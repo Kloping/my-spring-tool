@@ -323,6 +323,7 @@ public final class Starter {
                 return;
             }
         }
+        Log("无匹配 (no mather)=>" + Arrays.toString(objs), 2);
     }
 
     private static void RunMethod(Map.Entry<Object, Method> objectMethodEntry, Result result) {
