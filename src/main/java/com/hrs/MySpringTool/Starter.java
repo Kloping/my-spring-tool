@@ -104,14 +104,13 @@ public final class Starter {
                         Future future = threads.submit(new Runnable() {
                             @Override
                             public void run() {
-                                Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
                                 Run(objs);
                             }
                         });
                         try {
                             future.get(15, TimeUnit.SECONDS);
                         } catch (InterruptedException e) {
-                            Log("运行时错误(Runnig Has Error)=>" + e, -1);
+                            Log("运行时错误(Running Has Error)=>" + e, -1);
                             future.cancel(true);
                         } catch (TimeoutException e) {
                             Log("运行超时(Run Time Out)=>" + e, -1);
@@ -120,7 +119,7 @@ public final class Starter {
                             Log("其他错误(Other Error)=>" + e, -1);
                             future.cancel(true);
                         }
-                        Log("运行结束(Run Complete)=>" + Arrays.toString(objs), 0);
+                        Log("活动处理结束(Run Complete)=>" + Arrays.toString(objs), 0);
                         runList.remove(objs[0]);
                         Log("耗时(Use Timed)=>" + (System.currentTimeMillis() - l1) + "ms", 1);
                         Log("============================================", 1);
@@ -318,6 +317,7 @@ public final class Starter {
             if (!mabey(res, v)) continue;
             Result result = null;
             if ((result = new Result(res, v)).isMatch()) {
+                Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
                 result.setObjs(objs);
                 RunMethod(actions.get(v), result);
                 return;
