@@ -439,7 +439,7 @@ public final class Starter {
             if (parameters[i].isAnnotationPresent(Param.class)) {
                 Param param = parameters[i].getAnnotation(Param.class);
                 String s1 = param.value();
-                if (result != null)
+                if (result != null && result.K != null && result.V != null)
                     if (result.getK().equals(s1)) {
                         objects[i] = result.getV();
                     }
