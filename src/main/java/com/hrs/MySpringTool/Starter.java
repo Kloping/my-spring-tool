@@ -97,7 +97,7 @@ public final class Starter {
             try {
                 return runList.size();
             } finally {
-                threads.execute(new Runnable() {
+                threads.execute(new A(objs) {
                     @Override
                     public void run() {
                         long l1 = System.currentTimeMillis();
@@ -126,7 +126,7 @@ public final class Starter {
                         if (!runQueue.isEmpty()) {
                             Object[] objects = runQueue.poll();
                             Log("开始回调 =>" + Arrays.toString(objects), 1);
-                            ExecuteMethod(objs);
+                            ExecuteMethod(objects);
                         }
                         System.gc();
                     }
@@ -147,7 +147,14 @@ public final class Starter {
      * 阅读 NessScan 注解
      */
     public static final Set<Class<?>> AllClass = new CopyOnWriteArraySet<>();
+    private static abstract class A implements Runnable{
+        protected Object[] objects;
 
+        public A(Object[] objects) {
+            this.objects = objects;
+        }
+
+    }
     public static abstract class AllAfterOrBefore {
         private State state = State.Before;
 
