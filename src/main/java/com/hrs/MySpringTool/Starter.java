@@ -67,9 +67,17 @@ public final class Starter {
             Log("扫描主类 Bean 完成(Scan Main Class Bean Complete)", 1);
             Log("开始 扫描 所有 包(Start Scan All Class On Package)", 1);
             startScan();
+            InitMaybeKey();
             Log("准备完成(All is Paper)", 1);
         } else {
             throw new NoRunException("此类上必须存在 CommentScan 注解 (class must has @interface CommentScan )");
+        }
+    }
+
+    private static void InitMaybeKey() {
+        for (String key : actions.keySet()) {
+            Character c = key.charAt(0);
+            maybeKeys.add(c);
         }
     }
 
@@ -87,11 +95,15 @@ public final class Starter {
 
     public static final int ExecuteMethod(Object... objects) {
         final Object[] objs = BaseToPack(objects);
+        if (!maybeKeys.contains(((String) objs[1]).charAt(0))) {
+            Log("不可能的匹配(impossible match)=>" + Arrays.toString(objects), 2);
+            return -1;
+        }
         if (accept(objs)) {
-            Log("开始匹配=>" + Arrays.toString(objects), 0);
+            Log("开始匹配(Start match)=>" + Arrays.toString(objects), 0);
             if (!runList.add(objs[0])) {
                 runQueue.offer(objs);
-                Log("稍后执行-->" + Arrays.toString(objs), 2);
+                Log("稍后执行(Execute later)-->" + Arrays.toString(objs), 2);
                 return runList.size();
             }
             try {
@@ -125,7 +137,7 @@ public final class Starter {
                         Log("============================================", 1);
                         if (!runQueue.isEmpty()) {
                             Object[] objects = runQueue.poll();
-                            Log("开始回调 =>" + Arrays.toString(objects), 1);
+                            Log("开始回调(start calling)=>" + Arrays.toString(objects), 1);
                             ExecuteMethod(objects);
                         }
                         System.gc();
@@ -147,7 +159,9 @@ public final class Starter {
      * 阅读 NessScan 注解
      */
     public static final Set<Class<?>> AllClass = new CopyOnWriteArraySet<>();
-    private static abstract class A implements Runnable{
+    private static final Set<Character> maybeKeys = new CopyOnWriteArraySet<>();
+
+    private static abstract class A implements Runnable {
         protected Object[] objects;
 
         public A(Object[] objects) {
@@ -155,6 +169,7 @@ public final class Starter {
         }
 
     }
+
     public static abstract class AllAfterOrBefore {
         private State state = State.Before;
 
@@ -321,7 +336,7 @@ public final class Starter {
     private static void Run(Object... objs) {
         for (String v : actions.keySet()) {
             String res = objs[1].toString();
-            if (!mabey(res, v)) continue;
+            if (!maybe(res, v)) continue;
             Result result = null;
             if ((result = new Result(res, v)).isMatch()) {
                 Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
@@ -469,6 +484,9 @@ public final class Starter {
         return n;
     }
 
+    private static final Map<Class<?>, List<Class>> father2son = new ConcurrentHashMap<>();
+
+    //=====
     private static boolean accept(Object... objs) {
         if (objs[0].getClass() == _key) {
             if (objs[1].getClass() == String.class) {
@@ -488,17 +506,35 @@ public final class Starter {
 
     private static boolean superOrImpl(final Class<?> father, final Class<?> son) {
         if (father == son) return true;
+        try {
+            if (father2son.get(father).contains(son)){
+                Log("从历史匹配知道 "+father+" 匹配与=>"+son,0);
+                return true;
+            }
+        } catch (Exception e) {
+        }
         Class<?> son1 = son;
         Class<?> father1 = father;
         while (hasSuper(son1)) {
             father1 = son1.getSuperclass();
-            if (father1 == son) return true;
-            else son1 = father1;
+            if (father1 == son) {
+                appendFather2Son(father, son);
+                return true;
+            } else son1 = father1;
         }
         Class<?>[] classes1 = son.getInterfaces();
-        if (isInterfaces(classes1, father))
+        if (isInterfaces(classes1, father)) {
+            appendFather2Son(father, son);
             return true;
+        }
         return false;
+    }
+
+    private static void appendFather2Son(Class<?> father, Class<?> son) {
+        List<Class> list = father2son.get(father);
+        if (list == null) list = new CopyOnWriteArrayList<>();
+        if (!list.contains(son)) list.add(son);
+        father2son.put(father, list);
     }
 
     private static boolean isInterfaces(Class<?>[] classes1, Class<?> cla) {
@@ -532,6 +568,7 @@ public final class Starter {
         }
         return false;
     }
+    //=====
 
     private static void startScanMainBean(Class<?> cla) {
         try {
@@ -668,7 +705,7 @@ public final class Starter {
         return false;
     }
 
-    private static final boolean mabey(final String res, final String par) {
+    private static final boolean maybe(final String res, final String par) {
         if (res.equals(par)) return true;
         String par1 = par.substring(0, 1);
         if (res.startsWith(par1)) {
