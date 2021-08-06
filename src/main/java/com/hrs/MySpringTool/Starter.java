@@ -403,16 +403,25 @@ public final class Starter {
             }
         } catch (Exception e) {
             if (e instanceof InvocationTargetException) {
-                InvocationTargetException ite = (InvocationTargetException) e;
-                if (ite.getTargetException().getClass() == NoRunException.class) {
-                    NoRunException exception = (NoRunException) ite.getTargetException();
-                    Log("抛出 不运行异常(throw NuRunException): " + exception.getMessage(), 2);
-                } else {
-                    Log("存在映射一个异常(Has a Invoke Exception)=>" + ite.getTargetException(), -1);
-                }
+                getTargetException((InvocationTargetException) e);
                 return;
             }
-            Log("存在一个异常(Has a Exception)=>" + e, -1);
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+        }
+    }
+
+    private static final String getExceptionLine(Throwable e) {
+        try {
+            Method method = Throwable.class.getDeclaredMethod("getOurStackTrace");
+            method.setAccessible(true);
+            Object[] objects = (Object[]) method.invoke(e);
+            StringBuilder sb = new StringBuilder("\r\n");
+            for(Object o:objects){
+                sb.append(" at ").append(o.toString()).append("\r\n\t");
+            }
+            return sb.toString();
+        } catch (Exception e1) {
+            return "??";
         }
     }
 
@@ -425,17 +434,21 @@ public final class Starter {
             return true;
         } catch (Exception e) {
             if (e instanceof InvocationTargetException) {
-                InvocationTargetException ite = (InvocationTargetException) e;
-                if (ite.getTargetException().getClass() == NoRunException.class) {
-                    NoRunException exception = (NoRunException) ite.getTargetException();
-                    Log("抛出 不运行异常(throw NuRunException): " + exception.getMessage(), 2);
-                } else {
-                    Log("存在映射一个异常(Has a Invoke Exception)=>" + ite.getTargetException(), -1);
-                }
+                getTargetException((InvocationTargetException) e);
                 return false;
             }
-            Log("存在一个异常(Has a Exception)=>" + e, -1);
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
             return false;
+        }
+    }
+
+    private static void getTargetException(InvocationTargetException e) {
+        InvocationTargetException ite = e;
+        if (ite.getTargetException().getClass() == NoRunException.class) {
+            NoRunException exception = (NoRunException) ite.getTargetException();
+            Log("抛出 不运行异常(throw NuRunException): " + exception.getMessage(), 2);
+        } else {
+            Log("存在映射一个异常(Has a Invoke Exception)=>" + ite.getTargetException() + " at " + getExceptionLine(ite.getTargetException()), -1);
         }
     }
 
@@ -507,8 +520,8 @@ public final class Starter {
     private static boolean superOrImpl(final Class<?> father, final Class<?> son) {
         if (father == son) return true;
         try {
-            if (father2son.get(father).contains(son)){
-                Log("从历史匹配知道 "+father+" 匹配与=>"+son,0);
+            if (father2son.get(father).contains(son)) {
+                Log("从历史匹配知道 " + father + " 匹配与=>" + son, 0);
                 return true;
             }
         } catch (Exception e) {
@@ -583,13 +596,13 @@ public final class Starter {
                         Object obj = method.invoke(main);
                         appendToObjMap(id, obj, rec);
                     } catch (Exception e) {
-                        Log("存在一个异常(Has a Exception)=>" + e, -1);
+                        Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
 
                     }
                 }
             }
         } catch (Exception e) {
-            Log("存在一个异常(Has a Exception)=>" + e, -1);
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
 
         }
     }
@@ -622,7 +635,7 @@ public final class Starter {
                 InitMethod(cla, obj, method);
             }
         } catch (Exception e) {
-            Log("存在一个异常(Has a Exception)=>" + e, -1);
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
 
         }
     }
@@ -649,7 +662,7 @@ public final class Starter {
                 afterS.put(cla, method);
             }
         } catch (Exception e) {
-            Log("存在一个异常(Has a Exception)=>" + e, -1);
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
 
         }
     }
@@ -670,7 +683,7 @@ public final class Starter {
                 Log("AutoStand Ok " + field.getType() + " On " + cla.getName(), 0);
             }
         } catch (Exception e) {
-            Log("存在一个异常(Has a Exception)=>" + e, -1);
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
         }
     }
 
@@ -692,7 +705,7 @@ public final class Starter {
                 }
             }
         } catch (Exception e) {
-            Log("存在一个异常(Has a Exception)=>" + e, -1);
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
         }
     }
 
@@ -772,7 +785,7 @@ public final class Starter {
                 try {
                     jarFile = ((JarURLConnection) url.openConnection()).getJarFile();
                 } catch (Exception e) {
-                    Log("存在一个异常(Has a Exception)=>" + e, -1);
+                    Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
                 }
                 if (jarFile != null) {
                     getClassNameFromJar(jarFile.entries(), packageName, isRecursion);
@@ -787,7 +800,7 @@ public final class Starter {
                 Class<?> cla = loader.loadClass(name);
                 classes.add(cla);
             } catch (ClassNotFoundException e) {
-                Log("存在一个异常(Has a Exception)=>" + e, -1);
+                Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
 
             }
         }
@@ -848,7 +861,7 @@ public final class Starter {
             try {
                 jarFile = new JarFile(classPath.substring(classPath.indexOf("/")));
             } catch (IOException e) {
-                Log("存在一个异常(Has a Exception)=>" + e, -1);
+                Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
 
             }
 
