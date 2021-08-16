@@ -3,6 +3,7 @@ package com.hrs.MySpringTool;
 
 import com.hrs.MySpringTool.annotations.*;
 import com.hrs.MySpringTool.exceptions.NoRunException;
+import com.sun.deploy.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,7 +62,7 @@ public final class Starter {
     public static void run(Class<?> cla) {
         if (cla.isAnnotationPresent(CommentScan.class)) {
             CommentScan scan = cla.getAnnotation(CommentScan.class);
-            scanPath = scan.path();
+            scanPath = filter(scan.path(),cla);
             Log("开始扫描主类 Bean(Start Scan Main Class Bean)", 1);
             startScanMainBean(cla);
             Log("扫描主类 Bean 完成(Scan Main Class Bean Complete)", 1);
@@ -72,6 +73,13 @@ public final class Starter {
         } else {
             throw new NoRunException("此类上必须存在 CommentScan 注解 (class must has @interface CommentScan )");
         }
+    }
+
+    private static String filter(String path,Class cla) {
+        if(path.equals(".")||path.equals("/")||path.equals("./")||path.trim().isEmpty()){
+            path = cla.getName().substring(0,cla.getName().indexOf("."));
+        }
+        return path;
     }
 
     private static void InitMaybeKey() {
