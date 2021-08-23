@@ -3,7 +3,6 @@ package com.hrs.MySpringTool;
 
 import com.hrs.MySpringTool.annotations.*;
 import com.hrs.MySpringTool.exceptions.NoRunException;
-import com.sun.deploy.util.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,7 +61,7 @@ public final class Starter {
     public static void run(Class<?> cla) {
         if (cla.isAnnotationPresent(CommentScan.class)) {
             CommentScan scan = cla.getAnnotation(CommentScan.class);
-            scanPath = filter(scan.path(),cla);
+            scanPath = filter(scan.path(), cla);
             Log("开始扫描主类 Bean(Start Scan Main Class Bean)", 1);
             startScanMainBean(cla);
             Log("扫描主类 Bean 完成(Scan Main Class Bean Complete)", 1);
@@ -75,9 +74,9 @@ public final class Starter {
         }
     }
 
-    private static String filter(String path,Class cla) {
-        if(path.equals(".")||path.equals("/")||path.equals("./")||path.trim().isEmpty()){
-            path = cla.getName().substring(0,cla.getName().indexOf("."));
+    private static String filter(String path, Class cla) {
+        if (path.equals(".") || path.equals("/") || path.equals("./") || path.trim().isEmpty()) {
+            path = cla.getName().substring(0, cla.getName().indexOf("."));
         }
         return path;
     }
@@ -124,7 +123,7 @@ public final class Starter {
                         Future future = threads.submit(new Runnable() {
                             @Override
                             public void run() {
-                                Run(objs);
+                                Run(true, objs);
                             }
                         });
                         try {
@@ -341,19 +340,42 @@ public final class Starter {
      *
      * @param objs
      */
-    private static void Run(Object... objs) {
+    private static boolean Run(boolean run, Object... objs) {
         for (String v : actions.keySet()) {
             String res = objs[1].toString();
             if (!maybe(res, v)) continue;
             Result result = null;
             if ((result = new Result(res, v)).isMatch()) {
+                if (!run) return true;
                 Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
                 result.setObjs(objs);
                 RunMethod(actions.get(v), result);
-                return;
+                return true;
             }
         }
         Log("无匹配 (no mather)=>" + Arrays.toString(objs), 2);
+        return false;
+    }
+
+    /**
+     * 是否匹配
+     *
+     * @param str
+     * @return
+     */
+    public static boolean matcher(String str) {
+        if (!maybeKeys.contains(str.charAt(0))) {
+            return false;
+        }
+        for (String v : actions.keySet()) {
+            String res = str;
+            if (!maybe(res, v)) continue;
+            Result result = null;
+            if ((result = new Result(res, v)).isMatch()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void RunMethod(Map.Entry<Object, Method> objectMethodEntry, Result result) {
@@ -424,7 +446,7 @@ public final class Starter {
             method.setAccessible(true);
             Object[] objects = (Object[]) method.invoke(e);
             StringBuilder sb = new StringBuilder("\r\n");
-            for(Object o:objects){
+            for (Object o : objects) {
                 sb.append(" at ").append(o.toString()).append("\r\n\t");
             }
             return sb.toString();
