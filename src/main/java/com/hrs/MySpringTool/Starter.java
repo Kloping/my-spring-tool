@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
  * 主键Key,//_key类型
  * 要匹配的action,//String 对应 @Action(的内容)
  * ... //接受的参数类型组
+ * end 控制器类型,//@Controller(type='?')
  * };
  *
  * @Action 用法
@@ -43,6 +44,8 @@ public final class Starter {
     private static Class<?>[] accPars = null;
     private static Class<?> _key = null;
     private static Integer Log_Level = 0;
+    private static final Map<Class<?>, Integer> cla2Type = new ConcurrentHashMap<>();
+    private static final Map<String, Integer> action2Type = new ConcurrentHashMap<>();
 
     public static void set_key(Class<?> _key) {
         Starter._key = _key;
@@ -174,7 +177,6 @@ public final class Starter {
         public A(Object[] objects) {
             this.objects = objects;
         }
-
     }
 
     public static abstract class AllAfterOrBefore {
@@ -347,9 +349,18 @@ public final class Starter {
             Result result = null;
             if ((result = new Result(res, v)).isMatch()) {
                 if (!run) return true;
-                Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
+                Integer t = (Integer) objs[objs.length-1];
+                Integer t2 = null;
+                String k = t==0? (String) v :(t+":"+v);
+                t2 = action2Type.get(k);
+                if(t==t2)
+                    Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
+                else{
+                    Log("控制器类型不匹配(Controller Type Not matcher)=>" + Arrays.toString(objs), 1);
+                    return false;
+                }
                 result.setObjs(objs);
-                RunMethod(actions.get(v), result);
+                RunMethod(actions.get(k), result);
                 return true;
             }
         }
@@ -533,15 +544,20 @@ public final class Starter {
     private static boolean accept(Object... objs) {
         if (objs[0].getClass() == _key) {
             if (objs[1].getClass() == String.class) {
-                for (int i = 2; i < accPars.length + 2; i++) {
-                    Class<?> cla1 = objs[i].getClass();
-                    Class<?> cla2 = accPars[i - 2];
-                    boolean k = superOrImpl(cla2, cla1);
-                    if (k)
-                        continue;
-                    else return false;
+                if(objs[objs.length-1].getClass() == Integer.class){
+                    for (int i = 2; i < accPars.length + 2; i++) {
+                        if(i==objs.length-1){
+                            continue;
+                        }
+                        Class<?> cla1 = objs[i].getClass();
+                        Class<?> cla2 = accPars[i - 2];
+                        boolean k = superOrImpl(cla2, cla1);
+                        if (k)
+                            continue;
+                        else return false;
+                    }
+                    return true;
                 }
-                return true;
             }
         }
         return false;
@@ -666,7 +682,6 @@ public final class Starter {
             }
         } catch (Exception e) {
             Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
-
         }
     }
 
@@ -676,11 +691,24 @@ public final class Starter {
                 Action action = method.getAnnotation(Action.class);
                 String[] sss = action.otherName();
                 String acs = action.value();
+                Integer type = cla2Type.get(cla);
                 method.setAccessible(true);
-                actions.put(acs, getEntry(obj, method));
-                for (String str : sss) {
-                    if (str.trim().isEmpty()) continue;
-                    actions.put(str, getEntry(obj, method));
+                if(type==0){
+                    actions.put(acs, getEntry(obj, method));
+                    action2Type.put(acs, cla2Type.get(cla));
+                    for (String str : sss) {
+                        if (str.trim().isEmpty()) continue;
+                        action2Type.put(str, cla2Type.get(cla));
+                        actions.put(str, getEntry(obj, method));
+                    }
+                }else{
+                    actions.put(type+":"+acs, getEntry(obj, method));
+                    action2Type.put(type+":"+acs, cla2Type.get(cla));
+                    for (String str : sss) {
+                        if (str.trim().isEmpty()) continue;
+                        action2Type.put(type+":"+str, cla2Type.get(cla));
+                        actions.put(type+":"+str, getEntry(obj, method));
+                    }
                 }
             }
             if (method.isAnnotationPresent(Before.class)) {
@@ -723,7 +751,11 @@ public final class Starter {
                 if (hasNoParameterConstructor(cla)) {
                     Object obj = cla.newInstance();
                     String id = cla.getAnnotation(Controller.class).value();
+                    String type = cla.getAnnotation(Controller.class).type();
+                    cla2Type.put(cla, Integer.valueOf(type));
                     appendToObjMap(id, obj);
+                } else {
+                    Log(cla.getName() + "没有无参构造方法构建失败(don`t have NoParameters Constructor)", 2);
                 }
             } else if (cla.isAnnotationPresent(Entity.class)) {
                 if (hasNoParameterConstructor(cla)) {
