@@ -43,7 +43,7 @@ public final class Starter {
     private static Class<?>[] accPars = null;
     private static Class<?> _key = null;
     private static Integer Log_Level = 0;
-
+    private static Long waitTime = 15L;
     public static void set_key(Class<?> _key) {
         Starter._key = _key;
     }
@@ -96,6 +96,14 @@ public final class Starter {
         Starter.allBefore = allBefore;
     }
 
+    public static Long getWaitTime() {
+        return waitTime;
+    }
+
+    public static void setWaitTime(Long waitTime) {
+        Starter.waitTime = waitTime;
+    }
+
     public static void setLog_Level(Integer log_Level) {
         Log_Level = log_Level;
     }
@@ -127,7 +135,7 @@ public final class Starter {
                             }
                         });
                         try {
-                            future.get(15, TimeUnit.SECONDS);
+                            future.get(waitTime, TimeUnit.SECONDS);
                         } catch (InterruptedException e) {
                             Log("运行时错误(Running Has Error)=>" + e, -1);
                             future.cancel(true);
