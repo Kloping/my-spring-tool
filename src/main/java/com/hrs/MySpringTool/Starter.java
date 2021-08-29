@@ -228,7 +228,7 @@ public final class Starter {
                 info = "[Error] " + info;
                 break;
         }
-        info = "[com.hsr.Spring]" + info;
+        info = "[com.hrs.Spring]" + info;
         if (level == 0) {
             System.out.println(info);
         } else if (level == 1) {
