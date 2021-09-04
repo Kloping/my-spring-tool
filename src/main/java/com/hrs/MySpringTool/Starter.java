@@ -547,9 +547,16 @@ public final class Starter {
     private static final Map<Class<?>, List<Class>> father2son = new ConcurrentHashMap<>();
     private static final List<Class[]> acceptClasses = new CopyOnWriteArrayList<>();
 
+    private static final boolean ListArrayContainsArray(Class<?>... classes) {
+        for (Class[] classes1 : acceptClasses) {
+            if (Arrays.equals(classes1, classes)) return true;
+        }
+        return false;
+    }
+
     //=====
     private static boolean accept(Class<?>... classes) {
-        if (acceptClasses.contains(classes)) return true;
+        if (ListArrayContainsArray(classes)) return true;
         if (classes[0] == _key) {
             if (classes[1] == String.class) {
                 for (int i = 2; i < accPars.length + 2; i++) {
