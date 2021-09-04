@@ -115,7 +115,7 @@ public final class Starter {
             Log("不可能的匹配(impossible match)=>" + Arrays.toString(objects), 2);
             return -1;
         }
-        if (accept(objs)) {
+        if (accept(ObjectsToClasses(objs))) {
             Log("开始匹配(Start match)=>" + Arrays.toString(objects), 0);
             if (!runList.add(objs[0])) {
                 runQueue.offer(objs);
@@ -164,6 +164,14 @@ public final class Starter {
             Log("不接受这组参数(Not Access This Parameters)=>" + Arrays.toString(objs), -1);
             return -1;
         }
+    }
+
+    private static Class<?>[] ObjectsToClasses(Object... objs) {
+        Class<?>[] classes = new Class[objs.length];
+        for (int i = 0; i < objs.length; i++) {
+            classes[i] = objs[i].getClass();
+        }
+        return classes;
     }
 
     /**
@@ -354,7 +362,7 @@ public final class Starter {
             String res = objs[1].toString();
             if (!maybe(res, v)) continue;
             Result result = null;
-            if ((result = new Result(res, v)).isMatch()) {
+            if ((result = Result.create(res, v)).isMatch()) {
                 if (!run) return true;
                 Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
                 result.setObjs(objs);
@@ -380,7 +388,7 @@ public final class Starter {
             String res = str;
             if (!maybe(res, v)) continue;
             Result result = null;
-            if ((result = new Result(res, v)).isMatch()) {
+            if ((result = Result.create(res, v)).isMatch()) {
                 return true;
             }
         }
@@ -537,19 +545,23 @@ public final class Starter {
     }
 
     private static final Map<Class<?>, List<Class>> father2son = new ConcurrentHashMap<>();
+    private static final List<Class[]> acceptClasses = new CopyOnWriteArrayList<>();
 
     //=====
-    private static boolean accept(Object... objs) {
-        if (objs[0].getClass() == _key) {
-            if (objs[1].getClass() == String.class) {
+    private static boolean accept(Class<?>... classes) {
+        if (acceptClasses.contains(classes)) return true;
+        if (classes[0] == _key) {
+            if (classes[1] == String.class) {
                 for (int i = 2; i < accPars.length + 2; i++) {
-                    Class<?> cla1 = objs[i].getClass();
+                    Class<?> cla1 = classes[i];
                     Class<?> cla2 = accPars[i - 2];
                     boolean k = superOrImpl(cla2, cla1);
                     if (k)
                         continue;
                     else return false;
                 }
+                if (!acceptClasses.contains(classes))
+                    acceptClasses.add(classes);
                 return true;
             }
         }
@@ -566,13 +578,13 @@ public final class Starter {
         } catch (Exception e) {
         }
         Class<?> son1 = son;
-        Class<?> father1 = father;
         while (hasSuper(son1)) {
-            father1 = son1.getSuperclass();
-            if (father1 == son) {
+            son1 = son1.getSuperclass();
+            if (father == son1) {
                 appendFather2Son(father, son);
                 return true;
-            } else son1 = father1;
+            }
+            continue;
         }
         Class<?>[] classes1 = son.getInterfaces();
         if (isInterfaces(classes1, father)) {
@@ -923,12 +935,18 @@ public final class Starter {
         private String K, V;
         private Object[] objs;
         private String res;
+        private static final Map<String, Result> historyResult = new ConcurrentHashMap<>();
 
-        public Result(final String res, final String par) {
+        private synchronized static final Result create(final String res, final String par) {
+            String end = String.format("%s|$|%s", res, par);
+            if (historyResult.containsKey(end)) {
+                return historyResult.get(end);
+            }
+            Result result = new Result();
             if (par.contains("<") && par.contains(">")) {
                 Matcher matcher = pattern.matcher(par);
                 if (matcher.find()) {
-                    this.res = res;
+                    result.res = res;
                     String s1 = matcher.group();
                     String s2 = s1.substring(1, s1.length() - 1);
                     String[] ss = s2.split("=>");
@@ -937,20 +955,24 @@ public final class Starter {
                     String s3 = res.substring(i);
                     Matcher m1 = Pattern.compile(mat).matcher(s3);
                     if (m1.matches()) {
-                        hasPar = true;
-                        K = ss[1];
-                        V = m1.group();
-                        isMatch = true;
-                    } else isMatch = false;
+                        result.hasPar = true;
+                        result.K = ss[1];
+                        result.V = m1.group();
+                        result.isMatch = true;
+                    } else result.isMatch = false;
                 }
             } else {
-                this.res = res;
+                result.res = res;
                 if (res.matches(par) || res.equals(par)) {
-                    this.isMatch = true;
+                    result.isMatch = true;
                 } else {
-                    isMatch = false;
+                    result.isMatch = false;
                 }
             }
+            if (result.isMatch) {
+                historyResult.put(String.format("%s|$|%s", res, par), result);
+            }
+            return result;
         }
 
         public String getRes() {
