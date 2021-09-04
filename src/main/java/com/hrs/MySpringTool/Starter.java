@@ -44,6 +44,7 @@ public final class Starter {
     private static Class<?> _key = null;
     private static Integer Log_Level = 0;
     private static Long waitTime = 15L;
+
     public static void set_key(Class<?> _key) {
         Starter._key = _key;
     }
@@ -811,11 +812,14 @@ public final class Starter {
     private static Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
         Set<String> classNames = null;
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        System.out.println("Loader:" + loader);
         String packagePath = packageName.replace(".", "/");
 
         URL url = loader.getResource(packagePath);
+        System.out.println("URL:" + url);
         if (url != null) {
-            String protocol = url.getProtocol();
+            String protocol = url.getProtocol().trim();
+            System.out.println(protocol);
             if (protocol.equals("file")) {
                 classNames = getClassNameFromDir(url.getPath(), packageName, isRecursion);
             } else if (protocol.equals("jar")) {
@@ -826,12 +830,13 @@ public final class Starter {
                     Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
                 }
                 if (jarFile != null) {
-                    getClassNameFromJar(jarFile.entries(), packageName, isRecursion);
+                    classNames = getClassNameFromJar(jarFile.entries(), packageName, isRecursion);
                 }
             }
         } else {
             classNames = getClassNameFromJars(((URLClassLoader) loader).getURLs(), packageName, isRecursion);
         }
+        System.out.println(classNames);
         Set<Class<?>> classes = new CopyOnWriteArraySet<>();
         for (String name : classNames) {
             try {
@@ -868,11 +873,10 @@ public final class Starter {
 
     private static Set<String> getClassNameFromJar(Enumeration<JarEntry> jarEntries, String packageName, boolean isRecursion) {
         Set<String> classNames = new HashSet();
-
         while (jarEntries.hasMoreElements()) {
             JarEntry jarEntry = jarEntries.nextElement();
             if (!jarEntry.isDirectory()) {
-                String entryName = jarEntry.getName().replace("/", ".");
+                String entryName = jarEntry.getName().replaceAll("\\/", ".");
                 if (entryName.endsWith(".class") && !entryName.contains("$") && entryName.startsWith(packageName)) {
                     entryName = entryName.replace(".class", "");
                     if (isRecursion) {
