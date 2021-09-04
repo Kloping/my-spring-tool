@@ -499,13 +499,21 @@ public final class Starter {
         }
     }
 
+    private static final Map<Class<?>, Integer> parType2po = new ConcurrentHashMap<>();
+
     private static Object[] AutoObjFromPar(Parameter[] parameters, Object[] objects) {
         Object[] objects1 = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             if (hasAnnotation(parameters[i])) continue;
             Class<?> type = BaseToPack(parameters[i].getType());
-            int n = find(objects, type);
-            if (n >= 0) objects1[i] = objects[n];
+            int n;
+            if (parType2po.containsKey(type))
+                n = parType2po.get(type);
+            else n = find(objects, type);
+            if (n >= 0) {
+                parType2po.put(type, n);
+                objects1[i] = objects[n];
+            }
         }
         return objects1;
     }
@@ -556,7 +564,8 @@ public final class Starter {
 
     //=====
     private static boolean accept(Class<?>... classes) {
-        if (ListArrayContainsArray(classes)) return true;
+        if (ListArrayContainsArray(classes))
+            return true;
         if (classes[0] == _key) {
             if (classes[1] == String.class) {
                 for (int i = 2; i < accPars.length + 2; i++) {
@@ -831,14 +840,10 @@ public final class Starter {
     private static Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
         Set<String> classNames = null;
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
-        System.out.println("Loader:" + loader);
         String packagePath = packageName.replace(".", "/");
-
         URL url = loader.getResource(packagePath);
-        System.out.println("URL:" + url);
         if (url != null) {
             String protocol = url.getProtocol().trim();
-            System.out.println(protocol);
             if (protocol.equals("file")) {
                 classNames = getClassNameFromDir(url.getPath(), packageName, isRecursion);
             } else if (protocol.equals("jar")) {
