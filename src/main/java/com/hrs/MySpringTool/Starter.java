@@ -85,7 +85,10 @@ public final class Starter {
     private static void InitMaybeKey() {
         for (String key : actions.keySet()) {
             Character c = key.charAt(0);
-            maybeKeys.add(c);
+            if (c != '\\')
+                maybeKeys.add(c);
+            else
+                maybeKeys.add(key.charAt(1));
         }
     }
 
@@ -786,8 +789,10 @@ public final class Starter {
     }
 
     private static final boolean maybe(final String res, final String par) {
-        if (res.equals(par)) return true;
+        if (res.equals(par) || res.matches(par) ) return true;
         String par1 = par.substring(0, 1);
+        if(par1.equals("\\"))
+            par1 = par.substring(1, 2);
         if (res.startsWith(par1)) {
             int len = Math.min(res.length(), par.length());
             for (int i = 1; i < len; i++) {
