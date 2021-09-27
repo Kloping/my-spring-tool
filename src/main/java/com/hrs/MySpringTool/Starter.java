@@ -789,7 +789,9 @@ public final class Starter {
     }
 
     private static final boolean maybe(final String res, final String par) {
-        if (res.equals(par) || res.matches(par) ) return true;
+        try {
+            if (res.equals(par) || res.matches(par) ) return true;
+        } catch (Exception e){}
         String par1 = par.substring(0, 1);
         if(par1.equals("\\"))
             par1 = par.substring(1, 2);
