@@ -419,17 +419,16 @@ public final class Starter {
             if (afterS.containsKey(cla)) {
                 if (allAfter != null) {
                     if (allAfter.state == AllAfterOrBefore.State.After) {
-                        if (!RunBeforeOrAfter(afterS.get(cla), objectMethodEntry.getKey(), new Object[]{ret}, result))
+                        if (!RunBeforeOrAfter(afterS.get(cla), objectMethodEntry.getKey(), objAndObjsToObjs(ret, result.getObjs()), result))
                             return;
-
                         allAfter.run(ret, objs);
                     } else {
                         allAfter.run(ret, objs);
-                        if (!RunBeforeOrAfter(afterS.get(cla), objectMethodEntry.getKey(), new Object[]{ret}, result))
+                        if (!RunBeforeOrAfter(afterS.get(cla), objectMethodEntry.getKey(), objAndObjsToObjs(ret, result.getObjs()), result))
                             return;
                     }
                 } else {
-                    if (!RunBeforeOrAfter(afterS.get(cla), objectMethodEntry.getKey(), new Object[]{ret}, result))
+                    if (!RunBeforeOrAfter(afterS.get(cla), objectMethodEntry.getKey(), objAndObjsToObjs(ret, result.getObjs()), result))
                         return;
                 }
             } else if (allAfter != null) {
@@ -442,6 +441,13 @@ public final class Starter {
             }
             Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
         }
+    }
+
+    private static Object[] objAndObjsToObjs(Object o, Object... objects) {
+        List<Object> list = new ArrayList<>();
+        list.add(o);
+        list.addAll(Arrays.asList(objects));
+        return list.toArray(new Object[0]);
     }
 
     private static final String getExceptionLine(Throwable e) {
@@ -490,17 +496,20 @@ public final class Starter {
 
     private static Object[] AutoObjFromPar(Parameter[] parameters, Object[] objects) {
         Object[] objects1 = new Object[parameters.length];
-        for (int i = 0; i < parameters.length; i++) {
-            if (hasAnnotation(parameters[i])) continue;
-            Class<?> type = BaseToPack(parameters[i].getType());
-            int n;
-            if (parType2po.containsKey(type))
-                n = parType2po.get(type);
-            else n = find(objects, type);
-            if (n >= 0) {
-                parType2po.put(type, n);
-                objects1[i] = objects[n];
+        try {
+            for (int i = 0; i < parameters.length; i++) {
+                if (hasAnnotation(parameters[i])) continue;
+                Class<?> type = BaseToPack(parameters[i].getType());
+                int n;
+                if (parType2po.containsKey(type))
+                    n = parType2po.get(type);
+                else n = find(objects, type);
+                if (n >= 0) {
+                    parType2po.put(type, n);
+                    objects1[i] = objects[n];
+                }
             }
+        } catch (Exception e) {
         }
         return objects1;
     }
