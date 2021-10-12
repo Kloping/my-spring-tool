@@ -12,6 +12,8 @@
 
 使用说明:
 
+框架运行于JVM class 和 jar 环境
+
 ### 类注解
 
 - @CommentScan(path): 扫描Controller和实体类的路径
@@ -118,7 +120,7 @@ Starter.ExecuteMethod(1L,"test1","字符参数",347400676);
 
 ```java
 @Action("test\\d")
-public void testN(String p1){     
+public void testN(String p1){
     System.out.println(p1);
 }
 ```
@@ -173,5 +175,9 @@ T 类型 可为 <br> **_String_**  int long float double boolean 以及其包装
 
 内部将自动转换类型 若转换失败 则为 String
 
-介绍完
+### _**Kotlin 使用 这里不多做介绍 直接上图**_
+
+![img.png](res/img1.png)
+
+介绍完=============
 
