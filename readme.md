@@ -50,7 +50,7 @@
 
 ### 二,启动匹配
 
--Starter.ExecuteMethod(Obj...);
+- Starter.ExecuteMethod(Obj...);
 
 - 其值必须为此格式 0.唯一ID类型 1.String 类型 2+ 接受参数类型
 
