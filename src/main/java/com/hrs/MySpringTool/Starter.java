@@ -18,25 +18,6 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * 使用 Starter.run(Main.class)来启动程序,前提启动类上必须存在CommentScan注解,已说明要扫描的包
- * 设置 主键 Key 类型
- * 设置 接受的 数据组 类型
- * 通过ExecuteMethod()来调用 注意 参数
- * new Object[]{
- * 主键Key,//_key类型
- * 要匹配的action,//String 对应 @Action(的内容)
- * ... //接受的参数类型组
- * };
- *
- * @Action 用法
- * ("abcd")
- * 匹配 ("abcd") //必须一样
- * ("abc.")   //若存在正则表达
- * 匹配 ("abc.")("abcd")("abc1")("abca")
- * ("abc<.+=>name>")   //若存在正则表达 在接下来的方法内的参数 @Param("name") String name 自动赋值 为 .+ 匹配的值
- * 匹配 ("abc.")("abcd")("abc1")("abca")
- */
 public final class Starter {
     private static String scanPath = "";
     private static Object main;
@@ -147,7 +128,8 @@ public final class Starter {
                             Log("运行超时(Run Time Out)=>" + e, -1);
                             future.cancel(true);
                         } catch (Exception e) {
-                            Log("其他错误(Other Error)=>" + e, -1);
+                            Log("其他错误(Other Error)=>" + e + "\n", -1);
+                            e.printStackTrace();
                             future.cancel(true);
                         }
                         Log("活动处理结束(Run Complete)=>" + Arrays.toString(objs), 0);
@@ -361,6 +343,7 @@ public final class Starter {
      * @param objs
      */
     private static boolean Run(boolean run, Object... objs) {
+        boolean k = false;
         for (String v : actions.keySet()) {
             String res = objs[1].toString();
             if (!maybe(res, v)) continue;
@@ -370,11 +353,12 @@ public final class Starter {
                 Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
                 result.setObjs(objs);
                 RunMethod(actions.get(v), result);
-                return true;
+                k = true;
             }
         }
-        Log("无匹配 (no mather)=>" + Arrays.toString(objs), 2);
-        return false;
+        if (!k)
+            Log("无匹配 (no mather)=>" + Arrays.toString(objs), 2);
+        return k;
     }
 
     /**
@@ -534,7 +518,25 @@ public final class Starter {
                 String s1 = param.value();
                 if (result != null && result.K != null && result.V != null)
                     if (result.getK().equals(s1)) {
-                        objects[i] = result.getV();
+                        try {
+                            Class cla = parameters[i].getType();
+                            cla = BaseToPack(cla);
+                            if (cla == Long.class) {
+                                objects[i] = Long.parseLong(result.getV());
+                            } else if (cla == Integer.class) {
+                                objects[i] = Integer.parseInt(result.getV());
+                            } else if (cla == Float.class) {
+                                objects[i] = Float.parseFloat(result.getV());
+                            } else if (cla == Double.class) {
+                                objects[i] = Double.parseDouble(result.getV());
+                            } else if (cla == Boolean.class) {
+                                objects[i] = Boolean.parseBoolean(result.getV());
+                            } else {
+                                objects[i] = result.getV();
+                            }
+                        } catch (Exception e) {
+                            objects[i] = result.getV();
+                        }
                     }
             } else if (parameters[i].isAnnotationPresent(AllMess.class)) {
                 AllMess param = parameters[i].getAnnotation(AllMess.class);
@@ -658,6 +660,7 @@ public final class Starter {
             main = cla.newInstance();
             Method[] methods = cla.getDeclaredMethods();
             for (Method method : methods) {
+                InitMethod(cla, main, method);
                 if (method.isAnnotationPresent(Bean.class)) {
                     try {
                         Bean bean = method.getAnnotation(Bean.class);
@@ -665,9 +668,9 @@ public final class Starter {
                         Class rec = method.getReturnType();
                         Object obj = method.invoke(main);
                         appendToObjMap(id, obj, rec);
+
                     } catch (Exception e) {
                         Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
-
                     }
                 }
             }
@@ -764,12 +767,15 @@ public final class Starter {
                     Object obj = cla.newInstance();
                     String id = cla.getAnnotation(Controller.class).value();
                     appendToObjMap(id, obj);
+                } else {
+                    Log(cla.getName() + "没有无参构造方法构建失败(don`t have NoParameters Constructor)", 2);
                 }
             } else if (cla.isAnnotationPresent(Entity.class)) {
                 if (hasNoParameterConstructor(cla)) {
                     Object obj = cla.newInstance();
                     String id = cla.getAnnotation(Entity.class).value();
                     appendToObjMap(id, obj);
+                    startScanMainBean(cla);
                 } else {
                     Log(cla.getName() + "没有无参构造方法构建失败(don`t have NoParameters Constructor)", 2);
                 }
@@ -790,10 +796,11 @@ public final class Starter {
 
     private static final boolean maybe(final String res, final String par) {
         try {
-            if (res.equals(par) || res.matches(par) ) return true;
-        } catch (Exception e){}
+            if (res.equals(par) || res.matches(par)) return true;
+        } catch (Exception e) {
+        }
         String par1 = par.substring(0, 1);
-        if(par1.equals("\\"))
+        if (par1.equals("\\"))
             par1 = par.substring(1, 2);
         if (res.startsWith(par1)) {
             int len = Math.min(res.length(), par.length());
@@ -969,16 +976,25 @@ public final class Starter {
                     String s1 = matcher.group();
                     String s2 = s1.substring(1, s1.length() - 1);
                     String[] ss = s2.split("=>");
-                    String mat = ss[0];
-                    int i = par.indexOf("<");
-                    String s3 = res.substring(i);
-                    Matcher m1 = Pattern.compile(mat).matcher(s3);
-                    if (m1.matches()) {
-                        result.hasPar = true;
-                        result.K = ss[1];
-                        result.V = m1.group();
-                        result.isMatch = true;
-                    } else result.isMatch = false;
+                    if (ss.length == 1) {
+                        String parN = par.replace("<" + ss[0] + ">", "") + s2;
+                        if (res.matches(parN) || res.equals(parN)) {
+                            result.isMatch = true;
+                        } else {
+                            result.isMatch = false;
+                        }
+                    } else {
+                        String mat = ss[0];
+                        int i = par.indexOf("<");
+                        String s3 = res.substring(i);
+                        Matcher m1 = Pattern.compile(mat).matcher(s3);
+                        if (m1.matches()) {
+                            result.hasPar = true;
+                            result.K = ss[1];
+                            result.V = m1.group();
+                            result.isMatch = true;
+                        } else result.isMatch = false;
+                    }
                 }
             } else {
                 result.res = res;
