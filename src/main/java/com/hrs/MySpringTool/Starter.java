@@ -655,9 +655,24 @@ public final class Starter {
     }
     //=====
 
+    private static Object newInstance(Class<?> cla) {
+        Constructor<?>[] constructors = cla.getDeclaredConstructors();
+        for (Constructor<?> constructor : constructors) {
+            try {
+                if (constructor.getParameterCount() == 0) {
+                    constructor.setAccessible(true);
+                    return constructor.newInstance();
+                }
+            } catch (Exception e) {
+                continue;
+            }
+        }
+        return null;
+    }
+
     private static void startScanMainBean(Class<?> cla) {
         try {
-            main = cla.newInstance();
+            main = newInstance(cla);
             Method[] methods = cla.getDeclaredMethods();
             for (Method method : methods) {
                 InitMethod(cla, main, method);
@@ -764,7 +779,7 @@ public final class Starter {
         try {
             if (cla.isAnnotationPresent(Controller.class)) {
                 if (hasNoParameterConstructor(cla)) {
-                    Object obj = cla.newInstance();
+                    Object obj = newInstance(cla);
                     String id = cla.getAnnotation(Controller.class).value();
                     appendToObjMap(id, obj);
                 } else {
@@ -772,7 +787,7 @@ public final class Starter {
                 }
             } else if (cla.isAnnotationPresent(Entity.class)) {
                 if (hasNoParameterConstructor(cla)) {
-                    Object obj = cla.newInstance();
+                    Object obj = newInstance(cla);
                     String id = cla.getAnnotation(Entity.class).value();
                     appendToObjMap(id, obj);
                     startScanMainBean(cla);
