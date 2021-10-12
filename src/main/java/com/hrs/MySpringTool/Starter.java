@@ -492,7 +492,6 @@ public final class Starter {
         }
     }
 
-    private static final Map<Class<?>, Integer> parType2po = new ConcurrentHashMap<>();
 
     private static Object[] AutoObjFromPar(Parameter[] parameters, Object[] objects) {
         Object[] objects1 = new Object[parameters.length];
@@ -501,11 +500,8 @@ public final class Starter {
                 if (hasAnnotation(parameters[i])) continue;
                 Class<?> type = BaseToPack(parameters[i].getType());
                 int n;
-                if (parType2po.containsKey(type))
-                    n = parType2po.get(type);
-                else n = find(objects, type);
+                n = find(objects, type);
                 if (n >= 0) {
-                    parType2po.put(type, n);
                     objects1[i] = objects[n];
                 }
             }
@@ -556,12 +552,23 @@ public final class Starter {
         return objects;
     }
 
+    private static final Map<Class[], Map<Class, Integer>> findHist = new ConcurrentHashMap<>();
+
     private static int find(Object[] obj, Class<?> cla) {
+        Class[] classes = ObjectsToClasses(obj);
+        if (findHist.containsKey(classes) && findHist.get(classes).containsKey(cla))
+            return findHist.get(classes).get(cla);
         obj = BaseToPack(obj);
         int n = -1;
         for (int i = 2; i < obj.length; i++) {
             if (superOrImpl(cla, obj[i].getClass()))
                 n = i;
+        }
+        if (n >= 0) {
+            Map map = findHist.get(classes);
+            if (map == null) map = new ConcurrentHashMap();
+            map.put(cla, n);
+            findHist.put(classes, map);
         }
         return n;
     }
