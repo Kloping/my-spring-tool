@@ -92,10 +92,10 @@ public class Main {
 例:
 
 ```java
-    @Action("test1")
+@Action("test1")
 public void test1(String p1){
-        System.out.println(p1);
-        }
+    System.out.println(p1);
+}
 ```
 
 这将输出参数 "字符参数"
@@ -117,10 +117,10 @@ Starter.ExecuteMethod(1L,"test1","字符参数",347400676);
 此方法也将匹配
 
 ```java
-    @Action("test\\d")
-public void testN(String p1){
-        System.out.println(p1);
-        }
+@Action("test\\d")
+public void testN(String p1){     
+    System.out.println(p1);
+}
 ```
 
 若两方法同时存在则都将运行<br>
