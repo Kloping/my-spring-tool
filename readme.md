@@ -13,6 +13,7 @@
 使用Maven pom.xml
 
 ```xml
+
 <dependencies>
     <dependency>
         <groupId>io.github.Kloping</groupId>
@@ -201,10 +202,9 @@ T 类型 可为 <br> **_String_**  int long float double boolean 以及其包装
 运行期间 若
 抛出 [NoRunException](https://github.com/Kloping/my-spring-tool/blob/master/src/main/java/com/hrs/MySpringTool/exceptions/NoRunException.java)
 异常 则会阻止 整个 运行流程 <br>
-After 与之 不同的就是 之前 和 之后
+After 与之 不同的就是 之前 和 之后<br>
 
-====================<br>
-特别的 Starter 还有两个配置
+#### 特别的 Starter 还有两个配置
 
 ```java
 
@@ -239,6 +239,58 @@ State.Before 将 先运行 Controller 类中的 after (before) 前 运行
 且 在所有位置
 抛出 [NoRunException](https://github.com/Kloping/my-spring-tool/blob/master/src/main/java/com/hrs/MySpringTool/exceptions/NoRunException.java)
 异常 都 会阻止 整个 运行流程
+
+### 六, @AutoStand 与 @Entity 这一针对于不懂Spring的 开发者
+
+这里我们定义一个 Interface
+```java
+public interface BaseService {
+    Number add(int a,int b);
+}
+```
+实现它 并 添加注解 @Entity
+
+```java
+@Entity("base1")
+public class BaseServiceImpl implements BaseService {
+    @Override
+    public Number add(int a, int b) {
+        return a + b;
+    }
+}
+```
+
+在 Controller 中 定义 BaseService 并 添加注解 @AutoStand 
+
+它将自动 实例化 为 BaseServiceImpl
+```java
+
+import com.hrs.MySpringTool.annotations.Controller;
+
+@Controller
+public class BaseController {
+    
+  @AutoStand
+  BaseService service;
+
+  @Action("计算<.+=>str>")
+  public String add(@Param("str") String str) {
+    try {
+      String[] ss = str.split("\\+");
+      Integer a = Integer.parseInt(ss[0]);
+      Integer b = Integer.parseInt(ss[1]);
+      return "结果" + service.add(a, b);
+    } catch (NumberFormatException e) {
+      return "格式错误";
+    }
+  }
+}
+```
+
+当然在 @Entity(id) 在 @AutoStand(id) 指定 ID
+
+
+================================================
 
 ### _**Kotlin 使用 这里不多做介绍 直接上图**_
 
