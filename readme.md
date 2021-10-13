@@ -94,9 +94,11 @@ public class Main {
 例:
 
 ```java
-@Action("test1")
-public void test1(String p1){
-    System.out.println(p1);
+public class Main {
+    @Action("test1")
+    public void test1(String p1) {
+        System.out.println(p1);
+    }
 }
 ```
 
@@ -119,9 +121,11 @@ Starter.ExecuteMethod(1L,"test1","字符参数",347400676);
 此方法也将匹配
 
 ```java
-@Action("test\\d")
-public void testN(String p1){
-    System.out.println(p1);
+public class Main {
+    @Action("test\\d")
+    public void testN(String p1) {
+        System.out.println(p1);
+    }
 }
 ```
 
@@ -129,7 +133,7 @@ public void testN(String p1){
 _**但强烈不建议这样做**_<br>
 _**强烈建议一个只有一个Action被匹配**_
 
-### 如何获取正则匹配的内容
+#### 如何获取正则匹配的内容
 
  ```java
 
@@ -175,9 +179,57 @@ T 类型 可为 <br> **_String_**  int long float double boolean 以及其包装
 
 内部将自动转换类型 若转换失败 则为 String
 
+### 五 运行流程
+
+所有注解就剩 两个 _@After_ _@Before_ <br>
+显然 这是活动运行之前和之后的方法 <br>
+它们必须存在于<u>@Controller</u> 类 之内 <br>
+当该类<u>Controller</u> 的 活动触发时 <br>
+若存在@Before方法 则 会先运行 <br>
+运行期间 若
+抛出 [NoRunException](https://github.com/Kloping/my-spring-tool/blob/master/src/main/java/com/hrs/MySpringTool/exceptions/NoRunException.java)
+异常 则会阻止 整个 运行流程 <br>
+After 与之 不同的就是 之前 和 之后
+
+====================<br>
+特别的 Starter 还有两个配置
+
+```java
+
+public class Main {
+    static {
+        Starter.setAllAfter(new Starter.AllAfterOrBefore(Starter.AllAfterOrBefore.State.After) {
+            @Override
+            public void run(Object o, Object[] objects) throws NoRunException {
+                System.out.println("所有类活动运行之后");
+            }
+        });
+        Starter.setAllBefore(new Starter.AllAfterOrBefore(Starter.AllAfterOrBefore.State.Before) {
+            @Override
+            public void run(Object o, Object[] objects) throws NoRunException {
+                System.out.println("所有活动运行之前");
+            }
+        });
+    }
+}
+```
+
+需要传入 Starter.AllAfterOrBefore 类型 的 抽象类 其 构造参数是<br>
+_(Starter.AllAfterOrBefore.State)_ 这是个 枚举 类 且 只有 两个<br>
+**Starter.AllAfterOrBefore.State.After**<br>
+**Starter.AllAfterOrBefore.State.Before**<br>
+
+意如字意 在 设置 AllAfter (AllBefore) 还可 指定<br>
+先运行 Controller 类中的 after (before) 或 先运行 指定的 方法<br>
+State.After 将 先运行 Controller 类中的 after (before) 后 运行<br>
+State.Before 将 先运行 Controller 类中的 after (before) 前 运行
+
+且 在所有位置
+抛出 [NoRunException](https://github.com/Kloping/my-spring-tool/blob/master/src/main/java/com/hrs/MySpringTool/exceptions/NoRunException.java)
+异常 都 会阻止 整个 运行流程
+
 ### _**Kotlin 使用 这里不多做介绍 直接上图**_
 
 ![img.png](res/img1.png)
 
-未完待续...
-
+## 如遇 Bug 请及时联系 感谢 您的 阅读 与 使用
