@@ -10,6 +10,18 @@
   <li>且 仅用于 学习和娱乐<u><b><i>禁止用于非法用途</i></b></u>
 </h4>
 
+使用Maven pom.xml
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>io.github.Kloping</groupId>
+        <artifactId>SpringTool</artifactId>
+        <version>0.0.2</version>
+    </dependency>
+</dependencies>
+```
+
 使用说明:
 
 框架运行于JVM class 和 jar 环境
