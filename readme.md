@@ -289,6 +289,7 @@ public class BaseController {
 
 当然在 @Entity(id) 在 @AutoStand(id) 指定 ID
 
+##更多API 请查看 [更新日志](https://github.com/Kloping/my-spring-tool/releases)
 
 ================================================
 

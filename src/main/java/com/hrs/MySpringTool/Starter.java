@@ -93,9 +93,11 @@ public final class Starter {
         Log_Level = log_Level;
     }
 
+    private static boolean tryAll = false;
+
     public static final int ExecuteMethod(Object... objects) {
         final Object[] objs = BaseToPack(objects);
-        if (!maybeKeys.contains(((String) objs[1]).charAt(0))) {
+        if (!tryAll && !maybeKeys.contains(((String) objs[1]).charAt(0))) {
             Log("不可能的匹配(impossible match)=>" + Arrays.toString(objects), 2);
             return -1;
         }
@@ -149,6 +151,17 @@ public final class Starter {
             Log("不接受这组参数(Not Access This Parameters)=>" + Arrays.toString(objs), -1);
             return -1;
         }
+    }
+
+    /**
+     * 是否尝试所有的匹配
+     * (不会报 不可能的匹配 )
+     * 适合于 存在  正则匹配开头的 Action
+     *
+     * @param tryAll
+     */
+    public static void setTryAll(boolean tryAll) {
+        Starter.tryAll = tryAll;
     }
 
     private static Class<?>[] ObjectsToClasses(Object... objs) {
@@ -346,7 +359,7 @@ public final class Starter {
         boolean k = false;
         for (String v : actions.keySet()) {
             String res = objs[1].toString();
-            if (!maybe(res, v)) continue;
+            if (!tryAll && !maybe(res, v)) continue;
             Result result = null;
             if ((result = Result.create(res, v)).isMatch()) {
                 if (!run) return true;
@@ -492,12 +505,15 @@ public final class Starter {
         }
     }
 
-
     private static Object[] AutoObjFromPar(Parameter[] parameters, Object[] objects) {
         Object[] objects1 = new Object[parameters.length];
         try {
             for (int i = 0; i < parameters.length; i++) {
                 if (hasAnnotation(parameters[i])) continue;
+                if (parameters[i].getType() == Object[].class) {
+                    objects1[i] = objects;
+                    continue;
+                }
                 Class<?> type = BaseToPack(parameters[i].getType());
                 int n;
                 n = find(objects, type);
@@ -583,7 +599,6 @@ public final class Starter {
         return false;
     }
 
-    //=====
     private static boolean accept(Class<?>... classes) {
         if (ListArrayContainsArray(classes))
             return true;
@@ -669,7 +684,6 @@ public final class Starter {
         }
         return false;
     }
-    //=====
 
     private static Object newInstance(Class<?> cla) {
         Constructor<?>[] constructors = cla.getDeclaredConstructors();
@@ -1017,14 +1031,23 @@ public final class Starter {
                     } else {
                         String mat = ss[0];
                         int i = par.indexOf("<");
-                        String s3 = res.substring(i);
-                        Matcher m1 = Pattern.compile(mat).matcher(s3);
-                        if (m1.matches()) {
-                            result.hasPar = true;
-                            result.K = ss[1];
-                            result.V = m1.group();
-                            result.isMatch = true;
-                        } else result.isMatch = false;
+                        if (i >= res.length()) {
+                            result.res = res;
+                            if (res.matches(par) || res.equals(par)) {
+                                result.isMatch = true;
+                            } else {
+                                result.isMatch = false;
+                            }
+                        } else {
+                            String s3 = res.substring(i);
+                            Matcher m1 = Pattern.compile(mat).matcher(s3);
+                            if (m1.matches()) {
+                                result.hasPar = true;
+                                result.K = ss[1];
+                                result.V = m1.group();
+                                result.isMatch = true;
+                            } else result.isMatch = false;
+                        }
                     }
                 }
             } else {
