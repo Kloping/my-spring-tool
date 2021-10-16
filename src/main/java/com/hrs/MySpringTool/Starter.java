@@ -4,8 +4,7 @@ package com.hrs.MySpringTool;
 import com.hrs.MySpringTool.annotations.*;
 import com.hrs.MySpringTool.exceptions.NoRunException;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.*;
 import java.net.JarURLConnection;
 import java.net.URL;
@@ -45,14 +44,40 @@ public final class Starter {
             CommentScan scan = cla.getAnnotation(CommentScan.class);
             scanPath = filter(scan.path(), cla);
             Log("开始扫描主类 Bean(Start Scan Main Class Bean)", 1);
+            loadConf();
             startScanMainBean(cla);
             Log("扫描主类 Bean 完成(Scan Main Class Bean Complete)", 1);
             Log("开始 扫描 所有 包(Start Scan All Class On Package)", 1);
-            startScan();
+            startScan(cla);
             InitMaybeKey();
             Log("准备完成(All is Paper)", 1);
         } else {
             throw new NoRunException("此类上必须存在 CommentScan 注解 (class must has @interface CommentScan )");
+        }
+    }
+
+    private static void loadConf() {
+        Class<?>[] classes = new Class[]{String.class, Long.class, Integer.class};
+        for (String k : configurationMap.keySet()) {
+            try {
+                for (Class<?> cla : classes) {
+                    try {
+                        Object v = configurationMap.get(k).trim();
+                        if (cla != String.class) {
+                            Method method = cla.getMethod("valueOf", String.class);
+                            v = method.invoke(null, v.toString());
+                        }
+                        Map<String, Object> map = ObjMap.get(cla);
+                        if (map == null) map = new ConcurrentHashMap<>();
+                        map.put(k, v);
+                        ObjMap.put(cla, map);
+                    } catch (Exception e) {
+                        continue;
+                    }
+                }
+            } catch (Exception e) {
+                continue;
+            }
         }
     }
 
@@ -83,6 +108,62 @@ public final class Starter {
 
     public static Long getWaitTime() {
         return waitTime;
+    }
+
+    public static final Map<String, String> configurationMap = new LinkedHashMap<>();
+
+    /**
+     * 加载配置文件
+     * 格式为
+     * k=v
+     * V类型可为 String Long Integer
+     * 使用AutoStand 自动填充
+     *
+     * @param file
+     */
+    public synchronized static void loadConfigurationFile(File file) {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                try {
+                    String[] ss = line.split("=");
+                    configurationMap.put(ss[0].trim(), ss[1].trim());
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+            br.close();
+        } catch (Exception e) {
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+        }
+    }
+
+    /**
+     * 加载配置文件
+     * 格式为
+     * k=v
+     * V类型可为 String Long Integer
+     * 使用AutoStand 自动填充
+     *
+     * @param filePath
+     */
+    public synchronized static void loadConfigurationFile(String filePath) {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                try {
+                    String[] ss = line.split("=");
+                    configurationMap.put(ss[0].trim(), ss[1].trim());
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+            br.close();
+        } catch (Exception e) {
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+        }
     }
 
     public static void setWaitTime(Long waitTime) {
@@ -703,6 +784,9 @@ public final class Starter {
     private static void startScanMainBean(Class<?> cla) {
         try {
             main = newInstance(cla);
+            Map<String, Object> map = new ConcurrentHashMap<>();
+            map.put("main", main);
+            ObjMap.put(cla, map);
             Method[] methods = cla.getDeclaredMethods();
             for (Method method : methods) {
                 InitMethod(cla, main, method);
@@ -713,7 +797,6 @@ public final class Starter {
                         Class rec = method.getReturnType();
                         Object obj = method.invoke(main);
                         appendToObjMap(id, obj, rec);
-
                     } catch (Exception e) {
                         Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
                     }
@@ -725,12 +808,15 @@ public final class Starter {
         }
     }
 
-    private static void startScan() {
+    private static void startScan(Class<?> mianCla) {
         if (NeedScan) {
             Set<Class<?>> sets = getClassName(scanPath, true);
             classes.addAll(sets);
         } else
             classes.addAll(AllClass);
+
+        classes.add(mianCla);
+
         for (Class<?> cla : classes) {
             Fill(cla);
         }
@@ -781,7 +867,6 @@ public final class Starter {
             }
         } catch (Exception e) {
             Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
-
         }
     }
 
@@ -1041,8 +1126,10 @@ public final class Starter {
                         } else {
                             String s3 = res.substring(i);
                             String s4 = par.substring(i);
-                            Matcher m1 = Pattern.compile(s4 + mat).matcher(s3);
-                            if (m1.matches()) {
+                            String resB = res.substring(0, i);
+                            String parB = par.substring(0, i);
+                            Matcher m1 = Pattern.compile(mat).matcher(s3);
+                            if (m1.matches() && resB.equals(parB)) {
                                 result.hasPar = true;
                                 result.K = ss[1];
                                 result.V = m1.group();
