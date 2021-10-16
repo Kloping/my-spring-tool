@@ -1040,7 +1040,8 @@ public final class Starter {
                             }
                         } else {
                             String s3 = res.substring(i);
-                            Matcher m1 = Pattern.compile(mat).matcher(s3);
+                            String s4 = par.substring(i);
+                            Matcher m1 = Pattern.compile(s4 + mat).matcher(s3);
                             if (m1.matches()) {
                                 result.hasPar = true;
                                 result.K = ss[1];
