@@ -45,27 +45,78 @@ public final class Starter {
             scanPath = filter(scan.path(), cla);
             Log("开始扫描主类 Bean(Start Scan Main Class Bean)", 1);
             loadConf();
-            startScanMainBean(cla);
+            startScanMainBean(cla, 1);
             Log("扫描主类 Bean 完成(Scan Main Class Bean Complete)", 1);
             Log("开始 扫描 所有 包(Start Scan All Class On Package)", 1);
             startScan(cla);
             InitMaybeKey();
             Log("准备完成(All is Paper)", 1);
+            startTimer();
         } else {
             throw new NoRunException("此类上必须存在 CommentScan 注解 (class must has @interface CommentScan )");
         }
     }
 
+    private static void startTimer() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Map.Entry<Long, Method> en = getNextTimeMethodDelay();
+                    long t1 = en.getKey();
+                    if (t1 > 0) {
+                        Thread.sleep(t1);
+                        Method method = en.getValue();
+                        method.invoke(null);
+                        run();
+                    }
+                } catch (Exception e) {
+                }
+            }
+        }).start();
+    }
+
+    private static Map.Entry<Long, Method> getNextTimeMethodDelay() {
+        Map.Entry<Long, Method> entry = null;
+        for (Class cla : timeMethods.keySet()) {
+            for (Map.Entry<String, Method> e : timeMethods.get(cla)) {
+                if (e.getValue().isAnnotationPresent(Schedule.class)) {
+                    String[] sss = e.getKey().split(":");
+                    int n1 = Integer.parseInt(sss[0]);
+                    int n2 = Integer.parseInt(sss[1]);
+                    int n3 = Integer.parseInt(sss[2]);
+                    long t = Starter.Utils.getTimeFromNowTo(n1, n2, n3);
+                    t = t > 0 ? t : t + (1000 * 60 * 60 * 24);
+                    if (entry == null) {
+                        entry = getEntry(t, e.getValue());
+                    } else {
+                        if (t > entry.getKey())
+                            continue;
+                        else entry = getEntry(t, e.getValue());
+                    }
+                }
+            }
+        }
+        return entry;
+    }
+
     private static void loadConf() {
-        Class<?>[] classes = new Class[]{String.class, Long.class, Integer.class};
+        Class<?>[] classes = new Class[]{String.class, Long.class, Integer.class, Boolean.class, long.class, int.class, boolean.class};
         for (String k : configurationMap.keySet()) {
             try {
                 for (Class<?> cla : classes) {
                     try {
                         Object v = configurationMap.get(k).trim();
                         if (cla != String.class) {
-                            Method method = cla.getMethod("valueOf", String.class);
+                            Method method = BaseToPack(cla).getMethod("valueOf", String.class);
                             v = method.invoke(null, v.toString());
+                        }
+                        if (cla == Boolean.class) {
+                            if (v.toString().trim().equals("false") || v.toString().trim().equals("true")) {
+                                v = Boolean.valueOf(v.toString());
+                            } else {
+                                continue;
+                            }
                         }
                         Map<String, Object> map = ObjMap.get(cla);
                         if (map == null) map = new ConcurrentHashMap<>();
@@ -75,7 +126,8 @@ public final class Starter {
                         continue;
                     }
                 }
-            } catch (Exception e) {
+            } catch (
+                    Exception e) {
                 continue;
             }
         }
@@ -588,8 +640,8 @@ public final class Starter {
 
     private static Object[] AutoObjFromPar(Parameter[] parameters, Object[] objects) {
         Object[] objects1 = new Object[parameters.length];
-        try {
-            for (int i = 0; i < parameters.length; i++) {
+        for (int i = 0; i < parameters.length; i++) {
+            try {
                 if (hasAnnotation(parameters[i])) continue;
                 if (parameters[i].getType() == Object[].class) {
                     objects1[i] = objects;
@@ -601,8 +653,10 @@ public final class Starter {
                 if (n >= 0) {
                     objects1[i] = objects[n];
                 }
+            } catch (Exception e) {
+                Log("赋值参数失败=>" + parameters[i].getType(), 2);
+                continue;
             }
-        } catch (Exception e) {
         }
         return objects1;
     }
@@ -784,6 +838,30 @@ public final class Starter {
     private static void startScanMainBean(Class<?> cla) {
         try {
             main = newInstance(cla);
+            Method[] methods = cla.getDeclaredMethods();
+            for (Method method : methods) {
+                InitMethod(cla, main, method);
+                if (method.isAnnotationPresent(Bean.class)) {
+                    try {
+                        Bean bean = method.getAnnotation(Bean.class);
+                        String id = bean.value();
+                        Class rec = method.getReturnType();
+                        Object obj = method.invoke(main);
+                        appendToObjMap(id, obj, rec);
+                    } catch (Exception e) {
+                        Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+
+        }
+    }
+
+    private static void startScanMainBean(Class<?> cla, int n) {
+        try {
+            main = newInstance(cla);
             Map<String, Object> map = new ConcurrentHashMap<>();
             map.put("main", main);
             ObjMap.put(cla, map);
@@ -844,7 +922,9 @@ public final class Starter {
         }
     }
 
-    private static void InitMethod(Class<?> cla, Object obj, Method method) {
+    private static List<Method> startedMethods = new ArrayList<>();
+
+    private static synchronized void InitMethod(Class<?> cla, Object obj, Method method) {
         try {
             if (method.isAnnotationPresent(Action.class)) {
                 Action action = method.getAnnotation(Action.class);
@@ -865,10 +945,43 @@ public final class Starter {
                 method.setAccessible(true);
                 afterS.put(cla, method);
             }
+            if (method.isAnnotationPresent(Schedule.class)) {
+                List<Map.Entry<String, Method>> list = timeMethods.get(cla);
+                if (list == null) list = new ArrayList<>();
+                Schedule sch = method.getAnnotation(Schedule.class);
+                String[] ss = sch.value().split(",");
+                for (String s : ss) {
+                    list.add(getEntry(s, method));
+                }
+                timeMethods.put(cla, list);
+            }
+            if (method.isAnnotationPresent(TimeEve.class)) {
+                long t = method.getAnnotation(TimeEve.class).value();
+                if (t <= 0) return;
+                if (!startedMethods.contains(method)) {
+                    startedMethods.add(method);
+                    final long ft = t;
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            try {
+                                method.invoke(null);
+                            } catch (Exception e) {
+                                Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+                            }
+                        }
+                    }, ft, ft);
+                }
+            }
         } catch (Exception e) {
             Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
         }
     }
+
+    private static final Timer timer = new Timer();
+
+    //                         在哪里             多长时间  类型
+    private static final Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
 
     private static void fillField(Class<?> cla, Object obj, Field field) {
         try {
@@ -1187,6 +1300,38 @@ public final class Starter {
 
         public String getV() {
             return V;
+        }
+    }
+
+    private static final class Utils {
+        private static final SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+
+        public static long getTimeFromNowTo(int hour, int mini, int mil) {
+            Date date = null;
+            try {
+                String p1 = String.format("%s-%s-%s-%s-%s-%s", getYear(), getMon(), getDay(), hour, mini, mil);
+                date = myFmt.parse(p1);
+
+            } catch (Exception e) {
+            }
+            long millis = date.getTime();
+            long now = System.currentTimeMillis();
+            return millis - now;
+        }
+
+        private static int getYear() {
+            String s = myFmt.format(new Date());
+            return Integer.parseInt(s.substring(0, 4));
+        }
+
+        private static int getMon() {
+            String s = myFmt.format(new Date());
+            return Integer.parseInt(s.substring(5, 7));
+        }
+
+        private static int getDay() {
+            String s = myFmt.format(new Date());
+            return Integer.parseInt(s.substring(8, 10));
         }
     }
 }
