@@ -67,10 +67,17 @@ public final class Starter {
                     if (t1 > 0) {
                         Thread.sleep(t1);
                         Method method = en.getValue();
-                        method.invoke(null);
+                        threads.execute(() -> {
+                            try {
+                                method.invoke(null);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
                         run();
                     }
                 } catch (Exception e) {
+                    Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
                 }
             }
         }).start();
@@ -126,8 +133,8 @@ public final class Starter {
                         continue;
                     }
                 }
-            } catch (
-                    Exception e) {
+            } catch (Exception e) {
+                Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
                 continue;
             }
         }
@@ -192,6 +199,30 @@ public final class Starter {
     }
 
     /**
+     * 重新加载配置文件
+     *
+     * @param file
+     */
+    public synchronized static void reLoadConfigurationFile(File file) {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                try {
+                    String[] ss = line.split("=");
+                    configurationMap.put(ss[0].trim(), ss[1].trim());
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+            br.close();
+            loadConf();
+        } catch (Exception e) {
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+        }
+    }
+
+    /**
      * 加载配置文件
      * 格式为
      * k=v
@@ -213,6 +244,30 @@ public final class Starter {
                 }
             }
             br.close();
+        } catch (Exception e) {
+            Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+        }
+    }
+
+    /**
+     * 重新加载配置文件
+     *
+     * @param filePath
+     */
+    public synchronized static void reLoadConfigurationFile(String filePath) {
+        try {
+            BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                try {
+                    String[] ss = line.split("=");
+                    configurationMap.put(ss[0].trim(), ss[1].trim());
+                } catch (Exception e) {
+                    continue;
+                }
+            }
+            br.close();
+            loadConf();
         } catch (Exception e) {
             Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
         }
@@ -507,12 +562,6 @@ public final class Starter {
         return k;
     }
 
-    /**
-     * 是否匹配
-     *
-     * @param str
-     * @return
-     */
     public static boolean matcher(String str) {
         if (!maybeKeys.contains(str.charAt(0))) {
             return false;
@@ -980,8 +1029,15 @@ public final class Starter {
 
     private static final Timer timer = new Timer();
 
-    //                         在哪里             多长时间  类型
     private static final Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
+
+    public static final <T> T getContextValue(Class<?> claT, String id) {
+        Map<String, Object> map = ObjMap.get(claT);
+        if (map == null) return null;
+        id = id == null ? map.keySet().iterator().next() : id;
+        Object v = map.get(id);
+        return (T) v;
+    }
 
     private static void fillField(Class<?> cla, Object obj, Field field) {
         try {
