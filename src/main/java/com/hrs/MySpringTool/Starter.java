@@ -63,6 +63,10 @@ public final class Starter {
             public void run() {
                 try {
                     Map.Entry<Long, Method> en = getNextTimeMethodDelay();
+                    if (en == null) {
+                        Log("计时任务结束...", 2);
+                        return;
+                    }
                     long t1 = en.getKey();
                     if (t1 > 0) {
                         Thread.sleep(t1);
@@ -285,7 +289,13 @@ public final class Starter {
 
     public static final int ExecuteMethod(Object... objects) {
         final Object[] objs = BaseToPack(objects);
-        if (!tryAll && !maybeKeys.contains(((String) objs[1]).charAt(0))) {
+        if (((String) objs[1]).isEmpty()) {
+            Log("不可能的匹配(impossible match)=>" + Arrays.toString(objects), 2);
+            return -1;
+        }
+        String js = (objs[1].toString());
+        char c = js.charAt(0);
+        if (!tryAll && !maybeKeys.contains(c)){
             Log("不可能的匹配(impossible match)=>" + Arrays.toString(objects), 2);
             return -1;
         }
