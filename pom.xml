@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.Kloping</groupId>
     <artifactId>SpringTool</artifactId>
-    <version>0.0.9</version>
+    <version>0.1.1</version>
     <packaging>jar</packaging>
     <name>SpringTool</name>
     <url>https://github.com/Kloping/my-spring-tool</url>
@@ -23,6 +23,7 @@
         <developerConnection>scm:git:ssh://github.com/Kloping/my-spring-tool</developerConnection>
         <url>https://github.com/Kloping/my-spring-tool</url>
     </scm>
+
     <developers>
         <developer>
             <name>Kloping</name>
@@ -34,7 +35,13 @@
             <timezone>+8</timezone>
         </developer>
     </developers>
-
+    <dependencies>
+        <dependency>
+            <groupId>io.github.Kloping</groupId>
+            <artifactId>JvUtils</artifactId>
+            <version>0.0.5</version>
+        </dependency>
+    </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

@@ -17,6 +17,8 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static cn.kloping.object.ObjectUtils.baseToPack;
+
 public final class Starter {
     private static String scanPath = "";
     private static Object main;
@@ -24,6 +26,7 @@ public final class Starter {
     private static Class<?> _key = null;
     private static Integer Log_Level = 0;
     private static Long waitTime = 15L;
+    private static boolean onlyOne = false;
 
     public static void set_key(Class<?> _key) {
         Starter._key = _key;
@@ -119,7 +122,7 @@ public final class Starter {
                     try {
                         Object v = configurationMap.get(k).trim();
                         if (cla != String.class) {
-                            Method method = BaseToPack(cla).getMethod("valueOf", String.class);
+                            Method method = baseToPack(cla).getMethod("valueOf", String.class);
                             v = method.invoke(null, v.toString());
                         }
                         if (cla == Boolean.class) {
@@ -287,15 +290,21 @@ public final class Starter {
 
     private static boolean tryAll = false;
 
+    /**
+     * 开始尝试匹配运行
+     *
+     * @param objects
+     * @return
+     */
     public static final int ExecuteMethod(Object... objects) {
-        final Object[] objs = BaseToPack(objects);
+        final Object[] objs = baseToPack(objects);
         if (((String) objs[1]).isEmpty()) {
             Log("不可能的匹配(impossible match)=>" + Arrays.toString(objects), 2);
             return -1;
         }
         String js = (objs[1].toString());
         char c = js.charAt(0);
-        if (!tryAll && !maybeKeys.contains(c)){
+        if (!tryAll && !maybeKeys.contains(c)) {
             Log("不可能的匹配(impossible match)=>" + Arrays.toString(objects), 2);
             return -1;
         }
@@ -508,44 +517,15 @@ public final class Starter {
 
     private static AllAfterOrBefore allBefore = null;
 
-    /**
-     * 所有基本类型转化为 包装类型
-     *
-     * @param objects
-     * @return
-     */
-    private static Object[] BaseToPack(Object[] objects) {
-        Object[] objects1 = new Object[objects.length];
-        for (int i = 0; i < objects.length; i++) {
-            if (objects[i].getClass() == byte.class) {
-                objects1[i] = Byte.valueOf(String.valueOf(objects[i]));
-            } else if (objects[i].getClass() == short.class) {
-                objects1[i] = Short.valueOf(String.valueOf(objects[i]));
-            } else if (objects[i].getClass() == int.class) {
-                objects1[i] = Integer.valueOf(String.valueOf(objects[i]));
-            } else if (objects[i].getClass() == long.class) {
-                objects1[i] = Long.valueOf(String.valueOf(objects[i]));
-            } else if (objects[i].getClass() == boolean.class) {
-                objects1[i] = Boolean.valueOf(String.valueOf(objects[i]));
-            } else if (objects[i].getClass() == float.class) {
-                objects1[i] = Float.valueOf(String.valueOf(objects[i]));
-            } else if (objects[i].getClass() == double.class) {
-                objects1[i] = Double.valueOf(String.valueOf(objects[i]));
-            } else objects1[i] = objects[i];
-        }
-        return objects1;
-    }
+    private static final Map<String, String> histRunedRV = new ConcurrentHashMap<>();
 
-    private static Class<?> BaseToPack(Class<?> cla) {
-        if (cla == byte.class) return Byte.class;
-        if (cla == short.class) return Short.class;
-        if (cla == int.class) return Integer.class;
-        if (cla == long.class) return Long.class;
-        if (cla == boolean.class) return Boolean.class;
-        if (cla == char.class) return Character.class;
-        if (cla == float.class) return Float.class;
-        if (cla == double.class) return Double.class;
-        return cla;
+    /**
+     * 匹配到一个就停止匹配
+     *
+     * @param onlyOne
+     */
+    public static void setOnlyOne(boolean onlyOne) {
+        Starter.onlyOne = onlyOne;
     }
 
     /**
@@ -555,16 +535,32 @@ public final class Starter {
      */
     private static boolean Run(boolean run, Object... objs) {
         boolean k = false;
-        for (String v : actions.keySet()) {
-            String res = objs[1].toString();
-            if (!tryAll && !maybe(res, v)) continue;
-            Result result = null;
+        String res = objs[1].toString();
+        Result result = null;
+        if (histRunedRV.containsKey(res)) {
+            String v = histRunedRV.get(res);
             if ((result = Result.create(res, v)).isMatch()) {
+                histRunedRV.put(res, v);
                 if (!run) return true;
                 Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
                 result.setObjs(objs);
                 RunMethod(actions.get(v), result);
                 k = true;
+                if (onlyOne) return true;
+            }
+            return k;
+        }
+        for (String v : actions.keySet()) {
+            if (!tryAll && !maybe(res, v)) continue;
+            if ((result = Result.create(res, v)).isMatch()) {
+                if (result.state >= 0)
+                    histRunedRV.put(res, v);
+                if (!run) return true;
+                Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
+                result.setObjs(objs);
+                RunMethod(actions.get(v), result);
+                k = true;
+                if (onlyOne) return true;
             }
         }
         if (!k)
@@ -706,7 +702,7 @@ public final class Starter {
                     objects1[i] = objects;
                     continue;
                 }
-                Class<?> type = BaseToPack(parameters[i].getType());
+                Class<?> type = baseToPack(parameters[i].getType());
                 int n;
                 n = find(objects, type);
                 if (n >= 0) {
@@ -735,7 +731,7 @@ public final class Starter {
                     if (result.getK().equals(s1)) {
                         try {
                             Class cla = parameters[i].getType();
-                            cla = BaseToPack(cla);
+                            cla = baseToPack(cla);
                             if (cla == Long.class) {
                                 objects[i] = Long.parseLong(result.getV());
                             } else if (cla == Integer.class) {
@@ -768,7 +764,7 @@ public final class Starter {
         Class[] classes = ObjectsToClasses(obj);
         if (findHist.containsKey(classes) && findHist.get(classes).containsKey(cla))
             return findHist.get(classes).get(cla);
-        obj = BaseToPack(obj);
+        obj = baseToPack(obj);
         int n = -1;
         for (int i = 2; i < obj.length; i++) {
             if (superOrImpl(cla, obj[i].getClass()))
@@ -1264,13 +1260,14 @@ public final class Starter {
 
     private static final class Result {
         private boolean isMatch = false;
-        private static final Pattern pattern = Pattern.compile("<.{0,}>");
+        private static final Pattern pattern = Pattern.compile("<.*>");
         private Map<String, String> map = new HashMap<>();
         private boolean hasPar = false;
         private String K, V;
         private Object[] objs;
         private String res;
         private static final Map<String, Result> historyResult = new ConcurrentHashMap<>();
+        private int state = -1;
 
         private synchronized static final Result create(final String res, final String par) {
             String end = String.format("%s|$|%s", res, par);
@@ -1319,7 +1316,11 @@ public final class Starter {
                 }
             } else {
                 result.res = res;
-                if (res.matches(par) || res.equals(par)) {
+                if (res.matches(par)) {
+                    result.state = 1;
+                    result.isMatch = true;
+                } else if (res.equals(par)) {
+                    result.state = 0;
                     result.isMatch = true;
                 } else {
                     result.isMatch = false;
