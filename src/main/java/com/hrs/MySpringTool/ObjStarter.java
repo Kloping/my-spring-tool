@@ -19,20 +19,23 @@ import java.util.regex.Pattern;
 
 import static cn.kloping.object.ObjectUtils.baseToPack;
 
-public final class Starter {
-    private static String scanPath = "";
-    private static Object main;
-    private static Class<?>[] accPars = null;
-    private static Class<?> _key = null;
-    private static Integer Log_Level = 0;
-    private static Long waitTime = 15L;
-    private static boolean onlyOne = false;
+/**
+ * 对象形式的ObjStarter #测试阶段
+ */
+public final class ObjStarter {
+    private String scanPath = "";
+    private Object main;
+    private Class<?>[] accPars = null;
+    private Class<?> _key = null;
+    private Integer Log_Level = 0;
+    private Long waitTime = 15L;
+    private boolean onlyOne = false;
 
-    public static void set_key(Class<?> _key) {
-        Starter._key = _key;
+    public void set_key(Class<?> _key) {
+        this._key = _key;
     }
 
-    public static final void setAccPars(Class<?>... classes) {
+    public final void setAccPars(Class<?>... classes) {
         accPars = classes;
         Log("设置 接收参数 类型 完成 (Set Access Parameters Successful)=>" + Arrays.toString(classes), 0);
     }
@@ -42,7 +45,7 @@ public final class Starter {
      *
      * @param cla
      */
-    public static void run(Class<?> cla) {
+    public void run(Class<?> cla) {
         if (cla.isAnnotationPresent(CommentScan.class)) {
             CommentScan scan = cla.getAnnotation(CommentScan.class);
             scanPath = filter(scan.path(), cla);
@@ -60,7 +63,7 @@ public final class Starter {
         }
     }
 
-    private static void startTimer() {
+    private void startTimer() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -90,7 +93,7 @@ public final class Starter {
         }).start();
     }
 
-    private static Map.Entry<Long, Method> getNextTimeMethodDelay() {
+    private Map.Entry<Long, Method> getNextTimeMethodDelay() {
         Map.Entry<Long, Method> entry = null;
         for (Class cla : timeMethods.keySet()) {
             for (Map.Entry<String, Method> e : timeMethods.get(cla)) {
@@ -114,7 +117,7 @@ public final class Starter {
         return entry;
     }
 
-    private static void loadConf() {
+    private void loadConf() {
         Class<?>[] classes = new Class[]{String.class, Long.class, Integer.class, Boolean.class, long.class, int.class, boolean.class};
         for (String k : configurationMap.keySet()) {
             try {
@@ -147,14 +150,14 @@ public final class Starter {
         }
     }
 
-    private static String filter(String path, Class cla) {
+    private String filter(String path, Class cla) {
         if (path.equals(".") || path.equals("/") || path.equals("./") || path.trim().isEmpty()) {
             path = cla.getName().substring(0, cla.getName().indexOf("."));
         }
         return path;
     }
 
-    private static void InitMaybeKey() {
+    private void InitMaybeKey() {
         for (String key : actions.keySet()) {
             Character c = key.charAt(0);
             if (c != '\\')
@@ -164,19 +167,19 @@ public final class Starter {
         }
     }
 
-    public static void setAllAfter(AllAfterOrBefore allAfter) {
-        Starter.allAfter = allAfter;
+    public void setAllAfter(AllAfterOrBefore allAfter) {
+        this.allAfter = allAfter;
     }
 
-    public static void setAllBefore(AllAfterOrBefore allBefore) {
-        Starter.allBefore = allBefore;
+    public void setAllBefore(AllAfterOrBefore allBefore) {
+        this.allBefore = allBefore;
     }
 
-    public static Long getWaitTime() {
+    public Long getWaitTime() {
         return waitTime;
     }
 
-    public static final Map<String, String> configurationMap = new LinkedHashMap<>();
+    public final Map<String, String> configurationMap = new LinkedHashMap<>();
 
     /**
      * 加载配置文件
@@ -187,7 +190,7 @@ public final class Starter {
      *
      * @param file
      */
-    public synchronized static void loadConfigurationFile(File file) {
+    public synchronized void loadConfigurationFile(File file) {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
             String line = null;
@@ -210,7 +213,7 @@ public final class Starter {
      *
      * @param file
      */
-    public synchronized static void reLoadConfigurationFile(File file) {
+    public synchronized void reLoadConfigurationFile(File file) {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
             String line = null;
@@ -238,7 +241,7 @@ public final class Starter {
      *
      * @param filePath
      */
-    public synchronized static void loadConfigurationFile(String filePath) {
+    public synchronized void loadConfigurationFile(String filePath) {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
             String line = null;
@@ -261,7 +264,7 @@ public final class Starter {
      *
      * @param filePath
      */
-    public synchronized static void reLoadConfigurationFile(String filePath) {
+    public synchronized void reLoadConfigurationFile(String filePath) {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
             String line = null;
@@ -280,15 +283,15 @@ public final class Starter {
         }
     }
 
-    public static void setWaitTime(Long waitTime) {
-        Starter.waitTime = waitTime;
+    public void setWaitTime(Long waitTime) {
+        this.waitTime = waitTime;
     }
 
-    public static void setLog_Level(Integer log_Level) {
+    public void setLog_Level(Integer log_Level) {
         Log_Level = log_Level;
     }
 
-    private static boolean tryAll = false;
+    private boolean tryAll = false;
 
     /**
      * 开始尝试匹配运行
@@ -296,7 +299,7 @@ public final class Starter {
      * @param objects
      * @return
      */
-    public static final int ExecuteMethod(Object... objects) {
+    public final int ExecuteMethod(Object... objects) {
         final Object[] objs = baseToPack(objects);
         if (((String) objs[1]).isEmpty()) {
             Log("不可能的匹配(impossible match)=>" + Arrays.toString(objects), 2);
@@ -367,11 +370,11 @@ public final class Starter {
      *
      * @param tryAll
      */
-    public static void setTryAll(boolean tryAll) {
-        Starter.tryAll = tryAll;
+    public void setTryAll(boolean tryAll) {
+        this.tryAll = tryAll;
     }
 
-    private static Class<?>[] ObjectsToClasses(Object... objs) {
+    private Class<?>[] ObjectsToClasses(Object... objs) {
         Class<?>[] classes = new Class[objs.length];
         for (int i = 0; i < objs.length; i++) {
             classes[i] = objs[i].getClass();
@@ -382,15 +385,15 @@ public final class Starter {
     /**
      * 如果 不需要扫描 或者 不支持扫描 则设置为 false 并把类元素加入 classes 集合
      */
-    public static final boolean NeedScan = true;
+    public final boolean NeedScan = true;
 
     /**
      * 阅读 NessScan 注解
      */
-    public static final Set<Class<?>> AllClass = new CopyOnWriteArraySet<>();
-    private static final Set<Character> maybeKeys = new CopyOnWriteArraySet<>();
+    public final Set<Class<?>> AllClass = new CopyOnWriteArraySet<>();
+    private final Set<Character> maybeKeys = new CopyOnWriteArraySet<>();
 
-    private static abstract class A implements Runnable {
+    private abstract class A implements Runnable {
         protected Object[] objects;
 
         public A(Object[] objects) {
@@ -399,7 +402,7 @@ public final class Starter {
 
     }
 
-    public static abstract class AllAfterOrBefore {
+    public abstract static class AllAfterOrBefore {
         private State state = State.Before;
 
         public AllAfterOrBefore(State state) {
@@ -425,7 +428,7 @@ public final class Starter {
      * @param mess
      * @param level
      */
-    private static synchronized void Log(String mess, int level) {
+    private synchronized void Log(String mess, int level) {
         if (level != -1 && level < Log_Level) return;
         String info = "[" + df.format(new Date()) + "]" + "=>" + mess;
         switch (level) {
@@ -454,9 +457,9 @@ public final class Starter {
         }
     }
 
-    private static final SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
+    private final SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
 
-    private static final void appendToObjMap(String id, Object obj) {
+    private final void appendToObjMap(String id, Object obj) {
         Map map = ObjMap.get(obj.getClass());
         if (map == null) map = new ConcurrentHashMap();
         map.put(id, obj);
@@ -464,7 +467,7 @@ public final class Starter {
         PutAllInterface(id, obj.getClass(), obj);
     }
 
-    private static final void appendToObjMap(String id, Object obj, Class<?> cla) {
+    private final void appendToObjMap(String id, Object obj, Class<?> cla) {
         Map map = ObjMap.get(cla);
         if (map == null) map = new ConcurrentHashMap();
         map.put(id, obj);
@@ -472,7 +475,7 @@ public final class Starter {
         PutAllInterface(id, cla, obj);
     }
 
-    private static final void PutAllInterface(String id, Class<?> cla, Object obj) {
+    private final void PutAllInterface(String id, Class<?> cla, Object obj) {
         Class<?>[] clas = cla.getInterfaces();
         for (Class<?> cla1 : clas) {
             appendToObjMap(id, obj, cla1);
@@ -482,50 +485,50 @@ public final class Starter {
     /**
      * 线程池
      */
-    private static final ExecutorService threads = Executors.newFixedThreadPool(40);
+    private final ExecutorService threads = Executors.newFixedThreadPool(40);
     /**
      * 运行队列
      */
-    private static final Set<Object> runList = new HashSet<>();
-    private static final Queue<Object[]> runQueue = new LinkedList<>();
+    private final Set<Object> runList = new HashSet<>();
+    private final Queue<Object[]> runQueue = new LinkedList<>();
     /**
      * 活动储存
      */
-    private static final Map<String, Map.Entry<Object, Method>> actions = new ConcurrentHashMap();
+    private final Map<String, Map.Entry<Object, Method>> actions = new ConcurrentHashMap();
 
     /**
      * 活动Before储存
      */
-    private static final Map<Class<?>, Method> beforeS = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Method> beforeS = new ConcurrentHashMap<>();
 
     /**
      * 活动after储存
      */
-    private static final Map<Class<?>, Method> afterS = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Method> afterS = new ConcurrentHashMap<>();
 
     /**
      * 实例 Object map
      */
-    private static final Map<Class<?>, Map<String, Object>> ObjMap = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Map<String, Object>> ObjMap = new ConcurrentHashMap<>();
 
     /**
      * 所有类字节码
      */
-    private static final Set<Class<?>> classes = new CopyOnWriteArraySet<>();
+    private final Set<Class<?>> classes = new CopyOnWriteArraySet<>();
 
-    private static AllAfterOrBefore allAfter = null;
+    private AllAfterOrBefore allAfter = null;
 
-    private static AllAfterOrBefore allBefore = null;
+    private AllAfterOrBefore allBefore = null;
 
-    private static final Map<String, String> histRunedRV = new ConcurrentHashMap<>();
+    private final Map<String, String> histRunedRV = new ConcurrentHashMap<>();
 
     /**
      * 匹配到一个就停止匹配
      *
      * @param onlyOne
      */
-    public static void setOnlyOne(boolean onlyOne) {
-        Starter.onlyOne = onlyOne;
+    public void setOnlyOne(boolean onlyOne) {
+        this.onlyOne = onlyOne;
     }
 
     /**
@@ -533,7 +536,7 @@ public final class Starter {
      *
      * @param objs
      */
-    private static boolean Run(boolean run, Object... objs) {
+    private boolean Run(boolean run, Object... objs) {
         boolean k = false;
         String res = objs[1].toString();
         Result result = null;
@@ -568,7 +571,7 @@ public final class Starter {
         return k;
     }
 
-    public static boolean matcher(String str) {
+    public boolean matcher(String str) {
         if (!maybeKeys.contains(str.charAt(0))) {
             return false;
         }
@@ -583,7 +586,7 @@ public final class Starter {
         return false;
     }
 
-    private static void RunMethod(Map.Entry<Object, Method> objectMethodEntry, Result result) {
+    private void RunMethod(Map.Entry<Object, Method> objectMethodEntry, Result result) {
         try {
             Class<?> cla = objectMethodEntry.getKey().getClass();
             Method method = objectMethodEntry.getValue();
@@ -644,14 +647,14 @@ public final class Starter {
         }
     }
 
-    private static Object[] objAndObjsToObjs(Object o, Object... objects) {
+    private Object[] objAndObjsToObjs(Object o, Object... objects) {
         List<Object> list = new ArrayList<>();
         list.add(o);
         list.addAll(Arrays.asList(objects));
         return list.toArray(new Object[0]);
     }
 
-    private static final String getExceptionLine(Throwable e) {
+    private final String getExceptionLine(Throwable e) {
         try {
             Method method = Throwable.class.getDeclaredMethod("getOurStackTrace");
             method.setAccessible(true);
@@ -666,7 +669,7 @@ public final class Starter {
         }
     }
 
-    private static boolean RunBeforeOrAfter(Method method, Object key, Object[] objs, Result result) {
+    private boolean RunBeforeOrAfter(Method method, Object key, Object[] objs, Result result) {
         try {
             Parameter[] parameters = method.getParameters();
             Object[] objects = AutoObjFromPar(parameters, objs);
@@ -683,7 +686,7 @@ public final class Starter {
         }
     }
 
-    private static void getTargetException(InvocationTargetException e) {
+    private void getTargetException(InvocationTargetException e) {
         InvocationTargetException ite = e;
         if (ite.getTargetException().getClass() == NoRunException.class) {
             NoRunException exception = (NoRunException) ite.getTargetException();
@@ -693,7 +696,7 @@ public final class Starter {
         }
     }
 
-    private static Object[] AutoObjFromPar(Parameter[] parameters, Object[] objects) {
+    private Object[] AutoObjFromPar(Parameter[] parameters, Object[] objects) {
         Object[] objects1 = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             try {
@@ -716,13 +719,13 @@ public final class Starter {
         return objects1;
     }
 
-    private static boolean hasAnnotation(Parameter parameter) {
+    private boolean hasAnnotation(Parameter parameter) {
         if (parameter.isAnnotationPresent(Param.class)) return true;
         if (parameter.isAnnotationPresent(AllMess.class)) return true;
         return false;
     }
 
-    private static Object[] AutoObjOnPar(Parameter[] parameters, Object[] objects, Result result) {
+    private Object[] AutoObjOnPar(Parameter[] parameters, Object[] objects, Result result) {
         for (int i = 0; i < parameters.length; i++) {
             if (parameters[i].isAnnotationPresent(Param.class)) {
                 Param param = parameters[i].getAnnotation(Param.class);
@@ -758,9 +761,9 @@ public final class Starter {
         return objects;
     }
 
-    private static final Map<Class[], Map<Class, Integer>> findHist = new ConcurrentHashMap<>();
+    private final Map<Class[], Map<Class, Integer>> findHist = new ConcurrentHashMap<>();
 
-    private static int find(Object[] obj, Class<?> cla) {
+    private int find(Object[] obj, Class<?> cla) {
         Class[] classes = ObjectsToClasses(obj);
         if (findHist.containsKey(classes) && findHist.get(classes).containsKey(cla))
             return findHist.get(classes).get(cla);
@@ -779,17 +782,17 @@ public final class Starter {
         return n;
     }
 
-    private static final Map<Class<?>, List<Class>> father2son = new ConcurrentHashMap<>();
-    private static final List<Class[]> acceptClasses = new CopyOnWriteArrayList<>();
+    private final Map<Class<?>, List<Class>> father2son = new ConcurrentHashMap<>();
+    private final List<Class[]> acceptClasses = new CopyOnWriteArrayList<>();
 
-    private static final boolean ListArrayContainsArray(Class<?>... classes) {
+    private final boolean ListArrayContainsArray(Class<?>... classes) {
         for (Class[] classes1 : acceptClasses) {
             if (Arrays.equals(classes1, classes)) return true;
         }
         return false;
     }
 
-    private static boolean accept(Class<?>... classes) {
+    private boolean accept(Class<?>... classes) {
         if (ListArrayContainsArray(classes))
             return true;
         if (classes[0] == _key) {
@@ -810,7 +813,7 @@ public final class Starter {
         return false;
     }
 
-    private static boolean superOrImpl(final Class<?> father, final Class<?> son) {
+    private boolean superOrImpl(final Class<?> father, final Class<?> son) {
         if (father == son) return true;
         try {
             if (father2son.get(father).contains(son)) {
@@ -836,14 +839,14 @@ public final class Starter {
         return false;
     }
 
-    private static void appendFather2Son(Class<?> father, Class<?> son) {
+    private void appendFather2Son(Class<?> father, Class<?> son) {
         List<Class> list = father2son.get(father);
         if (list == null) list = new CopyOnWriteArrayList<>();
         if (!list.contains(son)) list.add(son);
         father2son.put(father, list);
     }
 
-    private static boolean isInterfaces(Class<?>[] classes1, Class<?> cla) {
+    private boolean isInterfaces(Class<?>[] classes1, Class<?> cla) {
         if (classes1 == null || classes1.length == 0) return false;
         for (Class c : classes1) {
             if (c == cla) return true;
@@ -855,19 +858,19 @@ public final class Starter {
         return false;
     }
 
-    private static boolean hasInterface(Class<?> cla) {
+    private boolean hasInterface(Class<?> cla) {
         if (cla.getInterfaces().length > 0)
             return true;
         return false;
     }
 
-    private static boolean hasSuper(Class<?> cla) {
+    private boolean hasSuper(Class<?> cla) {
         if (cla.getSuperclass() != null)
             return true;
         return false;
     }
 
-    private static boolean hasClass(Class<?>[] classes, Class<?> cla) {
+    private boolean hasClass(Class<?>[] classes, Class<?> cla) {
         if (classes == null) return false;
         for (Class c : classes) {
             if (c == cla) return true;
@@ -875,7 +878,7 @@ public final class Starter {
         return false;
     }
 
-    private static Object newInstance(Class<?> cla) {
+    private Object newInstance(Class<?> cla) {
         Constructor<?>[] constructors = cla.getDeclaredConstructors();
         for (Constructor<?> constructor : constructors) {
             try {
@@ -890,7 +893,7 @@ public final class Starter {
         return null;
     }
 
-    private static void startScanMainBean(Class<?> cla) {
+    private void startScanMainBean(Class<?> cla) {
         try {
             main = newInstance(cla);
             Method[] methods = cla.getDeclaredMethods();
@@ -914,7 +917,7 @@ public final class Starter {
         }
     }
 
-    private static void startScanMainBean(Class<?> cla, int n) {
+    private void startScanMainBean(Class<?> cla, int n) {
         try {
             main = newInstance(cla);
             Map<String, Object> map = new ConcurrentHashMap<>();
@@ -941,7 +944,7 @@ public final class Starter {
         }
     }
 
-    private static void startScan(Class<?> mianCla) {
+    private void startScan(Class<?> mianCla) {
         if (NeedScan) {
             Set<Class<?>> sets = getClassName(scanPath, true);
             classes.addAll(sets);
@@ -958,7 +961,7 @@ public final class Starter {
         }
     }
 
-    private static void autofill(Class<?> cla) {
+    private void autofill(Class<?> cla) {
         try {
             Map<String, Object> map = ObjMap.get(cla);
             if (map == null) return;
@@ -977,9 +980,9 @@ public final class Starter {
         }
     }
 
-    private static List<Method> startedMethods = new ArrayList<>();
+    private List<Method> startedMethods = new ArrayList<>();
 
-    private static synchronized void InitMethod(Class<?> cla, Object obj, Method method) {
+    private synchronized void InitMethod(Class<?> cla, Object obj, Method method) {
         try {
             if (method.isAnnotationPresent(Action.class)) {
                 Action action = method.getAnnotation(Action.class);
@@ -1033,11 +1036,11 @@ public final class Starter {
         }
     }
 
-    private static final Timer timer = new Timer();
+    private final Timer timer = new Timer();
 
-    private static final Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
+    private final Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
 
-    public static final <T> T getContextValue(Class<?> claT, String id) {
+    public final <T> T getContextValue(Class<?> claT, String id) {
         Map<String, Object> map = ObjMap.get(claT);
         if (map == null) return null;
         id = id == null ? map.keySet().iterator().next() : id;
@@ -1045,7 +1048,7 @@ public final class Starter {
         return (T) v;
     }
 
-    private static void fillField(Class<?> cla, Object obj, Field field) {
+    private void fillField(Class<?> cla, Object obj, Field field) {
         try {
             if (field.isAnnotationPresent(AutoStand.class)) {
                 Map<String, Object> map = ObjMap.get(field.getType());
@@ -1065,7 +1068,7 @@ public final class Starter {
         }
     }
 
-    private static final void Fill(Class<?> cla) {
+    private final void Fill(Class<?> cla) {
         try {
             if (cla.isAnnotationPresent(Controller.class)) {
                 if (hasNoParameterConstructor(cla)) {
@@ -1090,7 +1093,7 @@ public final class Starter {
         }
     }
 
-    private static final boolean hasNoParameterConstructor(Class<?> cla) {
+    private final boolean hasNoParameterConstructor(Class<?> cla) {
         Constructor[] constructors = cla.getDeclaredConstructors();
         for (Constructor constructor : constructors) {
             if (constructor.getParameters().length == 0)
@@ -1099,7 +1102,7 @@ public final class Starter {
         return false;
     }
 
-    private static final boolean maybe(final String res, final String par) {
+    private final boolean maybe(final String res, final String par) {
         try {
             if (res.equals(par) || res.matches(par)) return true;
         } catch (Exception e) {
@@ -1121,9 +1124,9 @@ public final class Starter {
         return false;
     }
 
-    private static final char[] chars = {'<', '.', '\\'};
+    private final char[] chars = {'<', '.', '\\'};
 
-    private static boolean contians(char c1) {
+    private boolean contians(char c1) {
         for (char c : chars) {
             if (c == c1)
                 return true;
@@ -1131,7 +1134,7 @@ public final class Starter {
         return false;
     }
 
-    private static final <K, V> Map.Entry<K, V> getEntry(K k, V v) {
+    private final <K, V> Map.Entry<K, V> getEntry(K k, V v) {
         Map.Entry<K, V> entry = new Map.Entry<K, V>() {
             private final K _k = k;
             private V _v = v;
@@ -1156,7 +1159,7 @@ public final class Starter {
         return entry;
     }
 
-    private static Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
+    private Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
         Set<String> classNames = null;
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         String packagePath = packageName.replace(".", "/");
@@ -1193,7 +1196,7 @@ public final class Starter {
         return classes;
     }
 
-    private static Set<String> getClassNameFromDir(String filePath, String packageName, boolean isRecursion) {
+    private Set<String> getClassNameFromDir(String filePath, String packageName, boolean isRecursion) {
         Set<String> className = new HashSet<>();
         File file = new File(filePath);
         File[] files = file.listFiles();
@@ -1214,7 +1217,7 @@ public final class Starter {
         return className;
     }
 
-    private static Set<String> getClassNameFromJar(Enumeration<JarEntry> jarEntries, String packageName, boolean isRecursion) {
+    private Set<String> getClassNameFromJar(Enumeration<JarEntry> jarEntries, String packageName, boolean isRecursion) {
         Set<String> classNames = new HashSet();
         while (jarEntries.hasMoreElements()) {
             JarEntry jarEntry = jarEntries.nextElement();
@@ -1234,7 +1237,7 @@ public final class Starter {
         return classNames;
     }
 
-    private static Set<String> getClassNameFromJars(URL[] urls, String packageName, boolean isRecursion) {
+    private Set<String> getClassNameFromJars(URL[] urls, String packageName, boolean isRecursion) {
         Set<String> classNames = new HashSet<>();
 
         for (int i = 0; i < urls.length; i++) {
@@ -1269,7 +1272,7 @@ public final class Starter {
         private static final Map<String, Result> historyResult = new ConcurrentHashMap<>();
         private int state = -1;
 
-        private synchronized static final Result create(final String res, final String par) {
+        private static synchronized final Result create(final String res, final String par) {
             String end = String.format("%s|$|%s", res, par);
             if (historyResult.containsKey(end)) {
                 return historyResult.get(end);
@@ -1349,7 +1352,7 @@ public final class Starter {
             this.objs = objs;
         }
 
-        public static Pattern getPattern() {
+        public Pattern getPattern() {
             return pattern;
         }
 
@@ -1367,38 +1370,6 @@ public final class Starter {
 
         public String getV() {
             return V;
-        }
-    }
-
-    public static final class Utils {
-        private static final SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-
-        public static long getTimeFromNowTo(int hour, int mini, int mil) {
-            Date date = null;
-            try {
-                String p1 = String.format("%s-%s-%s-%s-%s-%s", getYear(), getMon(), getDay(), hour, mini, mil);
-                date = myFmt.parse(p1);
-
-            } catch (Exception e) {
-            }
-            long millis = date.getTime();
-            long now = System.currentTimeMillis();
-            return millis - now;
-        }
-
-        private static int getYear() {
-            String s = myFmt.format(new Date());
-            return Integer.parseInt(s.substring(0, 4));
-        }
-
-        private static int getMon() {
-            String s = myFmt.format(new Date());
-            return Integer.parseInt(s.substring(5, 7));
-        }
-
-        private static int getDay() {
-            String s = myFmt.format(new Date());
-            return Integer.parseInt(s.substring(8, 10));
         }
     }
 }
