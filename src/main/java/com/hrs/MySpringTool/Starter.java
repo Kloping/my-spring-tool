@@ -1,6 +1,8 @@
 package com.hrs.MySpringTool;
 
 
+import cn.kloping.map.MapUtils;
+import cn.kloping.object.ObjectUtils;
 import com.hrs.MySpringTool.annotations.*;
 import com.hrs.MySpringTool.exceptions.NoRunException;
 
@@ -17,6 +19,7 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static cn.kloping.clasz.ClassUtils.newInstance;
 import static cn.kloping.object.ObjectUtils.baseToPack;
 
 public final class Starter {
@@ -811,8 +814,18 @@ public final class Starter {
     }
 
     private static boolean superOrImpl(final Class<?> father, final Class<?> son) {
-        if (father == son) return true;
         try {
+            if (father2son.get(father).contains(son)) {
+                Log("从历史匹配知道 " + father + " 匹配与=>" + son, 0);
+                return true;
+            }
+        } catch (Exception e) {
+        }
+        boolean k = ObjectUtils.isSuper(son, father);
+        if (!k) ObjectUtils.isInterface(son, father);
+        if (k) appendFather2Son(father, son);
+        return k;
+        /*try {
             if (father2son.get(father).contains(son)) {
                 Log("从历史匹配知道 " + father + " 匹配与=>" + son, 0);
                 return true;
@@ -833,14 +846,15 @@ public final class Starter {
             appendFather2Son(father, son);
             return true;
         }
-        return false;
+        return false;*/
     }
 
     private static void appendFather2Son(Class<?> father, Class<?> son) {
-        List<Class> list = father2son.get(father);
-        if (list == null) list = new CopyOnWriteArrayList<>();
-        if (!list.contains(son)) list.add(son);
-        father2son.put(father, list);
+        MapUtils.append(father2son, father, son, CopyOnWriteArrayList.class);
+//        List<Class> list = father2son.get(father);
+//        if (list == null) list = new CopyOnWriteArrayList<>();
+//        if (!list.contains(son)) list.add(son);
+//        father2son.put(father, list);
     }
 
     private static boolean isInterfaces(Class<?>[] classes1, Class<?> cla) {
@@ -867,28 +881,6 @@ public final class Starter {
         return false;
     }
 
-    private static boolean hasClass(Class<?>[] classes, Class<?> cla) {
-        if (classes == null) return false;
-        for (Class c : classes) {
-            if (c == cla) return true;
-        }
-        return false;
-    }
-
-    private static Object newInstance(Class<?> cla) {
-        Constructor<?>[] constructors = cla.getDeclaredConstructors();
-        for (Constructor<?> constructor : constructors) {
-            try {
-                if (constructor.getParameterCount() == 0) {
-                    constructor.setAccessible(true);
-                    return constructor.newInstance();
-                }
-            } catch (Exception e) {
-                continue;
-            }
-        }
-        return null;
-    }
 
     private static void startScanMainBean(Class<?> cla) {
         try {
@@ -1037,6 +1029,14 @@ public final class Starter {
 
     private static final Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
 
+    /**
+     * 获取 某个实例
+     *
+     * @param claT
+     * @param id
+     * @param <T>
+     * @return
+     */
     public static final <T> T getContextValue(Class<?> claT, String id) {
         Map<String, Object> map = ObjMap.get(claT);
         if (map == null) return null;
@@ -1198,7 +1198,6 @@ public final class Starter {
         File file = new File(filePath);
         File[] files = file.listFiles();
         for (File childFile : files) {
-
             if (childFile.isDirectory()) {
                 if (isRecursion) {
                     className.addAll(getClassNameFromDir(childFile.getPath(), packageName + "." + childFile.getName(), isRecursion));
