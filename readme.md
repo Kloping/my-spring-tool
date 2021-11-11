@@ -18,7 +18,7 @@
     <dependency>
         <groupId>io.github.Kloping</groupId>
         <artifactId>SpringTool</artifactId>
-        <version>0.1.4</version>
+        <version>0.1.5</version>
     </dependency>
 </dependencies>
 ```
@@ -243,14 +243,17 @@ State.Before 将 先运行 Controller 类中的 after (before) 前 运行
 ### 六, @AutoStand 与 @Entity 这一针对于不懂Spring的 开发者
 
 这里我们定义一个 Interface
+
 ```java
 public interface BaseService {
-    Number add(int a,int b);
+    Number add(int a, int b);
 }
 ```
+
 实现它 并 添加注解 @Entity
 
 ```java
+
 @Entity("base1")
 public class BaseServiceImpl implements BaseService {
     @Override
@@ -260,36 +263,37 @@ public class BaseServiceImpl implements BaseService {
 }
 ```
 
-在 Controller 中 定义 BaseService 并 添加注解 @AutoStand 
+在 Controller 中 定义 BaseService 并 添加注解 @AutoStand
 
 它将自动 实例化 为 BaseServiceImpl
+
 ```java
 
 import com.hrs.MySpringTool.annotations.Controller;
 
 @Controller
 public class BaseController {
-    
-  @AutoStand
-  BaseService service;
 
-  @Action("计算<.+=>str>")
-  public String add(@Param("str") String str) {
-    try {
-      String[] ss = str.split("\\+");
-      Integer a = Integer.parseInt(ss[0]);
-      Integer b = Integer.parseInt(ss[1]);
-      return "结果" + service.add(a, b);
-    } catch (NumberFormatException e) {
-      return "格式错误";
+    @AutoStand
+    BaseService service;
+
+    @Action("计算<.+=>str>")
+    public String add(@Param("str") String str) {
+        try {
+            String[] ss = str.split("\\+");
+            Integer a = Integer.parseInt(ss[0]);
+            Integer b = Integer.parseInt(ss[1]);
+            return "结果" + service.add(a, b);
+        } catch (NumberFormatException e) {
+            return "格式错误";
+        }
     }
-  }
 }
 ```
 
 当然在 @Entity(id) 在 @AutoStand(id) 指定 ID
 
-##更多API 请查看 [更新日志](https://github.com/Kloping/my-spring-tool/releases)
+## 更多API 请查看 [更新日志](https://github.com/Kloping/my-spring-tool/releases)
 
 ================================================
 
