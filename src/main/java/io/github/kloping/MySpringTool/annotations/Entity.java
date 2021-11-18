@@ -1,4 +1,4 @@
-package cn.kloping.MySpringTool.annotations;
+package io.github.kloping.MySpringTool.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

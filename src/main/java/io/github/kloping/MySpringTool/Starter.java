@@ -1,8 +1,11 @@
-package cn.kloping.MySpringTool;
+package io.github.kloping.MySpringTool;
 
 
-import cn.kloping.MySpringTool.annotations.*;
-import cn.kloping.MySpringTool.exceptions.NoRunException;
+import io.github.kloping.MySpringTool.annotations.*;
+import io.github.kloping.MySpringTool.exceptions.NoRunException;
+import io.github.kloping.arr.Class2OMap;
+import io.github.kloping.map.MapUtils;
+import io.github.kloping.object.ObjectUtils;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -17,25 +20,23 @@ import java.util.jar.JarFile;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static cn.kloping.object.ObjectUtils.baseToPack;
+import static io.github.kloping.clasz.ClassUtils.newInstance;
+import static io.github.kloping.object.ObjectUtils.baseToPack;
 
-/**
- * 对象形式的ObjStarter #测试阶段
- */
-public final class ObjStarter {
-    private String scanPath = "";
-    private Object main;
-    private Class<?>[] accPars = null;
-    private Class<?> _key = null;
-    private Integer Log_Level = 0;
-    private Long waitTime = 15L;
-    private boolean onlyOne = false;
+public final class Starter {
+    private static String scanPath = "";
+    private static Object main;
+    private static Class<?>[] accPars = null;
+    private static Class<?> _key = null;
+    private static Integer Log_Level = 0;
+    private static Long waitTime = 15L;
+    private static boolean onlyOne = false;
 
-    public void set_key(Class<?> _key) {
-        this._key = _key;
+    public static void set_key(Class<?> _key) {
+        Starter._key = _key;
     }
 
-    public final void setAccPars(Class<?>... classes) {
+    public static final void setAccPars(Class<?>... classes) {
         accPars = classes;
         Log("设置 接收参数 类型 完成 (Set Access Parameters Successful)=>" + Arrays.toString(classes), 0);
     }
@@ -45,10 +46,11 @@ public final class ObjStarter {
      *
      * @param cla
      */
-    public void run(Class<?> cla) {
+    public static void run(Class<?> cla) {
         if (cla.isAnnotationPresent(CommentScan.class)) {
             CommentScan scan = cla.getAnnotation(CommentScan.class);
             scanPath = filter(scan.path(), cla);
+            check(scanPath);
             Log("开始扫描主类 Bean(Start Scan Main Class Bean)", 1);
             loadConf();
             startScanMainBean(cla, 1);
@@ -63,7 +65,16 @@ public final class ObjStarter {
         }
     }
 
-    private void startTimer() {
+    private static void check(String scanPath) {
+        try {
+            if (Starter.class.getClassLoader().getResources(scanPath) == null) throw new RuntimeException("欲扫描的包名不存在");
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("欲扫描的包名不存在");
+        }
+    }
+
+    private static void startTimer() {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -93,7 +104,7 @@ public final class ObjStarter {
         }).start();
     }
 
-    private Map.Entry<Long, Method> getNextTimeMethodDelay() {
+    private static Map.Entry<Long, Method> getNextTimeMethodDelay() {
         Map.Entry<Long, Method> entry = null;
         for (Class cla : timeMethods.keySet()) {
             for (Map.Entry<String, Method> e : timeMethods.get(cla)) {
@@ -117,7 +128,7 @@ public final class ObjStarter {
         return entry;
     }
 
-    private void loadConf() {
+    private static void loadConf() {
         Class<?>[] classes = new Class[]{String.class, Long.class, Integer.class, Boolean.class, long.class, int.class, boolean.class};
         for (String k : configurationMap.keySet()) {
             try {
@@ -150,14 +161,14 @@ public final class ObjStarter {
         }
     }
 
-    private String filter(String path, Class cla) {
+    private static String filter(String path, Class cla) {
         if (path.equals(".") || path.equals("/") || path.equals("./") || path.trim().isEmpty()) {
             path = cla.getName().substring(0, cla.getName().indexOf("."));
         }
         return path;
     }
 
-    private void InitMaybeKey() {
+    private static void InitMaybeKey() {
         for (String key : actions.keySet()) {
             Character c = key.charAt(0);
             if (c != '\\')
@@ -167,19 +178,19 @@ public final class ObjStarter {
         }
     }
 
-    public void setAllAfter(AllAfterOrBefore allAfter) {
-        this.allAfter = allAfter;
+    public static void setAllAfter(AllAfterOrBefore allAfter) {
+        Starter.allAfter = allAfter;
     }
 
-    public void setAllBefore(AllAfterOrBefore allBefore) {
-        this.allBefore = allBefore;
+    public static void setAllBefore(AllAfterOrBefore allBefore) {
+        Starter.allBefore = allBefore;
     }
 
-    public Long getWaitTime() {
+    public static Long getWaitTime() {
         return waitTime;
     }
 
-    public final Map<String, String> configurationMap = new LinkedHashMap<>();
+    public static final Map<String, String> configurationMap = new LinkedHashMap<>();
 
     /**
      * 加载配置文件
@@ -190,7 +201,7 @@ public final class ObjStarter {
      *
      * @param file
      */
-    public synchronized void loadConfigurationFile(File file) {
+    public synchronized static void loadConfigurationFile(File file) {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
             String line = null;
@@ -213,7 +224,7 @@ public final class ObjStarter {
      *
      * @param file
      */
-    public synchronized void reLoadConfigurationFile(File file) {
+    public synchronized static void reLoadConfigurationFile(File file) {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
             String line = null;
@@ -241,7 +252,7 @@ public final class ObjStarter {
      *
      * @param filePath
      */
-    public synchronized void loadConfigurationFile(String filePath) {
+    public synchronized static void loadConfigurationFile(String filePath) {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
             String line = null;
@@ -264,7 +275,7 @@ public final class ObjStarter {
      *
      * @param filePath
      */
-    public synchronized void reLoadConfigurationFile(String filePath) {
+    public synchronized static void reLoadConfigurationFile(String filePath) {
         try {
             BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(filePath)));
             String line = null;
@@ -283,15 +294,15 @@ public final class ObjStarter {
         }
     }
 
-    public void setWaitTime(Long waitTime) {
-        this.waitTime = waitTime;
+    public static void setWaitTime(Long waitTime) {
+        Starter.waitTime = waitTime;
     }
 
-    public void setLog_Level(Integer log_Level) {
+    public static void setLog_Level(Integer log_Level) {
         Log_Level = log_Level;
     }
 
-    private boolean tryAll = false;
+    private static boolean tryAll = false;
 
     /**
      * 开始尝试匹配运行
@@ -299,7 +310,7 @@ public final class ObjStarter {
      * @param objects
      * @return
      */
-    public final int ExecuteMethod(Object... objects) {
+    public static final int ExecuteMethod(Object... objects) {
         final Object[] objs = baseToPack(objects);
         if (((String) objs[1]).isEmpty()) {
             Log("不可能的匹配(impossible match)=>" + Arrays.toString(objects), 2);
@@ -370,11 +381,11 @@ public final class ObjStarter {
      *
      * @param tryAll
      */
-    public void setTryAll(boolean tryAll) {
-        this.tryAll = tryAll;
+    public static void setTryAll(boolean tryAll) {
+        Starter.tryAll = tryAll;
     }
 
-    private Class<?>[] ObjectsToClasses(Object... objs) {
+    private static Class<?>[] ObjectsToClasses(Object... objs) {
         Class<?>[] classes = new Class[objs.length];
         for (int i = 0; i < objs.length; i++) {
             classes[i] = objs[i].getClass();
@@ -385,15 +396,15 @@ public final class ObjStarter {
     /**
      * 如果 不需要扫描 或者 不支持扫描 则设置为 false 并把类元素加入 classes 集合
      */
-    public final boolean NeedScan = true;
+    public static final boolean NeedScan = true;
 
     /**
      * 阅读 NessScan 注解
      */
-    public final Set<Class<?>> AllClass = new CopyOnWriteArraySet<>();
-    private final Set<Character> maybeKeys = new CopyOnWriteArraySet<>();
+    public static final Set<Class<?>> AllClass = new CopyOnWriteArraySet<>();
+    private static final Set<Character> maybeKeys = new CopyOnWriteArraySet<>();
 
-    private abstract class A implements Runnable {
+    private static abstract class A implements Runnable {
         protected Object[] objects;
 
         public A(Object[] objects) {
@@ -402,7 +413,7 @@ public final class ObjStarter {
 
     }
 
-    public abstract static class AllAfterOrBefore {
+    public static abstract class AllAfterOrBefore {
         private State state = State.Before;
 
         public AllAfterOrBefore(State state) {
@@ -428,7 +439,7 @@ public final class ObjStarter {
      * @param mess
      * @param level
      */
-    private synchronized void Log(String mess, int level) {
+    private static synchronized void Log(String mess, int level) {
         if (level != -1 && level < Log_Level) return;
         String info = "[" + df.format(new Date()) + "]" + "=>" + mess;
         switch (level) {
@@ -457,9 +468,9 @@ public final class ObjStarter {
         }
     }
 
-    private final SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
+    private static final SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
 
-    private final void appendToObjMap(String id, Object obj) {
+    private static final void appendToObjMap(String id, Object obj) {
         Map map = ObjMap.get(obj.getClass());
         if (map == null) map = new ConcurrentHashMap();
         map.put(id, obj);
@@ -467,7 +478,7 @@ public final class ObjStarter {
         PutAllInterface(id, obj.getClass(), obj);
     }
 
-    private final void appendToObjMap(String id, Object obj, Class<?> cla) {
+    private static final void appendToObjMap(String id, Object obj, Class<?> cla) {
         Map map = ObjMap.get(cla);
         if (map == null) map = new ConcurrentHashMap();
         map.put(id, obj);
@@ -475,7 +486,7 @@ public final class ObjStarter {
         PutAllInterface(id, cla, obj);
     }
 
-    private final void PutAllInterface(String id, Class<?> cla, Object obj) {
+    private static final void PutAllInterface(String id, Class<?> cla, Object obj) {
         Class<?>[] clas = cla.getInterfaces();
         for (Class<?> cla1 : clas) {
             appendToObjMap(id, obj, cla1);
@@ -485,50 +496,50 @@ public final class ObjStarter {
     /**
      * 线程池
      */
-    private final ExecutorService threads = Executors.newFixedThreadPool(40);
+    private static final ExecutorService threads = Executors.newFixedThreadPool(40);
     /**
      * 运行队列
      */
-    private final Set<Object> runList = new HashSet<>();
-    private final Queue<Object[]> runQueue = new LinkedList<>();
+    private static final Set<Object> runList = new HashSet<>();
+    private static final Queue<Object[]> runQueue = new LinkedList<>();
     /**
      * 活动储存
      */
-    private final Map<String, Map.Entry<Object, Method>> actions = new ConcurrentHashMap();
+    private static final Map<String, Map.Entry<Object, Method>> actions = new ConcurrentHashMap();
 
     /**
      * 活动Before储存
      */
-    private final Map<Class<?>, Method> beforeS = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Method> beforeS = new ConcurrentHashMap<>();
 
     /**
      * 活动after储存
      */
-    private final Map<Class<?>, Method> afterS = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Method> afterS = new ConcurrentHashMap<>();
 
     /**
      * 实例 Object map
      */
-    private final Map<Class<?>, Map<String, Object>> ObjMap = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, Map<String, Object>> ObjMap = new ConcurrentHashMap<>();
 
     /**
      * 所有类字节码
      */
-    private final Set<Class<?>> classes = new CopyOnWriteArraySet<>();
+    private static final Set<Class<?>> classes = new CopyOnWriteArraySet<>();
 
-    private AllAfterOrBefore allAfter = null;
+    private static AllAfterOrBefore allAfter = null;
 
-    private AllAfterOrBefore allBefore = null;
+    private static AllAfterOrBefore allBefore = null;
 
-    private final Map<String, String> histRunedRV = new ConcurrentHashMap<>();
+    private static final Map<String, String> histRunedRV = new ConcurrentHashMap<>();
 
     /**
      * 匹配到一个就停止匹配
      *
      * @param onlyOne
      */
-    public void setOnlyOne(boolean onlyOne) {
-        this.onlyOne = onlyOne;
+    public static void setOnlyOne(boolean onlyOne) {
+        Starter.onlyOne = onlyOne;
     }
 
     /**
@@ -536,7 +547,7 @@ public final class ObjStarter {
      *
      * @param objs
      */
-    private boolean Run(boolean run, Object... objs) {
+    private static boolean Run(boolean run, Object... objs) {
         boolean k = false;
         String res = objs[1].toString();
         Result result = null;
@@ -571,7 +582,7 @@ public final class ObjStarter {
         return k;
     }
 
-    public boolean matcher(String str) {
+    public static boolean matcher(String str) {
         if (!maybeKeys.contains(str.charAt(0))) {
             return false;
         }
@@ -586,7 +597,7 @@ public final class ObjStarter {
         return false;
     }
 
-    private void RunMethod(Map.Entry<Object, Method> objectMethodEntry, Result result) {
+    private static void RunMethod(Map.Entry<Object, Method> objectMethodEntry, Result result) {
         try {
             Class<?> cla = objectMethodEntry.getKey().getClass();
             Method method = objectMethodEntry.getValue();
@@ -647,14 +658,14 @@ public final class ObjStarter {
         }
     }
 
-    private Object[] objAndObjsToObjs(Object o, Object... objects) {
+    private static Object[] objAndObjsToObjs(Object o, Object... objects) {
         List<Object> list = new ArrayList<>();
         list.add(o);
         list.addAll(Arrays.asList(objects));
         return list.toArray(new Object[0]);
     }
 
-    private final String getExceptionLine(Throwable e) {
+    private static final String getExceptionLine(Throwable e) {
         try {
             Method method = Throwable.class.getDeclaredMethod("getOurStackTrace");
             method.setAccessible(true);
@@ -669,7 +680,7 @@ public final class ObjStarter {
         }
     }
 
-    private boolean RunBeforeOrAfter(Method method, Object key, Object[] objs, Result result) {
+    private static boolean RunBeforeOrAfter(Method method, Object key, Object[] objs, Result result) {
         try {
             Parameter[] parameters = method.getParameters();
             Object[] objects = AutoObjFromPar(parameters, objs);
@@ -686,7 +697,7 @@ public final class ObjStarter {
         }
     }
 
-    private void getTargetException(InvocationTargetException e) {
+    private static void getTargetException(InvocationTargetException e) {
         InvocationTargetException ite = e;
         if (ite.getTargetException().getClass() == NoRunException.class) {
             NoRunException exception = (NoRunException) ite.getTargetException();
@@ -696,14 +707,16 @@ public final class ObjStarter {
         }
     }
 
-    private Object[] AutoObjFromPar(Parameter[] parameters, Object[] objects) {
+    private static Object[] AutoObjFromPar(Parameter[] parameters, Object[] objects) {
         Object[] objects1 = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             try {
                 if (hasAnnotation(parameters[i])) continue;
-                if (parameters[i].getType() == Object[].class) {
+                else if (parameters[i].getType() == Object[].class) {
                     objects1[i] = objects;
                     continue;
+                } else if (parameters[i].getType() == Class2OMap.class) {
+                    objects1[i] = Class2OMap.create(objects);
                 }
                 Class<?> type = baseToPack(parameters[i].getType());
                 int n;
@@ -719,13 +732,13 @@ public final class ObjStarter {
         return objects1;
     }
 
-    private boolean hasAnnotation(Parameter parameter) {
+    private static boolean hasAnnotation(Parameter parameter) {
         if (parameter.isAnnotationPresent(Param.class)) return true;
         if (parameter.isAnnotationPresent(AllMess.class)) return true;
         return false;
     }
 
-    private Object[] AutoObjOnPar(Parameter[] parameters, Object[] objects, Result result) {
+    private static Object[] AutoObjOnPar(Parameter[] parameters, Object[] objects, Result result) {
         for (int i = 0; i < parameters.length; i++) {
             if (parameters[i].isAnnotationPresent(Param.class)) {
                 Param param = parameters[i].getAnnotation(Param.class);
@@ -761,9 +774,9 @@ public final class ObjStarter {
         return objects;
     }
 
-    private final Map<Class[], Map<Class, Integer>> findHist = new ConcurrentHashMap<>();
+    private static final Map<Class[], Map<Class, Integer>> findHist = new ConcurrentHashMap<>();
 
-    private int find(Object[] obj, Class<?> cla) {
+    private static int find(Object[] obj, Class<?> cla) {
         Class[] classes = ObjectsToClasses(obj);
         if (findHist.containsKey(classes) && findHist.get(classes).containsKey(cla))
             return findHist.get(classes).get(cla);
@@ -782,17 +795,17 @@ public final class ObjStarter {
         return n;
     }
 
-    private final Map<Class<?>, List<Class>> father2son = new ConcurrentHashMap<>();
-    private final List<Class[]> acceptClasses = new CopyOnWriteArrayList<>();
+    private static final Map<Class<?>, List<Class>> father2son = new ConcurrentHashMap<>();
+    private static final List<Class[]> acceptClasses = new CopyOnWriteArrayList<>();
 
-    private final boolean ListArrayContainsArray(Class<?>... classes) {
+    private static final boolean ListArrayContainsArray(Class<?>... classes) {
         for (Class[] classes1 : acceptClasses) {
             if (Arrays.equals(classes1, classes)) return true;
         }
         return false;
     }
 
-    private boolean accept(Class<?>... classes) {
+    private static boolean accept(Class<?>... classes) {
         if (ListArrayContainsArray(classes))
             return true;
         if (classes[0] == _key) {
@@ -813,9 +826,19 @@ public final class ObjStarter {
         return false;
     }
 
-    private boolean superOrImpl(final Class<?> father, final Class<?> son) {
-        if (father == son) return true;
+    private static boolean superOrImpl(final Class<?> father, final Class<?> son) {
         try {
+            if (father2son.get(father).contains(son)) {
+                Log("从历史匹配知道 " + father + " 匹配与=>" + son, 0);
+                return true;
+            }
+        } catch (Exception e) {
+        }
+        boolean k = ObjectUtils.isSuper(son, father);
+        if (!k) k = ObjectUtils.isInterface(son, father);
+        if (k) appendFather2Son(father, son);
+        return k;
+        /*try {
             if (father2son.get(father).contains(son)) {
                 Log("从历史匹配知道 " + father + " 匹配与=>" + son, 0);
                 return true;
@@ -836,17 +859,18 @@ public final class ObjStarter {
             appendFather2Son(father, son);
             return true;
         }
-        return false;
+        return false;*/
     }
 
-    private void appendFather2Son(Class<?> father, Class<?> son) {
-        List<Class> list = father2son.get(father);
-        if (list == null) list = new CopyOnWriteArrayList<>();
-        if (!list.contains(son)) list.add(son);
-        father2son.put(father, list);
+    private static void appendFather2Son(Class<?> father, Class<?> son) {
+        MapUtils.append(father2son, father, son, CopyOnWriteArrayList.class);
+//        List<Class> list = father2son.get(father);
+//        if (list == null) list = new CopyOnWriteArrayList<>();
+//        if (!list.contains(son)) list.add(son);
+//        father2son.put(father, list);
     }
 
-    private boolean isInterfaces(Class<?>[] classes1, Class<?> cla) {
+    private static boolean isInterfaces(Class<?>[] classes1, Class<?> cla) {
         if (classes1 == null || classes1.length == 0) return false;
         for (Class c : classes1) {
             if (c == cla) return true;
@@ -858,42 +882,8 @@ public final class ObjStarter {
         return false;
     }
 
-    private boolean hasInterface(Class<?> cla) {
-        if (cla.getInterfaces().length > 0)
-            return true;
-        return false;
-    }
 
-    private boolean hasSuper(Class<?> cla) {
-        if (cla.getSuperclass() != null)
-            return true;
-        return false;
-    }
-
-    private boolean hasClass(Class<?>[] classes, Class<?> cla) {
-        if (classes == null) return false;
-        for (Class c : classes) {
-            if (c == cla) return true;
-        }
-        return false;
-    }
-
-    private Object newInstance(Class<?> cla) {
-        Constructor<?>[] constructors = cla.getDeclaredConstructors();
-        for (Constructor<?> constructor : constructors) {
-            try {
-                if (constructor.getParameterCount() == 0) {
-                    constructor.setAccessible(true);
-                    return constructor.newInstance();
-                }
-            } catch (Exception e) {
-                continue;
-            }
-        }
-        return null;
-    }
-
-    private void startScanMainBean(Class<?> cla) {
+    private static void startScanMainBean(Class<?> cla) {
         try {
             main = newInstance(cla);
             Method[] methods = cla.getDeclaredMethods();
@@ -917,7 +907,7 @@ public final class ObjStarter {
         }
     }
 
-    private void startScanMainBean(Class<?> cla, int n) {
+    private static void startScanMainBean(Class<?> cla, int n) {
         try {
             main = newInstance(cla);
             Map<String, Object> map = new ConcurrentHashMap<>();
@@ -944,7 +934,7 @@ public final class ObjStarter {
         }
     }
 
-    private void startScan(Class<?> mianCla) {
+    private static void startScan(Class<?> mianCla) {
         if (NeedScan) {
             Set<Class<?>> sets = getClassName(scanPath, true);
             classes.addAll(sets);
@@ -961,7 +951,7 @@ public final class ObjStarter {
         }
     }
 
-    private void autofill(Class<?> cla) {
+    private static void autofill(Class<?> cla) {
         try {
             Map<String, Object> map = ObjMap.get(cla);
             if (map == null) return;
@@ -980,9 +970,9 @@ public final class ObjStarter {
         }
     }
 
-    private List<Method> startedMethods = new ArrayList<>();
+    private static List<Method> startedMethods = new ArrayList<>();
 
-    private synchronized void InitMethod(Class<?> cla, Object obj, Method method) {
+    private static synchronized void InitMethod(Class<?> cla, Object obj, Method method) {
         try {
             if (method.isAnnotationPresent(Action.class)) {
                 Action action = method.getAnnotation(Action.class);
@@ -1036,11 +1026,19 @@ public final class ObjStarter {
         }
     }
 
-    private final Timer timer = new Timer();
+    private static final Timer timer = new Timer();
 
-    private final Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
+    private static final Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
 
-    public final <T> T getContextValue(Class<?> claT, String id) {
+    /**
+     * 获取 某个实例
+     *
+     * @param claT
+     * @param id
+     * @param <T>
+     * @return
+     */
+    public static final <T> T getContextValue(Class<?> claT, String id) {
         Map<String, Object> map = ObjMap.get(claT);
         if (map == null) return null;
         id = id == null ? map.keySet().iterator().next() : id;
@@ -1048,7 +1046,7 @@ public final class ObjStarter {
         return (T) v;
     }
 
-    private void fillField(Class<?> cla, Object obj, Field field) {
+    private static void fillField(Class<?> cla, Object obj, Field field) {
         try {
             if (field.isAnnotationPresent(AutoStand.class)) {
                 Map<String, Object> map = ObjMap.get(field.getType());
@@ -1068,7 +1066,7 @@ public final class ObjStarter {
         }
     }
 
-    private final void Fill(Class<?> cla) {
+    private static final void Fill(Class<?> cla) {
         try {
             if (cla.isAnnotationPresent(Controller.class)) {
                 if (hasNoParameterConstructor(cla)) {
@@ -1093,7 +1091,7 @@ public final class ObjStarter {
         }
     }
 
-    private final boolean hasNoParameterConstructor(Class<?> cla) {
+    private static final boolean hasNoParameterConstructor(Class<?> cla) {
         Constructor[] constructors = cla.getDeclaredConstructors();
         for (Constructor constructor : constructors) {
             if (constructor.getParameters().length == 0)
@@ -1102,7 +1100,7 @@ public final class ObjStarter {
         return false;
     }
 
-    private final boolean maybe(final String res, final String par) {
+    private static final boolean maybe(final String res, final String par) {
         try {
             if (res.equals(par) || res.matches(par)) return true;
         } catch (Exception e) {
@@ -1124,9 +1122,9 @@ public final class ObjStarter {
         return false;
     }
 
-    private final char[] chars = {'<', '.', '\\'};
+    private static final char[] chars = {'<', '.', '\\'};
 
-    private boolean contians(char c1) {
+    private static boolean contians(char c1) {
         for (char c : chars) {
             if (c == c1)
                 return true;
@@ -1134,7 +1132,7 @@ public final class ObjStarter {
         return false;
     }
 
-    private final <K, V> Map.Entry<K, V> getEntry(K k, V v) {
+    private static final <K, V> Map.Entry<K, V> getEntry(K k, V v) {
         Map.Entry<K, V> entry = new Map.Entry<K, V>() {
             private final K _k = k;
             private V _v = v;
@@ -1159,9 +1157,9 @@ public final class ObjStarter {
         return entry;
     }
 
-    private Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
+    private static Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
         Set<String> classNames = null;
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        ClassLoader loader = Starter.class.getClassLoader();
         String packagePath = packageName.replace(".", "/");
         URL url = loader.getResource(packagePath);
         if (url != null) {
@@ -1196,12 +1194,11 @@ public final class ObjStarter {
         return classes;
     }
 
-    private Set<String> getClassNameFromDir(String filePath, String packageName, boolean isRecursion) {
+    private static Set<String> getClassNameFromDir(String filePath, String packageName, boolean isRecursion) {
         Set<String> className = new HashSet<>();
         File file = new File(filePath);
         File[] files = file.listFiles();
         for (File childFile : files) {
-
             if (childFile.isDirectory()) {
                 if (isRecursion) {
                     className.addAll(getClassNameFromDir(childFile.getPath(), packageName + "." + childFile.getName(), isRecursion));
@@ -1217,7 +1214,7 @@ public final class ObjStarter {
         return className;
     }
 
-    private Set<String> getClassNameFromJar(Enumeration<JarEntry> jarEntries, String packageName, boolean isRecursion) {
+    private static Set<String> getClassNameFromJar(Enumeration<JarEntry> jarEntries, String packageName, boolean isRecursion) {
         Set<String> classNames = new HashSet();
         while (jarEntries.hasMoreElements()) {
             JarEntry jarEntry = jarEntries.nextElement();
@@ -1237,7 +1234,7 @@ public final class ObjStarter {
         return classNames;
     }
 
-    private Set<String> getClassNameFromJars(URL[] urls, String packageName, boolean isRecursion) {
+    private static Set<String> getClassNameFromJars(URL[] urls, String packageName, boolean isRecursion) {
         Set<String> classNames = new HashSet<>();
 
         for (int i = 0; i < urls.length; i++) {
@@ -1272,7 +1269,7 @@ public final class ObjStarter {
         private static final Map<String, Result> historyResult = new ConcurrentHashMap<>();
         private int state = -1;
 
-        private static synchronized final Result create(final String res, final String par) {
+        private synchronized static final Result create(final String res, final String par) {
             String end = String.format("%s|$|%s", res, par);
             if (historyResult.containsKey(end)) {
                 return historyResult.get(end);
@@ -1352,7 +1349,7 @@ public final class ObjStarter {
             this.objs = objs;
         }
 
-        public Pattern getPattern() {
+        public static Pattern getPattern() {
             return pattern;
         }
 
@@ -1370,6 +1367,38 @@ public final class ObjStarter {
 
         public String getV() {
             return V;
+        }
+    }
+
+    public static final class Utils {
+        private static final SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+
+        public static long getTimeFromNowTo(int hour, int mini, int mil) {
+            Date date = null;
+            try {
+                String p1 = String.format("%s-%s-%s-%s-%s-%s", getYear(), getMon(), getDay(), hour, mini, mil);
+                date = myFmt.parse(p1);
+
+            } catch (Exception e) {
+            }
+            long millis = date.getTime();
+            long now = System.currentTimeMillis();
+            return millis - now;
+        }
+
+        private static int getYear() {
+            String s = myFmt.format(new Date());
+            return Integer.parseInt(s.substring(0, 4));
+        }
+
+        private static int getMon() {
+            String s = myFmt.format(new Date());
+            return Integer.parseInt(s.substring(5, 7));
+        }
+
+        private static int getDay() {
+            String s = myFmt.format(new Date());
+            return Integer.parseInt(s.substring(8, 10));
         }
     }
 }

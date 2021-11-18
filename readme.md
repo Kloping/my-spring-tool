@@ -73,7 +73,7 @@
 
 ![说明1](res/intro_1.png)
 
-其中第二个参数("test") 作用于匹配 Action(内容)
+其中第二个参数("io.github.Kloping.test") 作用于匹配 Action(内容)
 
 #### 如 执行后将运行 test1方法
 
@@ -135,7 +135,7 @@ Starter.ExecuteMethod(1L,"test1","字符参数",347400676);
 
 ```java
 public class Main {
-    @Action("test\\d")
+    @Action("io.github.Kloping.test\\d")
     public void testN(String p1) {
         System.out.println(p1);
     }
@@ -162,7 +162,7 @@ public class Main {
         Starter.ExecuteMethod(1L, "test9", "字符参数", 347400676);
     }
 
-    @Action("test<\\d=>par>")
+    @Action("io.github.Kloping.test<\\d=>par>")
     public void testN(@Param("par") String n) {
         System.out.println("测试成功" + n);
     }
@@ -175,13 +175,13 @@ public class Main {
 
 匹配模式
 
-    @Action("test<正则>") 等同于 @Action("test正则")
+    @Action("io.github.Kloping.test<正则>") 等同于 @Action("test正则")
     如
-    @Action("test<\\d>") 等同于 @Action("test\\d")
+    @Action("io.github.Kloping.test<\\d>") 等同于 @Action("io.github.Kloping.test\\d")
 
 但这将无法获取\\d 匹配的内容
 
-     @Action("test<正则=>name>")
+     @Action("io.github.Kloping.test<正则=>name>")
      => 指向剪头 这将把 正则匹配的内容填充给方法@Param("name")参数
 
 如上代码

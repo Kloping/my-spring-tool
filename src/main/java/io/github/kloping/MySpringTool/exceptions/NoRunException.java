@@ -1,4 +1,4 @@
-package cn.kloping.MySpringTool.exceptions;
+package io.github.kloping.MySpringTool.exceptions;
 
 
 public class NoRunException extends RuntimeException{
