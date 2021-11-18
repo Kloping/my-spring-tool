@@ -50,6 +50,7 @@ public final class Starter {
         if (cla.isAnnotationPresent(CommentScan.class)) {
             CommentScan scan = cla.getAnnotation(CommentScan.class);
             scanPath = filter(scan.path(), cla);
+            check(scanPath);
             Log("开始扫描主类 Bean(Start Scan Main Class Bean)", 1);
             loadConf();
             startScanMainBean(cla, 1);
@@ -61,6 +62,15 @@ public final class Starter {
             startTimer();
         } else {
             throw new NoRunException("此类上必须存在 CommentScan 注解 (class must has @interface CommentScan )");
+        }
+    }
+
+    private static void check(String scanPath) {
+        try {
+            if (Starter.class.getClassLoader().getResources(scanPath) == null) throw new RuntimeException("欲扫描的包名不存在");
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("欲扫描的包名不存在");
         }
     }
 
@@ -1161,7 +1171,7 @@ public final class Starter {
 
     private static Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
         Set<String> classNames = null;
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        ClassLoader loader = Starter.class.getClassLoader();
         String packagePath = packageName.replace(".", "/");
         URL url = loader.getResource(packagePath);
         if (url != null) {
