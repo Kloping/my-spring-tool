@@ -1,8 +1,8 @@
-package com.hrs.MySpringTool;
+package cn.kloping.MySpringTool;
 
 
-import com.hrs.MySpringTool.annotations.*;
-import com.hrs.MySpringTool.exceptions.NoRunException;
+import cn.kloping.MySpringTool.annotations.*;
+import cn.kloping.MySpringTool.exceptions.NoRunException;
 
 import java.io.*;
 import java.lang.reflect.*;

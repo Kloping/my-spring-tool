@@ -269,7 +269,7 @@ public class BaseServiceImpl implements BaseService {
 
 ```java
 
-import com.hrs.MySpringTool.annotations.Controller;
+import Controller;
 
 @Controller
 public class BaseController {

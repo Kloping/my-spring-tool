@@ -1,10 +1,11 @@
-package com.hrs.MySpringTool;
+package cn.kloping.MySpringTool;
 
 
+import cn.kloping.MySpringTool.annotations.*;
+import cn.kloping.MySpringTool.exceptions.NoRunException;
+import cn.kloping.arr.Class2OMap;
 import cn.kloping.map.MapUtils;
 import cn.kloping.object.ObjectUtils;
-import com.hrs.MySpringTool.annotations.*;
-import com.hrs.MySpringTool.exceptions.NoRunException;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -701,9 +702,11 @@ public final class Starter {
         for (int i = 0; i < parameters.length; i++) {
             try {
                 if (hasAnnotation(parameters[i])) continue;
-                if (parameters[i].getType() == Object[].class) {
+                else if (parameters[i].getType() == Object[].class) {
                     objects1[i] = objects;
                     continue;
+                } else if (parameters[i].getType() == Class2OMap.class) {
+                    objects1[i] = Class2OMap.create(objects);
                 }
                 Class<?> type = baseToPack(parameters[i].getType());
                 int n;

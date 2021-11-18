@@ -1,4 +1,4 @@
-package com.hrs.MySpringTool.annotations;
+package cn.kloping.MySpringTool.annotations;
 
 
 import java.lang.annotation.ElementType;
