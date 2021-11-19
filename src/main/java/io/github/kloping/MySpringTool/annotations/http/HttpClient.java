@@ -1,4 +1,4 @@
-package io.github.kloping.MySpringTool.annotations;
+package io.github.kloping.MySpringTool.annotations.http;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CommentScan {
-    String path() default "?";
+public @interface HttpClient {
+    String value();
 }

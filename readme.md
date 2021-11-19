@@ -87,7 +87,7 @@ public class Main {
         Starter.setAccPars(String.class, Number.class);
         Starter.setLog_Level(0);
         Starter.run(Main.class);
-        // ==========================唯一ID, 匹配Action 参数1 参数2
+        // =================唯一ID, 匹配Action 参数1 参数2
         Starter.ExecuteMethod(1L, "test1", "字符参数", 347400676);
     }
 
@@ -134,12 +134,14 @@ Starter.ExecuteMethod(1L,"test1","字符参数",347400676);
 此方法也将匹配
 
 ```java
+
 public class Main {
-    @Action("io.github.Kloping.test\\d")
+    @Action("test\\d")
     public void testN(String p1) {
         System.out.println(p1);
     }
 }
+
 ```
 
 若两方法同时存在则都将运行<br>
