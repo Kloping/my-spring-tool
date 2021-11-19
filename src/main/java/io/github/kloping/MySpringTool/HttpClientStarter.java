@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import io.github.kloping.MySpringTool.annotations.http.*;
 import io.github.kloping.MySpringTool.entity.Params;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -71,13 +72,17 @@ final class HttpClientStarter {
                 Object run(Object... objects) {
                     try {
                         String trueUrl = getGetUrl(url, method, objects);
-                        Document document = Jsoup.connect(trueUrl).ignoreContentType(true)
-                                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53")
-                                .get();
+                        Connection connection = Jsoup.connect(trueUrl).ignoreContentType(true)
+                                .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53");
                         Class<?> cls = method.getReturnType();
-                        if (cls == String.class)
+                        if (cls == String.class) {
+                            Document document = connection.get();
                             return document.toString();
-                        else return Type(cls, document.body().text());
+                        }
+                        if (cls == byte[].class)
+                            return connection.execute().bodyAsBytes();
+                        Document document = connection.get();
+                        return Type(cls, document.body().text());
                     } catch (Exception e) {
                         Log(getExceptionLine(e), -1);
                     }
@@ -89,15 +94,19 @@ final class HttpClientStarter {
                 @Override
                 Object run(Object... objects) {
                     try {
+                        String trueUrl = getGetUrl(url, method, objects);
                         String body = getPostBody(method, objects);
-                        Document document = Jsoup.connect(url).ignoreContentType(true)
+                        Connection connection = Jsoup.connect(trueUrl).ignoreContentType(true)
                                 .userAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53")
-                                .requestBody(body)
-                                .post();
+                                .requestBody(body);
                         Class<?> cls = method.getReturnType();
-                        if (cls == String.class)
+                        if (cls == String.class) {
+                            Document document = connection.post();
                             return document.toString();
-                        else return Type(cls, document.body().text());
+                        } else if (cls == byte[].class)
+                            return connection.method(Connection.Method.POST).execute().bodyAsBytes();
+                        Document document = connection.post();
+                        return Type(cls, document.body().text());
                     } catch (Exception e) {
                         Log(getExceptionLine(e), -1);
                     }
@@ -119,7 +128,7 @@ final class HttpClientStarter {
                 } else if (type.equals("json")) {
                     sb.append(JSON.toJSONString(objects[i]));
                 }
-            } else if (objects[i] instanceof Params) {
+            }/* else if (objects[i] instanceof Params) {
                 Params params = (Params) objects[i];
                 params.getParams().forEach((k, v) -> {
                     sb.append(k).append("=").append(v).append("&");
@@ -134,14 +143,16 @@ final class HttpClientStarter {
                 jo.forEach((k, v) -> {
                     sb.append(k).append("=").append(v).append("&");
                 });
-            }
+            }*/
         }
+        if (sb.toString().endsWith("?")) sb.delete(sb.length() - 1, sb.length());
         if (sb.toString().endsWith("&")) sb.delete(sb.length() - 1, sb.length());
         return sb.toString();
     }
 
 
     private static <T> T Type(Class<T> cls, String text) {
+        if (cls == byte[].class) return (T) text.getBytes();
         return JSON.parseObject(text).toJavaObject(cls);
     }
 
@@ -168,6 +179,7 @@ final class HttpClientStarter {
                 });
             }
         }
+        if (sb.toString().endsWith("?")) sb.delete(sb.length() - 1, sb.length());
         if (sb.toString().endsWith("&")) sb.delete(sb.length() - 1, sb.length());
         return sb.toString();
     }

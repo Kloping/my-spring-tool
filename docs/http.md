@@ -9,6 +9,7 @@
 
 ```java
 import io.github.kloping.MySpringTool.annotations.http.HttpClient;
+import io.github.kloping.MySpringTool.annotations.http.ParamName;
 import io.github.kloping.MySpringTool.annotations.http.PostPath;
 import io.github.kloping.MySpringTool.annotations.http.RequestBody;
 
@@ -20,12 +21,14 @@ public interface H2 {
      * 意为: 将其对象 以 JSON 格式 作为 post 请求体
      * //@RequestBody()
      * 意为: 将调用对象 toString 作为 post 请求体
-     * 其中 Path 暂时不支持变更
      * @param entity
      * @return
      */
-    @PostPath("java?version=latest")
-    CodeResponse m1(@RequestBody(type = "json") CodeEntity entity);
+    @PostPath("java")
+    CodeResponse m1(
+            @RequestBody(type = "json") CodeEntity entity
+            , @ParamName("version") String version
+    );
 }
 
 
@@ -82,7 +85,7 @@ public class Main {
     //自动实现并填充
     @AutoStand
     H1 h1;
-    
+
     @AutoStand
     H2 h2;
 }
