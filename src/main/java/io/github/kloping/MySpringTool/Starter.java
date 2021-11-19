@@ -961,7 +961,12 @@ public final class Starter {
     private static final Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
 
     /**
-     * 获取 某个实例     *     * @param claT     * @param id     * @param <T>     * @return
+     * 获取 某个实例     *
+     *
+     * @param claT
+     * @param id
+     * @param <T>
+     * @return
      */
     public static final <T> T getContextValue(Class<?> claT, String id) {
         Map<String, Object> map = ObjMap.get(claT);
