@@ -1,6 +1,5 @@
 package io.github.kloping.MySpringTool;
 
-
 import io.github.kloping.MySpringTool.annotations.*;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
 import io.github.kloping.arr.Class2OMap;
@@ -31,6 +30,51 @@ public final class Starter {
     private static Integer Log_Level = 0;
     private static Long waitTime = 15L;
     private static boolean onlyOne = false;
+    public static final Map<String, String> configurationMap = new LinkedHashMap<>();
+    private static boolean tryAll = false;
+    /**
+     * 如果 不需要扫描 或者 不支持扫描 则设置为 false 并把类元素加入 classes 集合
+     */
+    public static final boolean NeedScan = true;
+    private static final char[] chars = {'<', '.', '\\'};
+    /**
+     * 阅读 NessScan 注解
+     */
+    public static final Set<Class<?>> AllClass = new CopyOnWriteArraySet<>();
+    private static final Set<Character> maybeKeys = new CopyOnWriteArraySet<>();
+    private static final SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
+    /**
+     * 线程池
+     */
+    private static final ExecutorService threads = Executors.newFixedThreadPool(40);
+    /**
+     * 运行队列
+     */
+    private static final Set<Object> runList = new HashSet<>();
+    private static final Queue<Object[]> runQueue = new LinkedList<>();
+    /**
+     * 活动储存
+     */
+    private static final Map<String, Map.Entry<Object, Method>> actions = new ConcurrentHashMap();
+    /**
+     * 活动Before储存
+     */
+    private static final Map<Class<?>, Method> beforeS = new ConcurrentHashMap<>();
+    /**
+     * 活动after储存
+     */
+    private static final Map<Class<?>, Method> afterS = new ConcurrentHashMap<>();
+    /**
+     * 实例 Object map
+     */
+    private static final Map<Class<?>, Map<String, Object>> ObjMap = new ConcurrentHashMap<>();
+    /**
+     * 所有类字节码
+     */
+    private static final Set<Class<?>> classes = new CopyOnWriteArraySet<>();
+    private static AllAfterOrBefore allAfter = null;
+    private static AllAfterOrBefore allBefore = null;
+    private static final Map<String, String> histRunedRV = new ConcurrentHashMap<>();
 
     public static void set_key(Class<?> _key) {
         Starter._key = _key;
@@ -118,8 +162,7 @@ public final class Starter {
                     if (entry == null) {
                         entry = getEntry(t, e.getValue());
                     } else {
-                        if (t > entry.getKey())
-                            continue;
+                        if (t > entry.getKey()) continue;
                         else entry = getEntry(t, e.getValue());
                     }
                 }
@@ -128,8 +171,13 @@ public final class Starter {
         return entry;
     }
 
+    private static final Class<?>[] allBaseClass =
+            new Class[]{
+                    String.class,
+                    Long.class, Integer.class, Double.class, Float.class, Boolean.class,
+                    long.class, int.class, double.class, float.class, boolean.class};
+
     private static void loadConf() {
-        Class<?>[] classes = new Class[]{String.class, Long.class, Integer.class, Boolean.class, long.class, int.class, boolean.class};
         for (String k : configurationMap.keySet()) {
             try {
                 for (Class<?> cla : classes) {
@@ -171,10 +219,8 @@ public final class Starter {
     private static void InitMaybeKey() {
         for (String key : actions.keySet()) {
             Character c = key.charAt(0);
-            if (c != '\\')
-                maybeKeys.add(c);
-            else
-                maybeKeys.add(key.charAt(1));
+            if (c != '\\') maybeKeys.add(c);
+            else maybeKeys.add(key.charAt(1));
         }
     }
 
@@ -190,13 +236,11 @@ public final class Starter {
         return waitTime;
     }
 
-    public static final Map<String, String> configurationMap = new LinkedHashMap<>();
-
     /**
      * 加载配置文件
      * 格式为
      * k=v
-     * V类型可为 String Long Integer
+     * V类型可为 String Long Integer Boolean Double
      * 使用AutoStand 自动填充
      *
      * @param file
@@ -220,7 +264,8 @@ public final class Starter {
     }
 
     /**
-     * 重新加载配置文件
+     * 重新加载配置文件 顶替之前的
+     * 使用AutoStand 自动填充
      *
      * @param file
      */
@@ -247,7 +292,7 @@ public final class Starter {
      * 加载配置文件
      * 格式为
      * k=v
-     * V类型可为 String Long Integer
+     * V类型可为 String Long Integer Boolean Double
      * 使用AutoStand 自动填充
      *
      * @param filePath
@@ -301,8 +346,6 @@ public final class Starter {
     public static void setLog_Level(Integer log_Level) {
         Log_Level = log_Level;
     }
-
-    private static boolean tryAll = false;
 
     /**
      * 开始尝试匹配运行
@@ -393,24 +436,12 @@ public final class Starter {
         return classes;
     }
 
-    /**
-     * 如果 不需要扫描 或者 不支持扫描 则设置为 false 并把类元素加入 classes 集合
-     */
-    public static final boolean NeedScan = true;
-
-    /**
-     * 阅读 NessScan 注解
-     */
-    public static final Set<Class<?>> AllClass = new CopyOnWriteArraySet<>();
-    private static final Set<Character> maybeKeys = new CopyOnWriteArraySet<>();
-
     private static abstract class A implements Runnable {
         protected Object[] objects;
 
         public A(Object[] objects) {
             this.objects = objects;
         }
-
     }
 
     public static abstract class AllAfterOrBefore {
@@ -422,22 +453,11 @@ public final class Starter {
 
         public abstract void run(Object ret, Object[] o_objs) throws NoRunException;
 
-        public enum State {
-            Before(),
-            After()
-        }
+        public enum State {Before(), After()}
     }
 
-    //============================
-
     /**
-     * 0 Normal Withe
-     * 1 Info Green
-     * 2 Debug Yellow
-     * -1 Err Red
-     *
-     * @param mess
-     * @param level
+     * 0 Normal Withe     * 1 Info Green     * 2 Debug Yellow     * -1 Err Red     *     * @param mess     * @param level
      */
     private static synchronized void Log(String mess, int level) {
         if (level != -1 && level < Log_Level) return;
@@ -456,7 +476,7 @@ public final class Starter {
                 info = "[Error] " + info;
                 break;
         }
-        info = "[com.hrs.Spring]" + info;
+        info = "[io.github.ST]" + info;
         if (level == 0) {
             System.out.println(info);
         } else if (level == 1) {
@@ -467,8 +487,6 @@ public final class Starter {
             System.err.println(info);
         }
     }
-
-    private static final SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
 
     private static final void appendToObjMap(String id, Object obj) {
         Map map = ObjMap.get(obj.getClass());
@@ -494,58 +512,14 @@ public final class Starter {
     }
 
     /**
-     * 线程池
-     */
-    private static final ExecutorService threads = Executors.newFixedThreadPool(40);
-    /**
-     * 运行队列
-     */
-    private static final Set<Object> runList = new HashSet<>();
-    private static final Queue<Object[]> runQueue = new LinkedList<>();
-    /**
-     * 活动储存
-     */
-    private static final Map<String, Map.Entry<Object, Method>> actions = new ConcurrentHashMap();
-
-    /**
-     * 活动Before储存
-     */
-    private static final Map<Class<?>, Method> beforeS = new ConcurrentHashMap<>();
-
-    /**
-     * 活动after储存
-     */
-    private static final Map<Class<?>, Method> afterS = new ConcurrentHashMap<>();
-
-    /**
-     * 实例 Object map
-     */
-    private static final Map<Class<?>, Map<String, Object>> ObjMap = new ConcurrentHashMap<>();
-
-    /**
-     * 所有类字节码
-     */
-    private static final Set<Class<?>> classes = new CopyOnWriteArraySet<>();
-
-    private static AllAfterOrBefore allAfter = null;
-
-    private static AllAfterOrBefore allBefore = null;
-
-    private static final Map<String, String> histRunedRV = new ConcurrentHashMap<>();
-
-    /**
-     * 匹配到一个就停止匹配
-     *
-     * @param onlyOne
+     * 匹配到一个就停止匹配     *     * @param onlyOne
      */
     public static void setOnlyOne(boolean onlyOne) {
         Starter.onlyOne = onlyOne;
     }
 
     /**
-     * 运行
-     *
-     * @param objs
+     * 运行     *     * @param objs
      */
     private static boolean Run(boolean run, Object... objs) {
         boolean k = false;
@@ -567,8 +541,7 @@ public final class Starter {
         for (String v : actions.keySet()) {
             if (!tryAll && !maybe(res, v)) continue;
             if ((result = Result.create(res, v)).isMatch()) {
-                if (result.state >= 0)
-                    histRunedRV.put(res, v);
+                if (result.state >= 0) histRunedRV.put(res, v);
                 if (!run) return true;
                 Log("匹配并运行(mather and run)=>" + Arrays.toString(objs), 1);
                 result.setObjs(objs);
@@ -577,8 +550,7 @@ public final class Starter {
                 if (onlyOne) return true;
             }
         }
-        if (!k)
-            Log("无匹配 (no mather)=>" + Arrays.toString(objs), 2);
+        if (!k) Log("无匹配 (no mather)=>" + Arrays.toString(objs), 2);
         return k;
     }
 
@@ -625,12 +597,10 @@ public final class Starter {
             } else if (allBefore != null) {
                 allBefore.run(null, objs);
             }
-            //=======================================
             Object[] objPars = AutoObjFromPar(pars, objs);
             objPars = AutoObjOnPar(pars, objPars, result);
             method.setAccessible(true);
             Object ret = method.invoke(obj, objPars);
-            //=======================================
             if (afterS.containsKey(cla)) {
                 if (allAfter != null) {
                     if (allAfter.state == AllAfterOrBefore.State.After) {
@@ -743,28 +713,27 @@ public final class Starter {
             if (parameters[i].isAnnotationPresent(Param.class)) {
                 Param param = parameters[i].getAnnotation(Param.class);
                 String s1 = param.value();
-                if (result != null && result.K != null && result.V != null)
-                    if (result.getK().equals(s1)) {
-                        try {
-                            Class cla = parameters[i].getType();
-                            cla = baseToPack(cla);
-                            if (cla == Long.class) {
-                                objects[i] = Long.parseLong(result.getV());
-                            } else if (cla == Integer.class) {
-                                objects[i] = Integer.parseInt(result.getV());
-                            } else if (cla == Float.class) {
-                                objects[i] = Float.parseFloat(result.getV());
-                            } else if (cla == Double.class) {
-                                objects[i] = Double.parseDouble(result.getV());
-                            } else if (cla == Boolean.class) {
-                                objects[i] = Boolean.parseBoolean(result.getV());
-                            } else {
-                                objects[i] = result.getV();
-                            }
-                        } catch (Exception e) {
+                if (result != null && result.K != null && result.V != null) if (result.getK().equals(s1)) {
+                    try {
+                        Class cla = parameters[i].getType();
+                        cla = baseToPack(cla);
+                        if (cla == Long.class) {
+                            objects[i] = Long.parseLong(result.getV());
+                        } else if (cla == Integer.class) {
+                            objects[i] = Integer.parseInt(result.getV());
+                        } else if (cla == Float.class) {
+                            objects[i] = Float.parseFloat(result.getV());
+                        } else if (cla == Double.class) {
+                            objects[i] = Double.parseDouble(result.getV());
+                        } else if (cla == Boolean.class) {
+                            objects[i] = Boolean.parseBoolean(result.getV());
+                        } else {
                             objects[i] = result.getV();
                         }
+                    } catch (Exception e) {
+                        objects[i] = result.getV();
                     }
+                }
             } else if (parameters[i].isAnnotationPresent(AllMess.class)) {
                 AllMess param = parameters[i].getAnnotation(AllMess.class);
                 objects[i] = result.getRes();
@@ -783,8 +752,7 @@ public final class Starter {
         obj = baseToPack(obj);
         int n = -1;
         for (int i = 2; i < obj.length; i++) {
-            if (superOrImpl(cla, obj[i].getClass()))
-                n = i;
+            if (superOrImpl(cla, obj[i].getClass())) n = i;
         }
         if (n >= 0) {
             Map map = findHist.get(classes);
@@ -806,20 +774,17 @@ public final class Starter {
     }
 
     private static boolean accept(Class<?>... classes) {
-        if (ListArrayContainsArray(classes))
-            return true;
+        if (ListArrayContainsArray(classes)) return true;
         if (classes[0] == _key) {
             if (classes[1] == String.class) {
                 for (int i = 2; i < accPars.length + 2; i++) {
                     Class<?> cla1 = classes[i];
                     Class<?> cla2 = accPars[i - 2];
                     boolean k = superOrImpl(cla2, cla1);
-                    if (k)
-                        continue;
+                    if (k) continue;
                     else return false;
                 }
-                if (!acceptClasses.contains(classes))
-                    acceptClasses.add(classes);
+                if (!acceptClasses.contains(classes)) acceptClasses.add(classes);
                 return true;
             }
         }
@@ -838,36 +803,10 @@ public final class Starter {
         if (!k) k = ObjectUtils.isInterface(son, father);
         if (k) appendFather2Son(father, son);
         return k;
-        /*try {
-            if (father2son.get(father).contains(son)) {
-                Log("从历史匹配知道 " + father + " 匹配与=>" + son, 0);
-                return true;
-            }
-        } catch (Exception e) {
-        }
-        Class<?> son1 = son;
-        while (hasSuper(son1)) {
-            son1 = son1.getSuperclass();
-            if (father == son1) {
-                appendFather2Son(father, son);
-                return true;
-            }
-            continue;
-        }
-        Class<?>[] classes1 = son.getInterfaces();
-        if (isInterfaces(classes1, father)) {
-            appendFather2Son(father, son);
-            return true;
-        }
-        return false;*/
     }
 
     private static void appendFather2Son(Class<?> father, Class<?> son) {
         MapUtils.append(father2son, father, son, CopyOnWriteArrayList.class);
-//        List<Class> list = father2son.get(father);
-//        if (list == null) list = new CopyOnWriteArrayList<>();
-//        if (!list.contains(son)) list.add(son);
-//        father2son.put(father, list);
     }
 
     private static boolean isInterfaces(Class<?>[] classes1, Class<?> cla) {
@@ -875,13 +814,11 @@ public final class Starter {
         for (Class c : classes1) {
             if (c == cla) return true;
             else {
-                if (isInterfaces(c.getInterfaces(), cla))
-                    return true;
+                if (isInterfaces(c.getInterfaces(), cla)) return true;
             }
         }
         return false;
     }
-
 
     private static void startScanMainBean(Class<?> cla) {
         try {
@@ -903,7 +840,6 @@ public final class Starter {
             }
         } catch (Exception e) {
             Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
-
         }
     }
 
@@ -930,7 +866,6 @@ public final class Starter {
             }
         } catch (Exception e) {
             Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
-
         }
     }
 
@@ -938,11 +873,8 @@ public final class Starter {
         if (NeedScan) {
             Set<Class<?>> sets = getClassName(scanPath, true);
             classes.addAll(sets);
-        } else
-            classes.addAll(AllClass);
-
+        } else classes.addAll(AllClass);
         classes.add(mianCla);
-
         for (Class<?> cla : classes) {
             Fill(cla);
         }
@@ -966,7 +898,6 @@ public final class Starter {
             }
         } catch (Exception e) {
             Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
-
         }
     }
 
@@ -1027,16 +958,10 @@ public final class Starter {
     }
 
     private static final Timer timer = new Timer();
-
     private static final Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
 
     /**
-     * 获取 某个实例
-     *
-     * @param claT
-     * @param id
-     * @param <T>
-     * @return
+     * 获取 某个实例     *     * @param claT     * @param id     * @param <T>     * @return
      */
     public static final <T> T getContextValue(Class<?> claT, String id) {
         Map<String, Object> map = ObjMap.get(claT);
@@ -1094,8 +1019,7 @@ public final class Starter {
     private static final boolean hasNoParameterConstructor(Class<?> cla) {
         Constructor[] constructors = cla.getDeclaredConstructors();
         for (Constructor constructor : constructors) {
-            if (constructor.getParameters().length == 0)
-                return true;
+            if (constructor.getParameters().length == 0) return true;
         }
         return false;
     }
@@ -1106,28 +1030,22 @@ public final class Starter {
         } catch (Exception e) {
         }
         String par1 = par.substring(0, 1);
-        if (par1.equals("\\"))
-            par1 = par.substring(1, 2);
+        if (par1.equals("\\")) par1 = par.substring(1, 2);
         if (res.startsWith(par1)) {
             int len = Math.min(res.length(), par.length());
             for (int i = 1; i < len; i++) {
-                if (contians(par.charAt(i)))
-                    return true;
+                if (contians(par.charAt(i))) return true;
                 else {
-                    if (res.charAt(i) != par.charAt(i))
-                        return false;
+                    if (res.charAt(i) != par.charAt(i)) return false;
                 }
             }
         }
         return false;
     }
 
-    private static final char[] chars = {'<', '.', '\\'};
-
     private static boolean contians(char c1) {
         for (char c : chars) {
-            if (c == c1)
-                return true;
+            if (c == c1) return true;
         }
         return false;
     }
@@ -1188,7 +1106,6 @@ public final class Starter {
                 classes.add(cla);
             } catch (ClassNotFoundException e) {
                 Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
-
             }
         }
         return classes;
@@ -1210,7 +1127,6 @@ public final class Starter {
                 }
             }
         }
-
         return className;
     }
 
@@ -1230,13 +1146,11 @@ public final class Starter {
                 }
             }
         }
-
         return classNames;
     }
 
     private static Set<String> getClassNameFromJars(URL[] urls, String packageName, boolean isRecursion) {
         Set<String> classNames = new HashSet<>();
-
         for (int i = 0; i < urls.length; i++) {
             String classPath = urls[i].getPath();
             if (classPath.endsWith("classes/")) {
@@ -1247,14 +1161,11 @@ public final class Starter {
                 jarFile = new JarFile(classPath.substring(classPath.indexOf("/")));
             } catch (IOException e) {
                 Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
-
             }
-
             if (jarFile != null) {
                 classNames.addAll(getClassNameFromJar(jarFile.entries(), packageName, isRecursion));
             }
         }
-
         return classNames;
     }
 
@@ -1336,7 +1247,6 @@ public final class Starter {
             return res;
         }
 
-
         public boolean isMatch() {
             return isMatch;
         }
@@ -1378,7 +1288,6 @@ public final class Starter {
             try {
                 String p1 = String.format("%s-%s-%s-%s-%s-%s", getYear(), getMon(), getDay(), hour, mini, mil);
                 date = myFmt.parse(p1);
-
             } catch (Exception e) {
             }
             long millis = date.getTime();
