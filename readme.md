@@ -48,7 +48,7 @@
 
 ## 如何启动
 
-**通过com.hrs.mySpringTool.Starter类**
+**通过io.github.Kloping.MySpringTool.Starter类**
 
 ### 一,代码配置
 
@@ -73,7 +73,7 @@
 
 ![说明1](res/intro_1.png)
 
-其中第二个参数("io.github.Kloping.test") 作用于匹配 Action(内容)
+其中第二个参数("test") 作用于匹配 Action(内容)
 
 #### 如 执行后将运行 test1方法
 
@@ -164,7 +164,7 @@ public class Main {
         Starter.ExecuteMethod(1L, "test9", "字符参数", 347400676);
     }
 
-    @Action("io.github.Kloping.test<\\d=>par>")
+    @Action("test<\\d=>par>")
     public void testN(@Param("par") String n) {
         System.out.println("测试成功" + n);
     }
@@ -177,13 +177,13 @@ public class Main {
 
 匹配模式
 
-    @Action("io.github.Kloping.test<正则>") 等同于 @Action("test正则")
+    @Action("test<正则>") 等同于 @Action("test正则")
     如
-    @Action("io.github.Kloping.test<\\d>") 等同于 @Action("io.github.Kloping.test\\d")
+    @Action("test<\\d>") 等同于 @Action("test\\d")
 
 但这将无法获取\\d 匹配的内容
 
-     @Action("io.github.Kloping.test<正则=>name>")
+     @Action("test<正则=>name>")
      => 指向剪头 这将把 正则匹配的内容填充给方法@Param("name")参数
 
 如上代码
