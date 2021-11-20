@@ -6,11 +6,21 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
- * 令 方法为 get 方法
- */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface GetPath {
-    String value();
+public @interface CookieFrom {
+    /**
+     * urls
+     * on  "this" use will execute url
+     *
+     * @return
+     */
+    String[] value();
+
+    /**
+     * only GET or POST
+     *
+     * @return
+     */
+    String method() default "GET";
 }
