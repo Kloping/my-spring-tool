@@ -913,7 +913,7 @@ public final class Starter {
     }
 
     /**
-     * 获取 某个实例     *
+     * 获取 某个实例
      *
      * @param claT
      * @param id

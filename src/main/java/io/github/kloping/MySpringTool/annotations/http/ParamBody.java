@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * 将该类内的属性 转为
- *  k=v & 的形式作为get参数
+ *  k=v  的形式作为get参数
  */
 @Target(ElementType.PARAMETER)
 @java.lang.annotation.Retention(RetentionPolicy.RUNTIME)

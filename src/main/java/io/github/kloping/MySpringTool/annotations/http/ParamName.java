@@ -6,7 +6,7 @@ import java.lang.annotation.Target;
 
 /**
  * 将这个参数 以 指定名字 作为
- *  k=v& 的参数
+ *  k=v 的参数
  *  k = value
  *  v = o.toString
  */
