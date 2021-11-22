@@ -30,6 +30,7 @@ public class ActionManagerImpl implements ActionManager {
 
     public static final Pattern pattern0 = Pattern.compile("<.*>");
     public static final Pattern pattern1 = Pattern.compile("<.+=>.+>");
+    public Map<String, String> histIndexes = new HashMap<>();
 
     @Override
     public MatherResult mather(String regx) {
@@ -40,50 +41,74 @@ public class ActionManagerImpl implements ActionManager {
             MatherResult mr = new MatherResult(regx, regx, set.toArray(new Method[0]));
             return mr;
         } else {
+            if (histIndexes.containsKey(regx)) {
+                MatherResult r = null;
+                try {
+                    r = mr(regx, histIndexes.get(regx));
+                    if (r != null) return r;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
             int i = -1;
             while (++i < regx.length()) {
                 char c = regx.charAt(i);
-                if (indexMap.containsKey(c))
+                if (indexMap.containsKey(c)) {
                     for (String s : indexMap.get(c)) {
-                        if (regx.matches(s)) {
-                            Set<Method> set = maps.get(s);
-                            MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
-                            return mr;
-                        } else {
-                            Matcher matcher = pattern0.matcher(s);
-                            if (matcher.find()) {
-                                String s1 = matcher.group();
-                                String s2 = s1.substring(1, s1.length() - 1);
-                                String regxNow = s.replace(s1, s2);
-                                if (regx.matches(regxNow)) {
-                                    Set<Method> set = maps.get(s);
-                                    MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
-                                    return mr;
-                                }
-                            }
-                            matcher = pattern1.matcher(s);
-                            if (matcher.find()) {
-                                String s1 = matcher.group();
-                                String s2 = s1.substring(1, s1.length() - 1);
-                                String[] ss = s2.split("=>");
-                                String regxNow = s.replace(s1, ss[0]);
-                                if (regx.matches(regxNow)) {
-                                    String s4 = m1(ss[0]);
-                                    String[] ss2 = regxNow.split(s4);
-                                    String nowRegx = regx;
-                                    for (String s3 : ss2) {
-                                        nowRegx = nowRegx.replace(s3, "");
-                                    }
-                                    Set<Method> set = maps.get(s);
-                                    MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
-                                    if (nowRegx.matches(ss[0])) {
-                                        mr.getParams().put(ss[1], nowRegx);
-                                    }
-                                    return mr;
-                                }
-                            }
+                        MatherResult r = null;
+                        try {
+                            r = mr(regx, s);
+                        } catch (Exception e) {
+                            continue;
+                        }
+                        if (r != null) {
+                            histIndexes.put(regx, s);
+                            return r;
                         }
                     }
+                }
+            }
+        }
+        return null;
+    }
+
+    private MatherResult mr(String regx, String s) throws Exception {
+        if (regx.matches(s)) {
+            Set<Method> set = maps.get(s);
+            MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
+            return mr;
+        } else {
+            Matcher matcher = pattern0.matcher(s);
+            if (matcher.find()) {
+                String s1 = matcher.group();
+                String s2 = s1.substring(1, s1.length() - 1);
+                String regxNow = s.replace(s1, s2);
+                if (regx.matches(regxNow)) {
+                    Set<Method> set = maps.get(s);
+                    MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
+                    return mr;
+                }
+            }
+            matcher = pattern1.matcher(s);
+            if (matcher.find()) {
+                String s1 = matcher.group();
+                String s2 = s1.substring(1, s1.length() - 1);
+                String[] ss = s2.split("=>");
+                String regxNow = s.replace(s1, ss[0]);
+                if (regx.matches(regxNow)) {
+                    String s4 = m1(ss[0]);
+                    String[] ss2 = regxNow.split(s4);
+                    String nowRegx = regx;
+                    for (String s3 : ss2) {
+                        nowRegx = nowRegx.replace(s3, "");
+                    }
+                    Set<Method> set = maps.get(s);
+                    MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
+                    if (nowRegx.matches(ss[0])) {
+                        mr.getParams().put(ss[1], nowRegx);
+                    }
+                    return mr;
+                }
             }
         }
         return null;
@@ -94,17 +119,29 @@ public class ActionManagerImpl implements ActionManager {
         return classSet.toArray(new Class[0]);
     }
 
+    private List<Character> csO = new LinkedList<>();
+
+    {
+        csO.add('<');
+        csO.add('>');
+        csO.add('.');
+        csO.add('?');
+        csO.add('=');
+        csO.add('+');
+        csO.add('*');
+    }
+
     public void makeIndex() {
         indexMap.clear();
         for (String k : maps.keySet()) {
-            k = k.replaceFirst("<.*>", "");
             for (Character c : k.toCharArray()) {
+                if (csO.contains(c)) continue;
                 MapUtils.append(indexMap, c, k);
             }
         }
     }
 
-    private Map<Character, List<String>> indexMap = new LinkedHashMap<>();
+    private Map<Character, List<String>> indexMap = new HashMap<>();
 
     private Map<String, Set<Method>> maps = new ConcurrentHashMap<>();
 

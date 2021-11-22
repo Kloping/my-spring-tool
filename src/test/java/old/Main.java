@@ -92,12 +92,16 @@ public class Main extends StarterApplication.Setting {
         StarterApplication.run(Main.class);
         Group group = new Group(10L,"nick name");
         User user = new User(1L,10L,"nickname","name");
-        StarterApplication.ExecuteMethod(1000L, "a", "我是参数", 111111 );
-        StarterApplication.ExecuteMethod(1001L, "ab", "我是参数", 111111);
+//        StarterApplication.ExecuteMethod(1000L, "a", "我是参数", 111111 );
+//        StarterApplication.ExecuteMethod(1001L, "ab", "我是参数", 111111);
         StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "adsadbc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "abffdsfc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "abeeeeec", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
+//        StarterApplication.ExecuteMethod(1002L, "adsadbc", "我是参数", 111111);
+//        StarterApplication.ExecuteMethod(1002L, "abffdsfc", "我是参数", 111111);
+//        StarterApplication.ExecuteMethod(1002L, "abeeeeec", "我是参数", 111111);
         System.out.println("===========");
 //        System.out.println(m2.doc());
     }
