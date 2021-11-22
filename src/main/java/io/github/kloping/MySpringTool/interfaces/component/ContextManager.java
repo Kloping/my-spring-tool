@@ -1,7 +1,9 @@
 package io.github.kloping.MySpringTool.interfaces.component;
 
 
-
+/**
+ * 全局上下文 Bean 管理器
+ */
 public interface ContextManager {
     int append(Object obj);
 

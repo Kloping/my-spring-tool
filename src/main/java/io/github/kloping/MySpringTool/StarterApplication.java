@@ -52,6 +52,7 @@ public final class StarterApplication {
         private void defaultInit() {
             logger = new LoggerImpl();
             contextManager = new ContextManagerWithEIImpl();
+            configFileManager = new ConfigFileManagerImpl(contextManager);
             automaticWiringParams = new AutomaticWiringParamsH2Impl();
             automaticWiringValue = new AutomaticWiringValueImpl();
             instanceCrater = new InstanceCraterImpl();
@@ -63,7 +64,6 @@ public final class StarterApplication {
 
             packageScanner = new PackageScannerImpl(true);
 
-            configFileManager = new ConfigFileManagerImpl(contextManager);
 
             classManager = new ClassManagerImpl(
                     instanceCrater, contextManager, automaticWiringParams, actionManager
@@ -163,7 +163,12 @@ public final class StarterApplication {
             workAfter();
             startAfter();
         } else {
-            throw new NoRunException("此类上必须存在 CommentScan 注解 (class must has @interface CommentScan )");
+            try {
+                throw new NoRunException("此类上必须存在 CommentScan 注解 (class must has @interface CommentScan )");
+            } finally {
+                System.exit(0);
+            }
+
         }
     }
 
@@ -182,22 +187,48 @@ public final class StarterApplication {
         }
     }
 
+    /**
+     * 设置主键参数
+     * 约束不可同一主键 多个运行
+     *
+     * @param cla
+     */
     public static void setMainKey(Class<?> cla) {
         mainKey = cla;
     }
 
+    /**
+     * 设置接收参数
+     * @param classes
+     */
     public static void setAccessTypes(Class<?>... classes) {
         INSTANCE.argsManager.setArgsType(classes);
     }
 
+    /**
+     * 开始匹配运行
+     *
+     * @param objects
+     * @return
+     */
     public static synchronized int ExecuteMethod(Object... objects) {
         return INSTANCE.queueExecutor.QueueExecute(objects[0], objects);
     }
 
+    /**
+     * 设置所有运行之后
+     *
+     * @param runner
+     */
     public static void setAllAfter(Runner runner) {
         INSTANCE.queueExecutor.setAfter(runner);
     }
 
+    /**
+     * 设置所有运行之前
+     *
+     * @param runner
+     */
     public static void setAllBefore(Runner runner) {
         INSTANCE.queueExecutor.setAfter(runner);
     }
@@ -223,11 +254,25 @@ public final class StarterApplication {
         }
     }
 
+    /**
+     * 添加 一个配置文件
+     * 并返回 当前所有配置文件
+     *
+     * @param file
+     * @return
+     */
     public static Set<String> addConfFile(File file) {
         fileSet.add(file.getAbsolutePath());
         return fileSet;
     }
 
+    /**
+     * 添加 一个配置文件
+     * 并返回 当前所有配置文件
+     *
+     * @param file
+     * @return
+     */
     public static Set<String> addConfFile(String file) {
         fileSet.add(file);
         return fileSet;

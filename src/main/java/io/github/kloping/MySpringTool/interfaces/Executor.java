@@ -5,6 +5,9 @@ import io.github.kloping.MySpringTool.entity.Runner;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * 所有执行器 父接口
+ */
 public interface Executor {
 
     void setBefore(Runner runner);

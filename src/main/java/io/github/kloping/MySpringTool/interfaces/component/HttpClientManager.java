@@ -1,4 +1,8 @@
 package io.github.kloping.MySpringTool.interfaces.component;
 
-public interface HttpClientManager extends MethodManager{
+/**
+ * -@HttpClient
+ * 的网络管理
+ */
+public interface HttpClientManager extends MethodManager {
 }

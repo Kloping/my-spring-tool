@@ -3,6 +3,9 @@ package io.github.kloping.MySpringTool.interfaces.component;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.InvocationTargetException;
 
+/**
+ * 类属性管理器
+ */
 public interface ClassAttributeManager extends BaseManager {
 
     @Override

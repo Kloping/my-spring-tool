@@ -3,6 +3,9 @@ package io.github.kloping.MySpringTool.interfaces.component;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.InvocationTargetException;
 
+/**
+ * Action 管理器
+ */
 public interface ActionManager extends MethodManager {
     @Override
     default void manager(AccessibleObject accessibleObject, ContextManager contextManager) throws InvocationTargetException, IllegalAccessException {

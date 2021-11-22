@@ -3,6 +3,9 @@ package io.github.kloping.MySpringTool.interfaces.component;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 
+/**
+ * 类管理器
+ */
 public interface ClassManager extends BaseManager {
     @Override
     default void manager(Object o) throws InvocationTargetException, InstantiationException, IllegalAccessException {

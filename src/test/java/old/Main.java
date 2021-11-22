@@ -1,4 +1,4 @@
-package test;
+package old;
 
 import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.annotations.*;
@@ -60,7 +60,7 @@ public class Main {
     public static void main(String[] args) throws IllegalAccessException, InvocationTargetException {
         StarterApplication.addConfFile("./src/test/java/conf.txt");
         StarterApplication.setMainKey(Long.class);
-        StarterApplication.setAccessTypes(String.class, Integer.class);
+        StarterApplication.setAccessTypes(String.class, Number.class);
         StarterApplication.setAllBefore(new Runner(Runner.state.BEFORE) {
             @Override
             public void run(Object t, Object[] objects) throws NoRunException {

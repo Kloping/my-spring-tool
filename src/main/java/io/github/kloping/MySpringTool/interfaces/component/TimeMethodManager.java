@@ -4,6 +4,11 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * -@TimeEve
+ * -@Schedule
+ * 管理
+ */
 public interface TimeMethodManager extends MethodManager{
     @Override
     default void manager(Object o) throws IllegalAccessException, InvocationTargetException {

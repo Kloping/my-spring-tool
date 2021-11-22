@@ -3,3 +3,4 @@ k2=3.14
 k3=m1
 k4=100000000
 out.format=yyyy-MM/dd-HH:mm:ss:SSS
+log.level=1
