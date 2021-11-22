@@ -4,7 +4,7 @@ import java.lang.annotation.*;
 
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(value=ElementType.FIELD)
+@Target(value = ElementType.FIELD)
 public @interface AutoStand {
-    String id() default "0";
+    String id() default "4002";
 }

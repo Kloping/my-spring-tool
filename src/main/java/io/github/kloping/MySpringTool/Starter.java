@@ -1,5 +1,6 @@
 package io.github.kloping.MySpringTool;
 
+import com.sun.istack.internal.Nullable;
 import io.github.kloping.MySpringTool.annotations.*;
 import io.github.kloping.MySpringTool.annotations.http.HttpClient;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
@@ -920,7 +921,7 @@ public final class Starter {
      * @param <T>
      * @return
      */
-    public static final <T> T getContextValue(Class<?> claT, String id) {
+    public static final <T> T getContextValue(Class<?> claT, @Nullable String id) {
         Map<String, Object> map = ObjMap.get(claT);
         if (map == null) return null;
         id = id == null ? map.keySet().iterator().next() : id;

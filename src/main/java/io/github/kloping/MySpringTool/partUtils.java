@@ -6,6 +6,7 @@ import io.github.kloping.object.ObjectUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.JarURLConnection;
@@ -21,7 +22,7 @@ import java.util.jar.JarFile;
 
 import static io.github.kloping.MySpringTool.Starter.Log;
 
-final class partUtils {
+public final class partUtils {
 
     static Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
         Set<String> classNames = null;
@@ -121,7 +122,7 @@ final class partUtils {
         return classNames;
     }
 
-    static String getExceptionLine(Throwable e) {
+    public static String getExceptionLine(Throwable e) {
         try {
             Method method = Throwable.class.getDeclaredMethod("getOurStackTrace");
             method.setAccessible(true);
@@ -136,7 +137,7 @@ final class partUtils {
         }
     }
 
-    static void getTargetException(InvocationTargetException e) {
+    public static void getTargetException(InvocationTargetException e) {
         InvocationTargetException ite = e;
         if (ite.getTargetException().getClass() == NoRunException.class) {
             NoRunException exception = (NoRunException) ite.getTargetException();
@@ -156,7 +157,7 @@ final class partUtils {
 
     static final SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 
-    static long getTimeFromNowTo(int hour, int mini, int mil) {
+    public static long getTimeFromNowTo(int hour, int mini, int mil) {
         Date date = null;
         try {
             String p1 = String.format("%s-%s-%s-%s-%s-%s", getYear(), getMon(), getDay(), hour, mini, mil);
@@ -237,5 +238,50 @@ final class partUtils {
             }
         }
         return false;
+    }
+
+    static String filter(String path, Class cla) {
+        if (path.equals(".") || path.equals("/") || path.equals("./") || path.trim().isEmpty()) {
+            path = cla.getName().substring(0, cla.getName().indexOf("."));
+        }
+        return path;
+    }
+
+    static void check(String scanPath) {
+        try {
+            if (Starter.class.getClassLoader().getResources(scanPath) == null)
+                throw new RuntimeException("欲扫描的包名不存在");
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("欲扫描的包名不存在");
+        }
+    }
+
+    public static Class<?>[] getAllInterfaceOrSupers(final Class<?> cla) {
+        Set<Class<?>> set = new CopyOnWriteArraySet<>();
+        Class cNow;
+        cNow = cla;
+        Class c = null;
+        while ((c = cNow.getSuperclass()) != null) {
+            if (c == Object.class) break;
+            set.add(c);
+            cNow = c;
+        }
+        addAllInterfaces(set, cla);
+        return set.toArray(new Class[0]);
+    }
+
+    private static void addAllInterfaces(Set<Class<?>> set, Class<?> cla) {
+        Class[] cs = getInterfaces(cla);
+        for (Class c1 : cs) {
+            if (c1 == Serializable.class) continue;
+            if (c1 == Comparable.class) continue;
+            set.add(c1);
+            addAllInterfaces(set, c1);
+        }
+    }
+
+    private static Class[] getInterfaces(Class cla) {
+        return cla.getInterfaces();
     }
 }
