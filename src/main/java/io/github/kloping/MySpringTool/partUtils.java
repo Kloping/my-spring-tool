@@ -253,7 +253,11 @@ public final class partUtils {
                 throw new RuntimeException("欲扫描的包名不存在");
         } catch (IOException e) {
             e.printStackTrace();
-            throw new RuntimeException("欲扫描的包名不存在");
+            try {
+                throw new RuntimeException("欲扫描的包名不存在");
+            } finally {
+                System.exit(0);
+            }
         }
     }
 

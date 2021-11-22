@@ -14,9 +14,124 @@
     - 系统 默认配置 与 功能的协调启动
     - 可根据具体需要更改配置 实现自己需要的功能
 
-基础案例:
+基础案例1:[Simple.java](https://github.com/Kloping/my-spring-tool/blob/master/src/test/java/test/Simple.java)
 ```java
 
-  
+package test;
+
+import io.github.kloping.MySpringTool.StarterApplication;
+import io.github.kloping.MySpringTool.annotations.AutoStand;
+import io.github.kloping.MySpringTool.annotations.CommentScan;
+import test.interfaces.M2;
+
+@CommentScan(path = "test")
+public class Simple {
+  public static void main(String[] args) {
+    StarterApplication.addConfFile("./src/test/java/conf.txt");
+    StarterApplication.run(Simple.class);
+    System.out.println(m2.doc());
+  }
+    
+  @AutoStand
+  static M2 m2;
+}
 
 ```
+
+
+基础案例2:
+<details> 
+<summary><a href="https://github.com/Kloping/my-spring-tool/blob/master/src/test/java/old/Main.java">Main.java</a></summary> 
+
+
+```java
+package old;
+
+import io.github.kloping.MySpringTool.StarterApplication;
+import io.github.kloping.MySpringTool.annotations.*;
+import io.github.kloping.MySpringTool.entity.Runner;
+import io.github.kloping.MySpringTool.exceptions.NoRunException;
+import test.interfaces.M2;
+
+import java.lang.reflect.InvocationTargetException;
+
+@CommentScan(path = "test")
+@Controller
+public class Main {
+    @Before
+    public void before(String arg) {
+        System.out.println("before => " + arg);
+    }
+
+    @Action("a")
+    public void m1() {
+        System.out.println("m1");
+    }
+
+    @Action("a.+")
+    public void m2() {
+        System.out.println("m2");
+    }
+
+    @Action("a<b=>s>")
+    public void m3() {
+        System.out.println("m3");
+    }
+
+    @Action("a<.*?=>s>c")
+    public void m4(@Param("s") String s) {
+        System.out.println(s);
+        System.out.println("m4");
+//        try {
+//            Thread.sleep(1500);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+    }
+
+    @After
+    public void after() {
+        System.out.println("after");
+    }
+
+    @TimeEve(1000)
+    public void s1() {
+        System.out.println("1000");
+    }
+
+    @Schedule("10:05:00")
+    public void s2() {
+        System.out.println("333333333333333333333333333");
+    }
+
+    public static void main(String[] args) throws IllegalAccessException, InvocationTargetException {
+        StarterApplication.addConfFile("./src/test/java/conf.txt");
+        StarterApplication.setMainKey(Long.class);
+        StarterApplication.setAccessTypes(String.class, Number.class);
+        StarterApplication.setAllBefore(new Runner(Runner.state.BEFORE) {
+            @Override
+            public void run(Object t, Object[] objects) throws NoRunException {
+                System.out.println("all after");
+            }
+        });
+        StarterApplication.run(Main.class);
+        StarterApplication.ExecuteMethod(1000L, "a", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1001L, "ab", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1002L, "adsadbc", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1002L, "abffdsfc", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1002L, "abeeeeec", "我是参数", 111111);
+        System.out.println("===========");
+        System.out.println(m2.doc());
+    }
+
+    @AutoStand
+    static M2 m2;
+
+    @AutoStand(id = "k1")
+    static Boolean k1;
+}
+
+```
+
+</details>

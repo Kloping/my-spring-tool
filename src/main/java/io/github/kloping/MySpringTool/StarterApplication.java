@@ -49,7 +49,7 @@ public final class StarterApplication {
 
         public static final Setting INSTANCE = new Setting();
 
-        private void defaultInit() {
+        void defaultInit() {
             logger = new LoggerImpl();
             contextManager = new ContextManagerWithEIImpl();
             configFileManager = new ConfigFileManagerImpl(contextManager);
@@ -168,7 +168,6 @@ public final class StarterApplication {
             } finally {
                 System.exit(0);
             }
-
         }
     }
 
@@ -199,6 +198,7 @@ public final class StarterApplication {
 
     /**
      * 设置接收参数
+     *
      * @param classes
      */
     public static void setAccessTypes(Class<?>... classes) {

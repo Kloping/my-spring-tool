@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>io.github.Kloping</groupId>
     <artifactId>SpringTool</artifactId>
-    <version>0.2.5</version>
+    <version>0.2.6</version>
     <packaging>jar</packaging>
     <name>SpringTool</name>
     <url>https://github.com/Kloping/my-spring-tool</url>
@@ -23,7 +23,6 @@
         <developerConnection>scm:git:ssh://github.com/Kloping/my-spring-tool</developerConnection>
         <url>https://github.com/Kloping/my-spring-tool</url>
     </scm>
-
     <developers>
         <developer>
             <name>Kloping</name>
