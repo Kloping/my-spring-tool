@@ -921,7 +921,7 @@ public final class Starter {
      * @param <T>
      * @return
      */
-    public static final <T> T getContextValue(Class<?> claT, @Nullable String id) {
+    public static final <T> T getContextValue(Class<?> claT, String id) {
         Map<String, Object> map = ObjMap.get(claT);
         if (map == null) return null;
         id = id == null ? map.keySet().iterator().next() : id;
