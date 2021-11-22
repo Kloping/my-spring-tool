@@ -33,7 +33,8 @@ public class AutomaticWiringParamsImpl implements AutomaticWiringParams {
         Object[] ros = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             for (Object o : objects) {
-                if (ObjectUtils.isSuperOrInterface(o.getClass(), parameters[i].getType())) {
+                Class pc = ObjectUtils.baseToPack(parameters[i].getType());
+                if (ObjectUtils.isSuperOrInterface(o.getClass(), pc)) {
                     ros[i] = o;
                 }
             }

@@ -5,6 +5,7 @@ import io.github.kloping.MySpringTool.annotations.Param;
 import io.github.kloping.MySpringTool.interfaces.AutomaticWiringParams;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.entitys.MatherResult;
+import io.github.kloping.arr.Class2OMap;
 import io.github.kloping.object.ObjectUtils;
 
 import java.lang.reflect.Method;
@@ -73,10 +74,15 @@ public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
                 }
             } else if (parameters[i].isAnnotationPresent(AllMess.class)) {
                 AllMess param = parameters[i].getAnnotation(AllMess.class);
-                objects[i] = result.getRegx();
-            } else for (Object o : objects) {
-                if (ObjectUtils.isSuperOrInterface(o.getClass(), parameters[i].getType())) {
-                    ros[i] = o;
+                ros[i] = result.getRegx();
+            } else if (parameters[i].getType() == Class2OMap.class) {
+                ros[i] = io.github.kloping.arr.Class2OMap.create(objects);
+            } else {
+                for (Object o : objects) {
+                    Class pc = ObjectUtils.baseToPack(parameters[i].getType());
+                    if (ObjectUtils.isSuperOrInterface(o.getClass(), pc)) {
+                        ros[i] = o;
+                    }
                 }
             }
         }

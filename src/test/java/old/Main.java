@@ -5,6 +5,9 @@ import io.github.kloping.MySpringTool.annotations.*;
 import io.github.kloping.MySpringTool.entity.impls.RunnerEve;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
 import io.github.kloping.MySpringTool.h1.impls.baseup.QueueExecutorWithReturnsImpl;
+import io.github.kloping.arr.Class2OMap;
+import test.entitys.Group;
+import test.entitys.User;
 import test.interfaces.M2;
 
 import java.lang.reflect.InvocationTargetException;
@@ -14,7 +17,7 @@ import java.lang.reflect.Method;
 @Controller
 public class Main extends StarterApplication.Setting {
     protected Main() {
-        queueExecutor = QueueExecutorWithReturnsImpl.create(Long.class, 25, 10 * 1000, executor);
+//        queueExecutor = QueueExecutorWithReturnsImpl.create(Long.class, 25, 10 * 1000, executor);
         defaultInit();
     }
 
@@ -24,7 +27,7 @@ public class Main extends StarterApplication.Setting {
     }
 
     @Action("a")
-    public void m1() {
+    public void m1(String m1, Number m2, Group group, User user, Class2OMap class2OMap) {
         System.out.println("m1");
     }
 
@@ -68,7 +71,7 @@ public class Main extends StarterApplication.Setting {
         INSTANCE = new Main();
         StarterApplication.addConfFile("./src/test/java/conf.txt");
         StarterApplication.setMainKey(Long.class);
-        StarterApplication.setAccessTypes(String.class, Number.class);
+        StarterApplication.setAccessTypes(String.class, Number.class, Group.class, User.class);
         StarterApplication.setAllBefore(new RunnerEve() {
             @Override
             public void methodRuined(Object ret, Method method, Object t, Object... objects) {
@@ -87,7 +90,9 @@ public class Main extends StarterApplication.Setting {
             }
         });
         StarterApplication.run(Main.class);
-        StarterApplication.ExecuteMethod(1000L, "a", "我是参数", 111111);
+        Group group = new Group(10L,"nick name");
+        User user = new User(1L,10L,"nickname","name");
+        StarterApplication.ExecuteMethod(1000L, "a", "我是参数", 111111,group,user);
         StarterApplication.ExecuteMethod(1001L, "ab", "我是参数", 111111);
         StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
         StarterApplication.ExecuteMethod(1002L, "adsadbc", "我是参数", 111111);
