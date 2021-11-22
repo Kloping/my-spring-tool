@@ -250,7 +250,7 @@ public final class StarterApplication {
      * @param runner
      */
     public static void setAllBefore(Runner runner) {
-        INSTANCE.queueExecutor.setAfter(runner);
+        INSTANCE.queueExecutor.setBefore(runner);
     }
 
     private static void workAfter() {

@@ -98,17 +98,19 @@ public class QueueExecutorImpl implements QueueExecutor {
                             Object[] parts = Arrays.copyOfRange(objects, 2, objects.length);
                             if (INSTANCE.getArgsManager().isLegal(parts)) {
                                 try {
-                                    if (runner1 != null) runner1.run(t, objects);
                                     MatherResult result = INSTANCE.getActionManager().mather(objects[1].toString());
                                     if (result != null) {
+                                        if (runner1 != null) runner1.run(t, objects);
                                         Method[] methods = result.getMethods();
                                         Class cla = methods[0].getDeclaringClass();
                                         Object o = INSTANCE.getContextManager().getContextEntity(cla);
+                                        Object reo = null;
                                         for (Method m : methods) {
                                             Object[] parObjs = INSTANCE.getAutomaticWiringParams().wiring(m, result, (Object) parts);
-                                            executor.execute(o, m, parObjs);
+                                            Object to = executor.execute(o, m, parObjs);
+                                            if (to != null) reo = to;
                                         }
-                                        if (runner2 != null) runner2.run(t, objects);
+                                        if (runner2 != null) runner2.run(reo, objects);
                                         logger.Log("lost time "
                                                 + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
                                     } else logger.Log("No match for " + objects[1].toString(), 2);
