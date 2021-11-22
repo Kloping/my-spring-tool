@@ -1,5 +1,7 @@
+
 package io.github.kloping.MySpringTool.h1.impls.baseup;
 
+import io.github.kloping.MySpringTool.entity.impls.RunnerEve;
 import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
 import io.github.kloping.MySpringTool.interfaces.Executor;
@@ -18,31 +20,33 @@ import static io.github.kloping.MySpringTool.StarterApplication.Setting.INSTANCE
 import static io.github.kloping.MySpringTool.StarterApplication.logger;
 import static io.github.kloping.MySpringTool.partUtils.getExceptionLine;
 
-public class QueueExecutorImpl implements QueueExecutor {
+public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     private Class<?> cla = Long.class;
     private Executor executor;
     private int poolSize = 20;
     private long waitTime = 10 * 1000;
-    private Runner runner1;
-    private Runner runner2;
+    private RunnerEve runner1;
+    private RunnerEve runner2;
 
     @Override
-    public void setBefore(Runner runner) {
-        runner1 = runner;
+    public <T extends Runner> void setBefore(T runner) {
+        if (runner instanceof RunnerEve)
+            runner1 = (RunnerEve) runner;
     }
 
     @Override
-    public void setAfter(Runner runner) {
-        runner2 = runner;
+    public <T extends Runner> void setAfter(T runner) {
+        if (runner instanceof RunnerEve)
+            runner2 = (RunnerEve) runner;
     }
 
-    public QueueExecutorImpl(Class<?> cla, Executor executor) {
+    public QueueExecutorWithReturnsImpl(Class<?> cla, Executor executor) {
         this.cla = cla;
         this.executor = executor;
         init();
     }
 
-    private java.util.concurrent.ExecutorService threads;
+    private ExecutorService threads;
     private ExecutorService runThreads = null;
 
     private void init() {
@@ -50,11 +54,11 @@ public class QueueExecutorImpl implements QueueExecutor {
         runThreads = Executors.newFixedThreadPool(poolSize);
     }
 
-    private QueueExecutorImpl() {
+    private QueueExecutorWithReturnsImpl() {
     }
 
-    public static QueueExecutor create(Class<?> cla, int poolSize, long waitTime, Executor executor) {
-        QueueExecutorImpl queueExecutor = new QueueExecutorImpl();
+    public static QueueExecutorWithReturnsImpl create(Class<?> cla, int poolSize, long waitTime, Executor executor) {
+        QueueExecutorWithReturnsImpl queueExecutor = new QueueExecutorWithReturnsImpl();
         queueExecutor.executor = executor;
         queueExecutor.poolSize = poolSize;
         queueExecutor.cla = cla;
@@ -98,7 +102,6 @@ public class QueueExecutorImpl implements QueueExecutor {
                             Object[] parts = Arrays.copyOfRange(objects, 2, objects.length);
                             if (INSTANCE.getArgsManager().isLegal(parts)) {
                                 try {
-                                    if (runner1 != null) runner1.run(t, objects);
                                     MatherResult result = INSTANCE.getActionManager().mather(objects[1].toString());
                                     if (result != null) {
                                         Method[] methods = result.getMethods();
@@ -106,24 +109,32 @@ public class QueueExecutorImpl implements QueueExecutor {
                                         Object o = INSTANCE.getContextManager().getContextEntity(cla);
                                         for (Method m : methods) {
                                             Object[] parObjs = INSTANCE.getAutomaticWiringParams().wiring(m, result, (Object) parts);
-                                            executor.execute(o, m, parObjs);
+                                            if (runner1 != null) {
+                                                runner1.methodRuined(null, m, t, objects);
+                                            }
+                                            Object o1 = executor.execute(o, m, parObjs);
+                                            if (runner2 != null) {
+                                                runner2.methodRuined(o1, m, t, objects);
+                                            }
                                         }
-                                        if (runner2 != null) runner2.run(t, objects);
                                         logger.Log("lost time "
                                                 + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
                                     } else logger.Log("No match for " + objects[1].toString(), 2);
                                 } catch (NoRunException e) {
-                                    logger.Log("抛出 不运行异常(throw NuRunException): " + e.getMessage() + " At " + getExceptionLine(e), 2);
+                                    logger.Log("抛出 不运行异常(throw NuRunException): "
+                                            + e.getMessage() + " At " + getExceptionLine(e), 2);
                                 } catch (InvocationTargetException e) {
                                     InvocationTargetException ite = e;
                                     if (ite.getTargetException().getClass() == NoRunException.class) {
                                         NoRunException exception = (NoRunException) ite.getTargetException();
                                         logger.Log("抛出 不运行异常(throw NuRunException): " + exception.getMessage(), 2);
                                     } else {
-                                        logger.Log("存在映射一个异常(Has a Invoke Exception)=>" + ite.getTargetException() + " at " + getExceptionLine(ite.getTargetException()), -1);
+                                        logger.Log("存在映射一个异常(Has a Invoke Exception)=>"
+                                                + ite.getTargetException() + " at " + getExceptionLine(ite.getTargetException()), -1);
                                     }
                                 } catch (Exception e) {
-                                    logger.Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+                                    logger.Log("存在一个异常(Has a Exception)=>"
+                                            + e + " at " + getExceptionLine(e), -1);
                                 }
                             } else {
                                 logger.Log("Can't Access types for " + Arrays.toString(objects), 2);

@@ -1,6 +1,6 @@
 package io.github.kloping.MySpringTool.interfaces;
 
-import io.github.kloping.MySpringTool.entity.Runner;
+import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -10,9 +10,9 @@ import java.lang.reflect.Method;
  */
 public interface Executor {
 
-    void setBefore(Runner runner);
+    <T extends Runner> void setBefore(T runner);
 
     Object execute(Object this_, Method method, Object... objects) throws InvocationTargetException, IllegalAccessException;
 
-    void setAfter(Runner runner);
+    <T extends Runner> void setAfter(T runner);
 }

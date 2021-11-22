@@ -1,6 +1,6 @@
 package io.github.kloping.MySpringTool.h1.impl.component;
 
-import io.github.kloping.MySpringTool.entity.Runner;
+import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 import io.github.kloping.MySpringTool.interfaces.Executor;
 
 import java.lang.reflect.InvocationTargetException;

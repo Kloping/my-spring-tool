@@ -1,7 +1,7 @@
 package io.github.kloping.MySpringTool;
 
 import io.github.kloping.MySpringTool.annotations.CommentScan;
-import io.github.kloping.MySpringTool.entity.Runner;
+import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
 import io.github.kloping.MySpringTool.h1.impl.AutomaticWiringValueImpl;
 import io.github.kloping.MySpringTool.h1.impl.ConfigFileManagerImpl;
@@ -25,55 +25,66 @@ import static io.github.kloping.MySpringTool.partUtils.*;
 public final class StarterApplication {
     public static Logger logger;
 
-    public static final class Setting {
-        private ContextManager contextManager;
-        private PackageScanner packageScanner;
-        private AutomaticWiringParams automaticWiringParams;
-        private AutomaticWiringValue automaticWiringValue;
-        private ArgsManager argsManager;
-        private InstanceCrater instanceCrater;
-        private ActionManager actionManager;
-        private MethodManager methodManager;
-        private FieldManager fieldManager;
-        private ClassManager classManager;
-        private ConfigFileManager configFileManager;
-        private Executor executor;
-        private QueueExecutor queueExecutor;
-        private TimeMethodManager timeMethodManager;
-        private HttpClientManager httpClientManager;
+    public static class Setting {
+        protected ContextManager contextManager;
+        protected PackageScanner packageScanner;
+        protected AutomaticWiringParams automaticWiringParams;
+        protected AutomaticWiringValue automaticWiringValue;
+        protected ArgsManager argsManager;
+        protected InstanceCrater instanceCrater;
+        protected ActionManager actionManager;
+        protected MethodManager methodManager;
+        protected FieldManager fieldManager;
+        protected ClassManager classManager;
+        protected ConfigFileManager configFileManager;
+        protected Executor executor;
+        protected QueueExecutor queueExecutor;
+        protected TimeMethodManager timeMethodManager;
+        protected HttpClientManager httpClientManager;
 
-        private Setting() {
-            if (INSTANCE != null) throw new RuntimeException("cannot create multiple Setting instances");
-            else defaultInit();
+        protected Setting() {
+//            if (INSTANCE != null) throw new RuntimeException("cannot create multiple Setting instances");
+//            else
+                defaultInit();
         }
 
-        public static final Setting INSTANCE = new Setting();
+        public static Setting INSTANCE = new Setting();
 
-        void defaultInit() {
-            logger = new LoggerImpl();
-            contextManager = new ContextManagerWithEIImpl();
-            configFileManager = new ConfigFileManagerImpl(contextManager);
-            automaticWiringParams = new AutomaticWiringParamsH2Impl();
-            automaticWiringValue = new AutomaticWiringValueImpl();
-            instanceCrater = new InstanceCraterImpl();
-            executor = new ExecutorNowImpl();
-
-            queueExecutor = QueueExecutorImpl.create(mainKey, poolSize, waitTime, executor);
-
-            argsManager = new ArgsManagerImpl();
-
-            packageScanner = new PackageScannerImpl(true);
-
-
-            classManager = new ClassManagerImpl(
-                    instanceCrater, contextManager, automaticWiringParams, actionManager
-            );
-
-            methodManager = new MethodManagerImpl(automaticWiringParams, classManager);
-            actionManager = new ActionManagerImpl(classManager);
-            timeMethodManager = new TimeMethodManagerImpl(classManager, automaticWiringParams);
-            httpClientManager = new HttpClientManagerImpl(classManager);
-            fieldManager = new FieldManagerImpl(automaticWiringValue, classManager);
+        protected void defaultInit() {
+            if (logger == null)
+                logger = new LoggerImpl();
+            if (contextManager == null)
+                contextManager = new ContextManagerWithEIImpl();
+            if (configFileManager == null)
+                configFileManager = new ConfigFileManagerImpl(contextManager);
+            if (automaticWiringParams == null)
+                automaticWiringParams = new AutomaticWiringParamsH2Impl();
+            if (automaticWiringValue == null)
+                automaticWiringValue = new AutomaticWiringValueImpl();
+            if (instanceCrater == null)
+                instanceCrater = new InstanceCraterImpl();
+            if (executor == null)
+                executor = new ExecutorNowImpl();
+            if (queueExecutor == null)
+                queueExecutor = QueueExecutorImpl.create(mainKey, poolSize, waitTime, executor);
+            if (argsManager == null)
+                argsManager = new ArgsManagerImpl();
+            if (packageScanner == null)
+                packageScanner = new PackageScannerImpl(true);
+            if (classManager == null)
+                classManager = new ClassManagerImpl(
+                        instanceCrater, contextManager, automaticWiringParams, actionManager
+                );
+            if (methodManager == null)
+                methodManager = new MethodManagerImpl(automaticWiringParams, classManager);
+            if (actionManager == null)
+                actionManager = new ActionManagerImpl(classManager);
+            if (timeMethodManager == null)
+                timeMethodManager = new TimeMethodManagerImpl(classManager, automaticWiringParams);
+            if (httpClientManager == null)
+                httpClientManager = new HttpClientManagerImpl(classManager);
+            if (fieldManager == null)
+                fieldManager = new FieldManagerImpl(automaticWiringValue, classManager);
 
             inited = true;
         }
@@ -137,6 +148,7 @@ public final class StarterApplication {
         public HttpClientManager getHttpClientManager() {
             return httpClientManager;
         }
+
     }
 
     private static int poolSize = 20;
@@ -144,6 +156,14 @@ public final class StarterApplication {
     private static String scanPath;
     private static boolean inited = false;
     private static Class<?> mainKey = Long.class;
+
+    public static void setPoolSize(int poolSize) {
+        StarterApplication.poolSize = poolSize;
+    }
+
+    public static void setWaitTime(long waitTime) {
+        StarterApplication.waitTime = waitTime;
+    }
 
     /**
      * 启动 SpringTool

@@ -2,15 +2,22 @@ package old;
 
 import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.annotations.*;
-import io.github.kloping.MySpringTool.entity.Runner;
+import io.github.kloping.MySpringTool.entity.impls.RunnerEve;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
+import io.github.kloping.MySpringTool.h1.impls.baseup.QueueExecutorWithReturnsImpl;
 import test.interfaces.M2;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 @CommentScan(path = "test")
 @Controller
-public class Main {
+public class Main extends StarterApplication.Setting {
+    protected Main() {
+        queueExecutor = QueueExecutorWithReturnsImpl.create(Long.class, 25, 10 * 1000, executor);
+        defaultInit();
+    }
+
     @Before
     public void before(String arg) {
         System.out.println("before => " + arg);
@@ -58,13 +65,25 @@ public class Main {
     }
 
     public static void main(String[] args) throws IllegalAccessException, InvocationTargetException {
+        INSTANCE = new Main();
         StarterApplication.addConfFile("./src/test/java/conf.txt");
         StarterApplication.setMainKey(Long.class);
         StarterApplication.setAccessTypes(String.class, Number.class);
-        StarterApplication.setAllBefore(new Runner(Runner.state.BEFORE) {
+        StarterApplication.setAllBefore(new RunnerEve() {
+            @Override
+            public void methodRuined(Object ret, Method method, Object t, Object... objects) {
+                System.out.println("any method before or after");
+            }
+
+            /**
+             * this method not run if executor instanceof QueueExecutorWithReturnsImpl
+             *
+             * @param t
+             * @param objects
+             * @throws NoRunException
+             */
             @Override
             public void run(Object t, Object[] objects) throws NoRunException {
-                System.out.println("all after");
             }
         });
         StarterApplication.run(Main.class);
@@ -75,7 +94,7 @@ public class Main {
         StarterApplication.ExecuteMethod(1002L, "abffdsfc", "我是参数", 111111);
         StarterApplication.ExecuteMethod(1002L, "abeeeeec", "我是参数", 111111);
         System.out.println("===========");
-        System.out.println(m2.doc());
+//        System.out.println(m2.doc());
     }
 
     @AutoStand

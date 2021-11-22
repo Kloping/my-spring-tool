@@ -15,6 +15,7 @@
     - 可根据具体需要更改配置 实现自己需要的功能
 
 基础案例1:[Simple.java](https://github.com/Kloping/my-spring-tool/blob/master/src/test/java/test/Simple.java)
+
 ```java
 
 package test;
@@ -26,30 +27,28 @@ import test.interfaces.M2;
 
 @CommentScan(path = "test")
 public class Simple {
-  public static void main(String[] args) {
-    StarterApplication.addConfFile("./src/test/java/conf.txt");
-    StarterApplication.run(Simple.class);
-    System.out.println(m2.doc());
-  }
-    
-  @AutoStand
-  static M2 m2;
+    public static void main(String[] args) {
+        StarterApplication.addConfFile("./src/test/java/conf.txt");
+        StarterApplication.run(Simple.class);
+        System.out.println(m2.doc());
+    }
+
+    @AutoStand
+    static M2 m2;
 }
 
 ```
 
-
 基础案例2:
 <details> 
 <summary><a href="https://github.com/Kloping/my-spring-tool/blob/master/src/test/java/old/Main.java">Main.java</a></summary> 
-
 
 ```java
 package old;
 
 import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.annotations.*;
-import io.github.kloping.MySpringTool.entity.Runner;
+import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
 import test.interfaces.M2;
 
@@ -135,3 +134,9 @@ public class Main {
 ```
 
 </details>
+
+
+update time on 21/11/2
+
+* 允许用户自定义 Setting
+* version for 0.2.6-M1
