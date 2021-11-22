@@ -136,7 +136,16 @@ public class Main {
 </details>
 
 
-update time on 21/11/2
+
+<hr>
+
+update time on 21/11/22:11
 
 * 允许用户自定义 Setting
 * version for 0.2.6-M1
+
+<hr>
+update time on 21/11/22:16
+
+* 修复 bug 
+* version for 0.2.6-M2
