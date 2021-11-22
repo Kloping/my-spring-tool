@@ -23,8 +23,8 @@ public class FieldManagerImpl implements FieldManager {
         classManager.registeredAnnotation(Entity.class, this);
         classManager.registeredAnnotation(Controller.class, this);
         classManager.registeredAnnotation(CommentScan.class, this);
-        StarterApplication.startAfterRunnerList.add(()->{
-            for (Class claz:setClass){
+        StarterApplication.startAfterRunnerList.add(() -> {
+            for (Class claz : setClass) {
                 for (Field declaredField : claz.getDeclaredFields()) {
                     declaredField.setAccessible(true);
                     try {
@@ -40,13 +40,15 @@ public class FieldManagerImpl implements FieldManager {
     @Override
     public void manager(Field field, ContextManager contextManager) throws IllegalAccessException {
         Object obj = contextManager.getContextEntity(field.getDeclaringClass());
-        if (field.get(obj) == null && field.isAnnotationPresent(AutoStand.class)) {
+        if (field.isAnnotationPresent(AutoStand.class)) {
             automaticWiringValue.wiring(obj, field, contextManager);
             StarterApplication.logger.Log("autoStand " + field.getName() + " in " + field.getDeclaringClass().getSimpleName(), 0);
         }
     }
+
     private ContextManager contextManager;
     private Set<Class> setClass = new CopyOnWriteArraySet<>();
+
     @Override
     public void manager(Class claz, ContextManager contextManager) throws IllegalAccessException {
         setClass.add(claz);

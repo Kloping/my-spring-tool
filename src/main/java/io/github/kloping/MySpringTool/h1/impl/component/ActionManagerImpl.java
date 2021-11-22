@@ -28,8 +28,8 @@ public class ActionManagerImpl implements ActionManager {
         classManager.registeredAnnotation(Controller.class, this);
     }
 
-    private static final Pattern pattern0 = Pattern.compile("<.*>");
-    private static final Pattern pattern1 = Pattern.compile("<.+=>.+>");
+    public static final Pattern pattern0 = Pattern.compile("<.*>");
+    public static final Pattern pattern1 = Pattern.compile("<.+=>.+>");
 
     @Override
     public MatherResult mather(String regx) {
@@ -97,6 +97,7 @@ public class ActionManagerImpl implements ActionManager {
     public void makeIndex() {
         indexMap.clear();
         for (String k : maps.keySet()) {
+            k = k.replaceFirst("<.*>", "");
             for (Character c : k.toCharArray()) {
                 MapUtils.append(indexMap, c, k);
             }
