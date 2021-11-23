@@ -3,11 +3,13 @@ package io.github.kloping.MySpringTool.h1.impl.component;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import io.github.kloping.MySpringTool.StarterApplication;
+import io.github.kloping.MySpringTool.annotations.PathValue;
 import io.github.kloping.MySpringTool.annotations.http.*;
 import io.github.kloping.MySpringTool.entity.Params;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.HttpClientManager;
+import io.github.kloping.object.ObjectUtils;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -18,6 +20,8 @@ import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -87,14 +91,18 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     try {
                         String trueUrl = getGetUrl(url, method, objects);
                         Connection connection = getConnection(trueUrl);
-                        initCookie(connection, method, trueUrl);
+                        initCookie(connection, method, trueUrl, objects);
                         Class<?> cls = method.getReturnType();
                         if (cls == String.class)
                             return connection.get().toString();
-                        else if (cls == Document.class)
+                        if (cls == Document.class)
                             return connection.get();
                         if (cls == byte[].class)
                             return connection.method(Connection.Method.GET).execute().bodyAsBytes();
+                        if (cls == CookieStore.class) {
+                            connection.get();
+                            return connection.cookieStore();
+                        }
                         return Type(cls, connection.get().body().text());
                     } catch (Exception e) {
                         StarterApplication.logger.Log(getExceptionLine(e), -1);
@@ -109,15 +117,21 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     try {
                         String trueUrl = getGetUrl(url, method, objects);
                         String body = getPostBody(method, objects);
-                        Connection connection = getConnection(trueUrl).requestBody(body);
-                        initCookie(connection, method, trueUrl);
+                        Connection connection = getConnection(trueUrl);
+                        connection.requestBody(body);
+                        connection.data(body);
+                        initCookie(connection, method, trueUrl, objects);
                         Class<?> cls = method.getReturnType();
                         if (cls == String.class)
                             return connection.post().toString();
-                        else if (cls == Document.class)
+                        if (cls == Document.class)
                             return connection.post();
                         if (cls == byte[].class)
                             return connection.method(Connection.Method.POST).execute().bodyAsBytes();
+                        if (cls == CookieStore.class) {
+                            connection.post();
+                            return connection.cookieStore();
+                        }
                         return Type(cls, connection.post().body().text());
                     } catch (Exception e) {
                         StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
@@ -128,11 +142,44 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
     }
 
-    private void initCookie(Connection connection, Method method, String trueUrl) throws Exception {
+    private void initCookie(Connection connection, Method method, String trueUrl, Object[] objects) throws Exception {
+        CookieStore cookieStore = connection.cookieStore();
         if (method.isAnnotationPresent(CookieFrom.class)) {
             CookieFrom cf = method.getAnnotation(CookieFrom.class);
-            connection.cookieStore(getCookieStore(cf.value(), Connection.Method.valueOf(cf.method()), trueUrl));
+            cookieStore = getCookieStore(cf.value(), Connection.Method.valueOf(cf.method()), trueUrl);
+            connection.cookieStore(cookieStore);
         }
+        Parameter[] parameters = method.getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            Class cla = parameter.getType();
+            if (cla == CookieStore.class) {
+                CookieStore store = (CookieStore) objects[i];
+                addCookieStore(store, cookieStore);
+            } else if (ObjectUtils.isSuperOrInterface(cla, Collection.class)) {
+                ParameterizedType type = (ParameterizedType) parameter.getParameterizedType();
+                Class t1 = (Class) type.getActualTypeArguments()[0];
+                if (t1 == CookieStore.class) {
+                    Collection<CookieStore> cookieStores = (Collection<CookieStore>) objects[i];
+                    for (CookieStore store : cookieStores) {
+                        addCookieStore(store, cookieStore);
+                    }
+                }
+            }
+        }
+    }
+
+
+    private static void addCookieStore(CookieStore from, CookieStore to) throws IllegalAccessException, NoSuchFieldException {
+        Field field = from.getClass().getDeclaredField("uriIndex");
+        field.setAccessible(true);
+        Map<URI, List<HttpCookie>> uriIndex = (Map<URI, List<HttpCookie>>) field.get(from);
+        List<HttpCookie> httpCookies = from.getCookies();
+        uriIndex.forEach((k, v) -> {
+            for (HttpCookie httpCookie : v) {
+                to.add(k, httpCookie);
+            }
+        });
     }
 
     public String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53";
@@ -166,8 +213,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
         return JSON.parseObject(text).toJavaObject(cls);
     }
 
-    public Map<String, CookieStore> histCookie = new ConcurrentHashMap<>();
-    public Map<String, URI> histURI = new ConcurrentHashMap<>();
 
     private CookieStore getCookieStore(String[] urls, Connection.Method method, String url) throws IOException, URISyntaxException {
         CookieStore store = null;
@@ -175,31 +220,19 @@ public class HttpClientManagerImpl implements HttpClientManager {
             try {
                 Connection connection = null;
                 CookieStore sc1 = null;
-                Document document = null;
-                URI uri = null;
                 if (u1.trim().toLowerCase().equals("this")) {
                     u1 = url.trim();
                 }
-                if (histCookie.containsKey(u1)) {
-                    sc1 = histCookie.get(u1);
-                    uri = histURI.get(u1);
-                } else {
-                    connection = getConnection(u1);
-                    if (method == Connection.Method.GET) {
-                        document = connection.get();
-                    } else if (method == Connection.Method.POST) {
-                        document = connection.post();
-                    }
-                    sc1 = connection.cookieStore();
-                    uri = new URI(document.baseUri());
-                    histCookie.put(u1, sc1);
-                    histURI.put(u1, uri);
-                }
+                connection = getConnection(u1);
+                if (method == Connection.Method.GET) connection.get();
+                else if (method == Connection.Method.POST) connection.post();
+                sc1 = connection.cookieStore();
                 if (store == null)
                     store = sc1;
                 else {
-                    for (HttpCookie httpCookie : sc1.getCookies()) {
-                        store.add(uri, httpCookie);
+                    List<HttpCookie> httpCookies = sc1.getCookies();
+                    for (int i1 = 0; i1 < httpCookies.size(); i1++) {
+                        store.add(store.getURIs().get(i1), httpCookies.get(i1));
                     }
                 }
             } catch (Exception e) {
@@ -212,9 +245,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     private String getGetUrl(String url, Method method, Object... objects) {
         Parameter[] parameters = method.getParameters();
+        StringBuilder sbend = new StringBuilder();
         StringBuilder sb = new StringBuilder();
-        sb.append(url);
-        sb.append("?");
+        sbend.append(url);
         for (int i = 0; i < parameters.length; i++) {
             if (objects[i] instanceof Params) {
                 Params params = (Params) objects[i];
@@ -231,10 +264,17 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 jo.forEach((k, v) -> {
                     sb.append(k).append("=").append(v).append("&");
                 });
+            } else if (parameters[i].isAnnotationPresent(PathValue.class)) {
+                PathValue pn = parameters[i].getAnnotation(PathValue.class);
+                if (!sbend.toString().endsWith("/"))
+                    sbend.append("/");
+                sbend.append(objects[i].toString());
             }
         }
         if (sb.toString().endsWith("?")) sb.delete(sb.length() - 1, sb.length());
         if (sb.toString().endsWith("&")) sb.delete(sb.length() - 1, sb.length());
-        return sb.toString();
+        sbend.append("?");
+        sbend.append(sb.toString());
+        return sbend.toString();
     }
 }
