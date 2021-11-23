@@ -13,5 +13,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RequestBody {
-    String type() default "toString";
+    public enum type{
+        toString,json
+    }
+    type type() default type.toString;
 }

@@ -140,11 +140,13 @@ final class HttpClientStarter {
         for (int i = 0; i < parameters.length; i++) {
             if (parameters[i].isAnnotationPresent(RequestBody.class)) {
                 RequestBody rb = parameters[i].getAnnotation(RequestBody.class);
-                String type = rb.type().trim().toLowerCase();
-                if (type.equals("toString")) {
-                    sb.append(objects[i]);
-                } else if (type.equals("json")) {
-                    sb.append(JSON.toJSONString(objects[i]));
+                switch (rb.type()) {
+                    case toString:
+                        sb.append(objects[i]);
+                        break;
+                    case json:
+                        sb.append(JSON.toJSONString(objects[i]));
+                        break;
                 }
             }
         }
