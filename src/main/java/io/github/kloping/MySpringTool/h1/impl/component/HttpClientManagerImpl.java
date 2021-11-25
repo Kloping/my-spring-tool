@@ -62,6 +62,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     @Override
     public void manager(Class cla, ContextManager contextManager) throws IllegalAccessException, InvocationTargetException {
+        if (!cla.isInterface()) return;
         contextManager.append(cla, Proxy.newProxyInstance(cla.getClassLoader(),
                 new Class[]{cla}, new InvocationHandler() {
                     @Override

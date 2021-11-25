@@ -35,5 +35,5 @@ gen
 src/io.github.Kloping.test/*
 
 target/*
-#**/test
+**/test
 **/test/test

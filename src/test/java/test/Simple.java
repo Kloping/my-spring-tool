@@ -10,7 +10,6 @@ public class Simple {
     public static void main(String[] args) {
         StarterApplication.addConfFile("./src/test/java/conf.txt");
         StarterApplication.run(Simple.class);
-        System.out.println(m2.doc());
     }
 
     @AutoStand

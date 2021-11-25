@@ -14,7 +14,7 @@
     - 系统 默认配置 与 功能的协调启动
     - 可根据具体需要更改配置 实现自己需要的功能
 
-基础案例1:[Simple.java](https://github.com/Kloping/my-spring-tool/blob/master/src/test/java/test/Simple.java)
+基础案例1:[Simple.java]()
 
 ```java
 
@@ -41,7 +41,7 @@ public class Simple {
 
 基础案例2:
 <details> 
-<summary><a href="https://github.com/Kloping/my-spring-tool/blob/master/src/test/java/old/Main.java">Main.java</a></summary> 
+<summary><a href="#">Main.java</a></summary> 
 
 ```java
 package old;

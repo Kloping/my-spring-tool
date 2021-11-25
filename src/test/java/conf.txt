@@ -4,3 +4,6 @@ k3=m1
 k4=100000000
 out.format=yyyy-MM/dd-HH:mm:ss:SSS
 log.level=1
+mysql.url=jdbc:mysql://localhost:3306/mydb1?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+mysql.user=root
+mysql.pwd=root

@@ -41,11 +41,12 @@ public final class StarterApplication {
         protected QueueExecutor queueExecutor;
         protected TimeMethodManager timeMethodManager;
         protected HttpClientManager httpClientManager;
+//        protected DataBaseManager dataBaseManager;
 
         protected Setting() {
 //            if (INSTANCE != null) throw new RuntimeException("cannot create multiple Setting instances");
 //            else
-                defaultInit();
+            defaultInit();
         }
 
         public static Setting INSTANCE = new Setting();
@@ -85,7 +86,8 @@ public final class StarterApplication {
                 httpClientManager = new HttpClientManagerImpl(classManager);
             if (fieldManager == null)
                 fieldManager = new FieldManagerImpl(automaticWiringValue, classManager);
-
+//            if (dataBaseManager == null)
+//                dataBaseManager = new DataBaseManagerImpl(classManager);
             inited = true;
         }
 
