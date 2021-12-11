@@ -99,9 +99,11 @@ public class ActionManagerImpl implements ActionManager {
                     String s4 = m1(ss[0]);
                     String[] ss2 = regxNow.split(s4);
                     String nowRegx = regx;
-                    for (String s3 : ss2) {
-                        nowRegx = nowRegx.replace(s3, "");
-                    }
+//                    for (String s3 : ss2) {
+//                        nowRegx = nowRegx.replace(s3, "");
+//                    }
+                    String m1 = regxNow.replace(ss[0],"");
+                    nowRegx = nowRegx.replaceFirst(m1,"");
                     Set<Method> set = maps.get(s);
                     MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
                     if (nowRegx.matches(ss[0])) {
@@ -215,6 +217,8 @@ public class ActionManagerImpl implements ActionManager {
         need1.add('?');
         need1.add('*');
         need1.add('^');
+        need1.add('{');
+//        "dsadsad".matches("\\.\\{0,}")
     }
 
     public static String m1(String m1) {

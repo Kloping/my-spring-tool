@@ -41,8 +41,8 @@ public class Main extends StarterApplication.Setting {
         System.out.println("m3");
     }
 
-    @Action("a<.*?=>s>c")
-    public void m4(@Param("s") String s) {
+    @Action("吸收魂环<.{0,}>")
+    public void m4(@Param("name") String s) {
         System.out.println(s);
         System.out.println("m4");
 //        try {
@@ -89,16 +89,17 @@ public class Main extends StarterApplication.Setting {
             public void run(Object t, Object[] objects) throws NoRunException {
             }
         });
+        System.out.println("吸收魂环.{0,}".replace(".{0,}",""));
         StarterApplication.run(Main.class);
         Group group = new Group(10L,"nick name");
         User user = new User(1L,10L,"nickname","name");
 //        StarterApplication.ExecuteMethod(1000L, "a", "我是参数", 111111 );
 //        StarterApplication.ExecuteMethod(1001L, "ab", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
+//        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
+//        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
+//        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
+//        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1002L, "吸收魂环百年魂环", "我是参数", 111111);
 //        StarterApplication.ExecuteMethod(1002L, "adsadbc", "我是参数", 111111);
 //        StarterApplication.ExecuteMethod(1002L, "abffdsfc", "我是参数", 111111);
 //        StarterApplication.ExecuteMethod(1002L, "abeeeeec", "我是参数", 111111);
