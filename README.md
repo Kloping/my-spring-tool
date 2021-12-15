@@ -23,7 +23,9 @@
 </dependencies>
 ```
 
+
 ## 使用说明(旧版):
+[NEW](https://github.com/Kloping/my-spring-tool/blob/master/docs/StarterApplication.md)
 
 框架运行于JVM class 和 jar 环境
 
