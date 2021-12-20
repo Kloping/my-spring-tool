@@ -18,9 +18,10 @@
     <dependency>
         <groupId>io.github.Kloping</groupId>
         <artifactId>SpringTool</artifactId>
-        <version>0.2.8</version>
+        <version>0.2.9</version>
     </dependency>
 </dependencies>
+
 ```
 
 
