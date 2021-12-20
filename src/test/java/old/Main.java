@@ -4,7 +4,10 @@ import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.annotations.*;
 import io.github.kloping.MySpringTool.entity.impls.RunnerEve;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
-import io.github.kloping.MySpringTool.h1.impls.baseup.QueueExecutorWithReturnsImpl;
+import io.github.kloping.MySpringTool.h1.impl.component.ExecutorNowImpl;
+import io.github.kloping.MySpringTool.h1.impls.baseup.QueueExecutorWithReturnsAndInterceptorImpl;
+import io.github.kloping.MySpringTool.interfaces.component.Callback;
+import io.github.kloping.MySpringTool.interfaces.component.Filter;
 import io.github.kloping.arr.Class2OMap;
 import test.entitys.Group;
 import test.entitys.User;
@@ -15,12 +18,7 @@ import java.lang.reflect.Method;
 
 @CommentScan(path = "test")
 @Controller
-public class Main extends StarterApplication.Setting {
-    protected Main() {
-//        queueExecutor = QueueExecutorWithReturnsImpl.create(Long.class, 25, 10 * 1000, executor);
-        defaultInit();
-    }
-
+public class Main {
     @Before
     public void before(String arg) {
         System.out.println("before => " + arg);
@@ -68,10 +66,18 @@ public class Main extends StarterApplication.Setting {
     }
 
     public static void main(String[] args) throws IllegalAccessException, InvocationTargetException {
-        INSTANCE = new Main();
+        new StarterApplication.Setting() {
+            @Override
+            protected void defaultInit() {
+                executor = new ExecutorNowImpl();
+                queueExecutor = QueueExecutorWithReturnsAndInterceptorImpl
+                        .create(Long.class, 25, 10 * 1000, executor);
+                super.defaultInit();
+            }
+        }.defaultInit();
         StarterApplication.addConfFile("./src/test/java/conf.txt");
         StarterApplication.setMainKey(Long.class);
-        StarterApplication.setAccessTypes(String.class, Number.class );
+        StarterApplication.setAccessTypes(String.class, Number.class);
         StarterApplication.setAllBefore(new RunnerEve() {
             @Override
             public void methodRuined(Object ret, Method method, Object t, Object... objects) {
@@ -89,10 +95,30 @@ public class Main extends StarterApplication.Setting {
             public void run(Object t, Object[] objects) throws NoRunException {
             }
         });
-        System.out.println("吸收魂环.{0,}".replace(".{0,}",""));
         StarterApplication.run(Main.class);
-        Group group = new Group(10L,"nick name");
-        User user = new User(1L,10L,"nickname","name");
+        Group group = new Group(10L, "nick name");
+        try {
+            QueueExecutorWithReturnsAndInterceptorImpl queueExecutorWithReturnsAndInterceptor =
+                    StarterApplication.Setting.INSTANCE.getContextManager()
+                            .getContextEntity(QueueExecutorWithReturnsAndInterceptorImpl.class);
+            queueExecutorWithReturnsAndInterceptor.addIntercept(1, new Callback() {
+                @Override
+                public void call(Object... objects) {
+                    System.out.println("拦截到了");
+                }
+            }, new Filter() {
+                @Override
+                public boolean filter(Object... o) {
+                    if (Long.parseLong(o[0].toString()) == 1002L) return true;
+                    return false;
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//
+//
+        User user = new User(1L, 10L, "nickname", "name");
 //        StarterApplication.ExecuteMethod(1000L, "a", "我是参数", 111111 );
 //        StarterApplication.ExecuteMethod(1001L, "ab", "我是参数", 111111);
 //        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);

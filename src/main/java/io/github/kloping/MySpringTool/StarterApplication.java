@@ -14,12 +14,12 @@ import io.github.kloping.MySpringTool.interfaces.*;
 import io.github.kloping.MySpringTool.interfaces.component.*;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-import static io.github.kloping.MySpringTool.StarterApplication.Setting.INSTANCE;
 import static io.github.kloping.MySpringTool.partUtils.*;
 
 public final class StarterApplication {
@@ -44,12 +44,14 @@ public final class StarterApplication {
 //        protected DataBaseManager dataBaseManager;
 
         protected Setting() {
-//            if (INSTANCE != null) throw new RuntimeException("cannot create multiple Setting instances");
-//            else
-            defaultInit();
+            INSTANCE = this;
         }
 
-        public static Setting INSTANCE = new Setting();
+        public static Setting INSTANCE = null;
+
+        public static void Default() {
+            new Setting().defaultInit();
+        }
 
         protected void defaultInit() {
             if (logger == null)
@@ -89,6 +91,17 @@ public final class StarterApplication {
 //            if (dataBaseManager == null)
 //                dataBaseManager = new DataBaseManagerImpl(classManager);
             inited = true;
+            Field[] fields = Setting.class.getDeclaredFields();
+            for (Field field : fields) {
+                Object o = null;
+                try {
+                    o = field.get(this);
+                } catch (Exception e) {
+                    continue;
+                }
+                if (o != null)
+                    contextManager.append(o);
+            }
         }
 
         public ContextManager getContextManager() {
@@ -173,9 +186,6 @@ public final class StarterApplication {
      * @param cla
      */
     public static void run(Class<?> cla) {
-        if (!inited) {
-            Setting.INSTANCE.defaultInit();
-        }
         if (cla.isAnnotationPresent(CommentScan.class)) {
             CommentScan scan = cla.getAnnotation(CommentScan.class);
             scanPath = filter(scan.path(), cla);
@@ -224,7 +234,7 @@ public final class StarterApplication {
      * @param classes
      */
     public static void setAccessTypes(Class<?>... classes) {
-        INSTANCE.argsManager.setArgsType(classes);
+        getInstance().argsManager.setArgsType(classes);
     }
 
     /**
@@ -234,7 +244,7 @@ public final class StarterApplication {
      * @return
      */
     public static synchronized int ExecuteMethod(Object... objects) {
-        return INSTANCE.queueExecutor.QueueExecute(objects[0], objects);
+        return getInstance().queueExecutor.QueueExecute(objects[0], objects);
     }
 
     /**
@@ -243,7 +253,7 @@ public final class StarterApplication {
      * @param runner
      */
     public static void setAllAfter(Runner runner) {
-        INSTANCE.queueExecutor.setAfter(runner);
+        getInstance().queueExecutor.setAfter(runner);
     }
 
     /**
@@ -252,13 +262,13 @@ public final class StarterApplication {
      * @param runner
      */
     public static void setAllBefore(Runner runner) {
-        INSTANCE.queueExecutor.setBefore(runner);
+        getInstance().queueExecutor.setBefore(runner);
     }
 
     private static void workAfter() {
-        Integer l = INSTANCE.contextManager.getContextEntity(Integer.class, "log.level");
+        Integer l = getInstance().contextManager.getContextEntity(Integer.class, "log.level");
         if (l != null) logger.setLogLevel(l.intValue());
-        String format = INSTANCE.contextManager.getContextEntity(String.class, "out.format");
+        String format = getInstance().contextManager.getContextEntity(String.class, "out.format");
         if (format != null) logger.setFormat(format);
     }
 
@@ -266,13 +276,13 @@ public final class StarterApplication {
 
     private static void loadConf() {
         for (String path : fileSet) {
-            INSTANCE.configFileManager.load(path);
+            getInstance().configFileManager.load(path);
         }
     }
 
     private static void reloadConf() {
         for (String path : fileSet) {
-            INSTANCE.configFileManager.load(path);
+            getInstance().configFileManager.load(path);
         }
     }
 
@@ -302,15 +312,24 @@ public final class StarterApplication {
 
     private static void work(Class<?> main) {
         try {
-            Object main_ = INSTANCE.instanceCrater.create(main, INSTANCE.contextManager);
-            INSTANCE.contextManager.append(main_);
-            INSTANCE.classManager.add(main);
-            for (Class<?> aClass : INSTANCE.packageScanner.scan(scanPath)) {
-                INSTANCE.classManager.add(aClass);
+            Object main_ = getInstance().instanceCrater.create(main, getInstance().contextManager);
+            getInstance().contextManager.append(main_);
+            getInstance().classManager.add(main);
+            for (Class<?> aClass : getInstance().packageScanner.scan(scanPath)) {
+                getInstance().classManager.add(aClass);
             }
             logger.Log("start sptool success", 1);
         } catch (Exception e) {
             logger.Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
         }
+    }
+
+    private static Setting getInstance() {
+        synchronized (StarterApplication.class) {
+            if (!inited) {
+                Setting.Default();
+            }
+        }
+        return Setting.INSTANCE;
     }
 }
