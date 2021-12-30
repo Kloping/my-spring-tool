@@ -15,7 +15,7 @@ public @interface DefaultValue {
     /**
      * default value
      * parameter is null use default value
-     * only use on {@link ParamName}
+     * only use on {@link io.github.kloping.MySpringTool.annotations.http.ParamName}
      *
      * @return
      */
