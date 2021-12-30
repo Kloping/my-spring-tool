@@ -4,11 +4,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.reflect.Method;
 
-/**
- * @author github-kloping
- */
+
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Callback {
@@ -19,8 +16,6 @@ public @interface Callback {
      * Callback("io.github.kloping.spt.M0")
      * this method return type must is String
      * else will call toString
-     *
-     * @return
      */
     String[] value();
 }
