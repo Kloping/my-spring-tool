@@ -4,7 +4,6 @@ import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.annotations.AutoStand;
 import io.github.kloping.MySpringTool.annotations.CommentScan;
 import test.entitys.pvpQQH0.PvpQQH0;
-import test.entitys.pvpQQVoice.PvpQQVoice;
 import test.interfaces.M2;
 import test.interfaces.PvpQq;
 
@@ -14,10 +13,11 @@ public class Simple {
         StarterApplication.addConfFile("./src/test/java/conf.txt");
         StarterApplication.run(Simple.class);
 
-        PvpQQH0 v2 = pvpQq.get1("createHeroList");
+        PvpQQH0 v2 = pvpQq.get1(null);
+
+        System.out.println(m2.doc());
 
         System.out.println("end");
-
     }
 
     public static String c1(String arg) {
@@ -31,6 +31,5 @@ public class Simple {
 
     @AutoStand
     static PvpQq pvpQq;
-
 
 }

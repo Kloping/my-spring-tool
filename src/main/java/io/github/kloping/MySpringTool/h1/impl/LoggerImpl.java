@@ -37,9 +37,9 @@ public class LoggerImpl implements Logger {
         if (level == 0) {
             System.out.println(info);
         } else if (level == 1) {
-            System.out.format("\033[32m" + info + "\033[m\n");
+            System.out.println("\033[32m" + info + "\033[m\n");
         } else if (level == 2) {
-            System.out.format("\033[33m" + info + "\033[m\n");
+            System.out.println("\033[33m" + info + "\033[m\n");
         } else if (level == -1) {
             System.err.println(info);
         }

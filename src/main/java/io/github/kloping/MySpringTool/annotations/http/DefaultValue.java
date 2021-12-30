@@ -5,14 +5,19 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 将这个参数 以 指定名字 作为
- *  k=v 的参数
- *  k = value
- *  v = o.toString
- * @author github-kloping
+ * @author github kloping
+ * @version 1.0
+ * @date 2021/12/30-15:29
  */
 @Target(ElementType.PARAMETER)
 @java.lang.annotation.Retention(RetentionPolicy.RUNTIME)
-public @interface ParamName {
+public @interface DefaultValue {
+    /**
+     * default value
+     * parameter is null use default value
+     * only use on {@link ParamName}
+     *
+     * @return
+     */
     String value();
 }

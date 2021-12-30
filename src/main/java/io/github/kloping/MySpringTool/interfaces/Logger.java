@@ -13,4 +13,20 @@ public interface Logger {
     }
 
     int setLogLevel(int level);
+
+    default void info(String mess) {
+        Log(mess, 1);
+    }
+
+    default void waring(String mess) {
+        Log(mess, 2);
+    }
+
+    default void log(String mess) {
+        Log(mess, 0);
+    }
+
+    default void eror(String mess) {
+        Log(mess, -1);
+    }
 }

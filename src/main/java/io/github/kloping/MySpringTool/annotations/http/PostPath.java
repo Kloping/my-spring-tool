@@ -7,6 +7,7 @@ import java.lang.annotation.Target;
 
 /**
  * post 方式请路径
+ * @author github-kloping
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)

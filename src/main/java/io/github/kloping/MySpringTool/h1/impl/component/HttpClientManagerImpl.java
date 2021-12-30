@@ -80,13 +80,8 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                         if (methodInks.containsKey(method)) {
                             return methodInks.get(method).run(args);
-                        } else {
-                            try {
-                                return method.invoke(proxy, args);
-                            } catch (Exception e) {
-                                return null;
-                            }
                         }
+                        return null;
                     }
                 }), UUID.randomUUID().toString());
         for (Method declaredMethod : cla.getDeclaredMethods()) {
@@ -261,17 +256,24 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     private <T> T Type(Class<T> cls, final String finalText, Method[] methods) {
         String text = finalText;
-        for (Method method : methods) {
-            if (method == null) {
-                continue;
-            }
-            try {
-                text = method.invoke(null, text).toString();
-            } catch (Exception e) {
-                StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
+        if (methods != null) {
+            for (Method method : methods) {
+                if (method == null) {
+                    continue;
+                }
+                try {
+                    text = method.invoke(null, text).toString();
+                } catch (Exception e) {
+                    StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
+                }
             }
         }
-        return JSON.parseObject(text == null ? finalText : text).toJavaObject(cls);
+        try {
+            return JSON.parseObject(text == null ? finalText : text).toJavaObject(cls);
+        } catch (Exception e) {
+            StarterApplication.logger.Log(e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e), -1);
+            return null;
+        }
     }
 
 
@@ -318,7 +320,16 @@ public class HttpClientManagerImpl implements HttpClientManager {
             } else if (parameters[i].isAnnotationPresent(ParamName.class)) {
                 ParamName pn = parameters[i].getAnnotation(ParamName.class);
                 String k = pn.value();
-                sb.append(k).append("=").append(objects[i].toString()).append("&");
+                Object v = objects[i];
+                if (v == null) {
+                    if (parameters[i].isAnnotationPresent(DefaultValue.class)) {
+                        DefaultValue value = parameters[i].getDeclaredAnnotation(DefaultValue.class);
+                        v = value.value();
+                    }
+                } else {
+                    v = v.toString();
+                }
+                sb.append(k).append("=").append(v).append("&");
             } else if (parameters[i].isAnnotationPresent(ParamBody.class)) {
                 ParamBody pn = parameters[i].getAnnotation(ParamBody.class);
                 JSONObject jo = JSON.parseObject(JSON.toJSONString(objects[i]));
