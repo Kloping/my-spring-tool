@@ -14,23 +14,12 @@ import java.lang.reflect.Method;
 public @interface Callback {
     /**
      * on request data call method(s)
-     *
+     * <p>
      * template
-     *
-     * ```
-     *
-     * @HttpClint("https://xxxx.xxx")
-     * interface M0{
-     *   @Callback({"io.github.kloping.spt.M0"})
-     *   @GetPath("xxxx/xx")
-     *   YouType getData(){
-     *   }
-     * }
-     *
-     * ```
-     *
+     * Callback("io.github.kloping.spt.M0")
      * this method return type must is String
      * else will call toString
+     *
      * @return
      */
     String[] value();
