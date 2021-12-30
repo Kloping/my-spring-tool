@@ -22,6 +22,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import static io.github.kloping.MySpringTool.partUtils.*;
 
+/**
+ * @author github-kloping
+ */
 public final class StarterApplication {
     public static Logger logger;
 

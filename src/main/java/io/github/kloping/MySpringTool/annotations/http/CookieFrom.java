@@ -7,23 +7,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * Request with cookie from value
+ * The default request for obtaining cookies is GET
  * @author github-kloping
  */
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CookieFrom {
-    /**
-     * urls
-     * on  "this" use will execute url
-     *
-     * @return
-     */
-    String[] value();
-
-    /**
-     * only GET or POST
-     *
-     * @return
-     */
     String method() default "GET";
+    String[] value();
 }
