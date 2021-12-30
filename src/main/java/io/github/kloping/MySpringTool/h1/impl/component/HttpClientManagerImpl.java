@@ -28,6 +28,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static io.github.kloping.MySpringTool.partUtils.getExceptionLine;
 
+/**
+ * @author github-kloping
+ */
 public class HttpClientManagerImpl implements HttpClientManager {
     private abstract class M1<T> {
         private String path;
@@ -36,6 +39,12 @@ public class HttpClientManagerImpl implements HttpClientManager {
             this.path = path;
         }
 
+        /**
+         * proxy method run
+         *
+         * @param objects
+         * @return
+         */
         abstract T run(Object... objects);
     }
 
@@ -62,14 +71,22 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     @Override
     public void manager(Class cla, ContextManager contextManager) throws IllegalAccessException, InvocationTargetException {
-        if (!cla.isInterface()) return;
+        if (!cla.isInterface()) {
+            return;
+        }
         contextManager.append(cla, Proxy.newProxyInstance(cla.getClassLoader(),
                 new Class[]{cla}, new InvocationHandler() {
                     @Override
                     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                        if (methodInks.containsKey(method))
+                        if (methodInks.containsKey(method)) {
                             return methodInks.get(method).run(args);
-                        return null;
+                        } else {
+                            try {
+                                return method.invoke(proxy, args);
+                            } catch (Exception e) {
+                                return null;
+                            }
+                        }
                     }
                 }), UUID.randomUUID().toString());
         for (Method declaredMethod : cla.getDeclaredMethods()) {
@@ -85,7 +102,14 @@ public class HttpClientManagerImpl implements HttpClientManager {
     }
 
     private void InitMethod(Method method, String url, int type) {
+        Method[] methods = null;
+        if (method.isAnnotationPresent(Callback.class)) {
+            Callback callback = method.getDeclaredAnnotation(Callback.class);
+            String[] ss = callback.value();
+            methods = parseMethods(ss);
+        }
         if (type == 0) {
+            Method[] finalMethods1 = methods;
             methodInks.put(method, new M1(url) {
                 @Override
                 Object run(Object... objects) {
@@ -104,7 +128,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                             connection.get();
                             return connection.cookieStore();
                         }
-                        return Type(cls, connection.get().body().text());
+                        return Type(cls, connection.get().body().text(), finalMethods1);
                     } catch (Exception e) {
                         StarterApplication.logger.Log(getExceptionLine(e), -1);
                     }
@@ -112,6 +136,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 }
             });
         } else if (type == 1) {
+            Method[] finalMethods = methods;
             methodInks.put(method, new M1(url) {
                 @Override
                 Object run(Object... objects) {
@@ -123,17 +148,20 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         connection.data(body);
                         initCookie(connection, method, trueUrl, objects);
                         Class<?> cls = method.getReturnType();
-                        if (cls == String.class)
+                        if (cls == String.class) {
                             return connection.post().toString();
-                        if (cls == Document.class)
+                        }
+                        if (cls == Document.class) {
                             return connection.post();
-                        if (cls == byte[].class)
+                        }
+                        if (cls == byte[].class) {
                             return connection.method(Connection.Method.POST).execute().bodyAsBytes();
+                        }
                         if (cls == CookieStore.class) {
                             connection.post();
                             return connection.cookieStore();
                         }
-                        return Type(cls, connection.post().body().text());
+                        return Type(cls, connection.post().body().text(), finalMethods);
                     } catch (Exception e) {
                         StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
                     }
@@ -141,6 +169,26 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 }
             });
         }
+    }
+
+    private Method[] parseMethods(String[] ss) {
+        Method[] methods = new Method[ss.length];
+        int i = 0;
+        for (String s : ss) {
+            int i0 = s.lastIndexOf(".");
+            String className = s.substring(0, i0);
+            String methodName = s.substring(i0 + 1, s.length());
+            try {
+                Class<?> cla = Class.forName(className);
+                Method method = cla.getDeclaredMethod(methodName, String.class);
+                method.setAccessible(true);
+                methods[i] = method;
+            } catch (Exception e) {
+                StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
+            }
+            i++;
+        }
+        return methods;
     }
 
     private void initCookie(Connection connection, Method method, String trueUrl, Object[] objects) throws Exception {
@@ -203,15 +251,27 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     case json:
                         sb.append(JSON.toJSONString(objects[i]));
                         break;
+                    default:
+                        break;
                 }
             }
         }
         return sb.toString();
     }
 
-    private <T> T Type(Class<T> cls, String text) {
-        if (cls == byte[].class) return (T) text.getBytes();
-        return JSON.parseObject(text).toJavaObject(cls);
+    private <T> T Type(Class<T> cls, final String finalText, Method[] methods) {
+        String text = finalText;
+        for (Method method : methods) {
+            if (method == null) {
+                continue;
+            }
+            try {
+                text = method.invoke(null, text).toString();
+            } catch (Exception e) {
+                StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
+            }
+        }
+        return JSON.parseObject(text == null ? finalText : text).toJavaObject(cls);
     }
 
 

@@ -39,7 +39,7 @@ public class Main {
         System.out.println("m3");
     }
 
-    @Action("吸收魂环<.{0,}>")
+    @Action("abcdef<.{0,}>")
     public void m4(@Param("name") String s) {
         System.out.println(s);
         System.out.println("m4");
@@ -104,7 +104,7 @@ public class Main {
             queueExecutorWithReturnsAndInterceptor.addIntercept(1, new Callback() {
                 @Override
                 public void call(Object... objects) {
-                    System.out.println("拦截到了");
+                    System.out.println("intercepted==========");
                 }
             }, new Filter() {
                 @Override
@@ -119,16 +119,7 @@ public class Main {
 //
 //
         User user = new User(1L, 10L, "nickname", "name");
-//        StarterApplication.ExecuteMethod(1000L, "a", "我是参数", 111111 );
-//        StarterApplication.ExecuteMethod(1001L, "ab", "我是参数", 111111);
-//        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
-//        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
-//        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
-//        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "吸收魂环百年魂环", "我是参数", 111111);
-//        StarterApplication.ExecuteMethod(1002L, "adsadbc", "我是参数", 111111);
-//        StarterApplication.ExecuteMethod(1002L, "abffdsfc", "我是参数", 111111);
-//        StarterApplication.ExecuteMethod(1002L, "abeeeeec", "我是参数", 111111);
+        StarterApplication.ExecuteMethod(1002L, "abcdef bbhh", "我是", 111111);
         System.out.println("===========");
 //        System.out.println(m2.doc());
     }
