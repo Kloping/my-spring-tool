@@ -6,6 +6,7 @@ import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.annotations.PathValue;
 import io.github.kloping.MySpringTool.annotations.http.*;
 import io.github.kloping.MySpringTool.entity.Params;
+import io.github.kloping.MySpringTool.h1.impl.AutomaticWiringParamsImpl;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.HttpClientManager;
@@ -123,7 +124,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                             connection.get();
                             return connection.cookieStore();
                         }
-                        return Type(cls, connection.get().body().text(), finalMethods1);
+                        return Type(cls, connection.get(), finalMethods1);
                     } catch (Exception e) {
                         StarterApplication.logger.Log(getExceptionLine(e), -1);
                     }
@@ -156,7 +157,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                             connection.post();
                             return connection.cookieStore();
                         }
-                        return Type(cls, connection.post().body().text(), finalMethods);
+                        return Type(cls, connection.post(), finalMethods);
                     } catch (Exception e) {
                         StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
                     }
@@ -175,7 +176,15 @@ public class HttpClientManagerImpl implements HttpClientManager {
             String methodName = s.substring(i0 + 1, s.length());
             try {
                 Class<?> cla = Class.forName(className);
-                Method method = cla.getDeclaredMethod(methodName, String.class);
+                Method method = null;
+                for (Method declaredMethod : cla.getDeclaredMethods()) {
+                    if (declaredMethod.getName().equals(methodName))
+                        method = declaredMethod;
+                }
+                if (method == null) {
+                    methods[i] = null;
+                    continue;
+                }
                 method.setAccessible(true);
                 methods[i] = method;
             } catch (Exception e) {
@@ -254,7 +263,10 @@ public class HttpClientManagerImpl implements HttpClientManager {
         return sb.toString();
     }
 
-    private <T> T Type(Class<T> cls, final String finalText, Method[] methods) {
+    private static final AutomaticWiringParamsImpl awp = new AutomaticWiringParamsImpl();
+
+    private <T> T Type(Class<T> cls, final Document doc, Method[] methods) {
+        String finalText = doc.toString();
         String text = finalText;
         if (methods != null) {
             for (Method method : methods) {
@@ -262,7 +274,8 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     continue;
                 }
                 try {
-                    text = method.invoke(null, text).toString();
+                    Object[] os = awp.wiring(method, doc, text);
+                    text = method.invoke(null, os).toString();
                 } catch (Exception e) {
                     StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
                 }
