@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 /**
  * @author github kloping
  * @version 1.0
- * @date 2021/12/30-15:29
+ * @date 2021/12/30-15
  */
 @Target(ElementType.PARAMETER)
 @java.lang.annotation.Retention(RetentionPolicy.RUNTIME)

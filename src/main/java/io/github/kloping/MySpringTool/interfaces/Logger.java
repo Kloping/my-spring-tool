@@ -14,19 +14,35 @@ public interface Logger {
 
     int setLogLevel(int level);
 
+    /**
+     * info log
+     * @param mess
+     */
     default void info(String mess) {
         Log(mess, 1);
     }
 
+    /**
+     * warring log
+     * @param mess
+     */
     default void waring(String mess) {
         Log(mess, 2);
     }
 
+    /**
+     * normal log
+     * @param mess
+     */
     default void log(String mess) {
         Log(mess, 0);
     }
 
-    default void eror(String mess) {
+    /**
+     * error log
+     * @param mess
+     */
+    default void error(String mess) {
         Log(mess, -1);
     }
 }

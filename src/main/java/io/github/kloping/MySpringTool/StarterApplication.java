@@ -303,7 +303,7 @@ public final class StarterApplication {
      * 并返回 当前所有配置文件
      *
      * @param file
-     * @return
+     * @return this
      */
     public static Set<String> addConfFile(String file) {
         fileSet.add(file);
