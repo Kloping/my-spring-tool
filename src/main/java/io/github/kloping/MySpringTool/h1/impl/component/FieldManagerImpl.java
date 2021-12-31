@@ -14,6 +14,9 @@ import java.lang.reflect.Field;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+/**
+ * @author github-kloping
+ */
 public class FieldManagerImpl implements FieldManager {
 
     private AutomaticWiringValue automaticWiringValue;
