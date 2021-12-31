@@ -222,7 +222,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
     }
 
-
     private static void addCookieStore(CookieStore from, CookieStore to) throws IllegalAccessException, NoSuchFieldException {
         Field field = from.getClass().getDeclaredField("uriIndex");
         field.setAccessible(true);
@@ -266,7 +265,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
     private static final AutomaticWiringParamsImpl awp = new AutomaticWiringParamsImpl();
 
     private <T> T Type(Class<T> cls, final Document doc, Method[] methods) {
-        String finalText = doc.toString();
+        String finalText = doc.body().text();
         String text = finalText;
         if (methods != null) {
             for (Method method : methods) {
@@ -288,7 +287,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
             return null;
         }
     }
-
 
     private CookieStore getCookieStore(String[] urls, Connection.Method method, String url) throws IOException, URISyntaxException {
         CookieStore store = null;
