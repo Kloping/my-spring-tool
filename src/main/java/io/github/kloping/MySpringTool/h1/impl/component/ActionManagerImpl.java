@@ -21,19 +21,21 @@ import java.util.regex.Pattern;
 
 import static io.github.kloping.judge.Judge.isNotNull;
 
+/**
+ * @author github-kloping
+ */
 public class ActionManagerImpl implements ActionManager {
-
 
     public ActionManagerImpl(ClassManager classManager) {
         classManager.registeredAnnotation(Controller.class, this);
     }
 
-    public static final Pattern pattern0 = Pattern.compile("<.*>");
-    public static final Pattern pattern1 = Pattern.compile("<.+=>.+>");
+    public static final Pattern PATTERN0 = Pattern.compile("<.*>");
+    public static final Pattern PATTERN1 = Pattern.compile("<.+=>.+>");
     public Map<String, String> histIndexes = new HashMap<>();
 
     @Override
-    public MatherResult mather(String regx) {
+    public synchronized MatherResult mather(String regx) {
         if (regx == null || regx.trim().isEmpty()) return null;
         if (indexMap.isEmpty()) makeIndex();
         if (maps.containsKey(regx)) {
@@ -78,7 +80,7 @@ public class ActionManagerImpl implements ActionManager {
             MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
             return mr;
         } else {
-            Matcher matcher = pattern0.matcher(s);
+            Matcher matcher = PATTERN0.matcher(s);
             if (matcher.find()) {
                 String s1 = matcher.group();
                 String s2 = s1.substring(1, s1.length() - 1);
@@ -89,7 +91,7 @@ public class ActionManagerImpl implements ActionManager {
                     return mr;
                 }
             }
-            matcher = pattern1.matcher(s);
+            matcher = PATTERN1.matcher(s);
             if (matcher.find()) {
                 String s1 = matcher.group();
                 String s2 = s1.substring(1, s1.length() - 1);
@@ -99,11 +101,8 @@ public class ActionManagerImpl implements ActionManager {
                     String s4 = m1(ss[0]);
                     String[] ss2 = regxNow.split(s4);
                     String nowRegx = regx;
-//                    for (String s3 : ss2) {
-//                        nowRegx = nowRegx.replace(s3, "");
-//                    }
-                    String m1 = regxNow.replace(ss[0],"");
-                    nowRegx = nowRegx.replaceFirst(m1,"");
+                    String m1 = regxNow.replace(ss[0], "");
+                    nowRegx = nowRegx.replaceFirst(m1, "");
                     Set<Method> set = maps.get(s);
                     MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
                     if (nowRegx.matches(ss[0])) {
@@ -154,6 +153,7 @@ public class ActionManagerImpl implements ActionManager {
         this.manager(contextManager.getContextEntity(method.getDeclaringClass()));
     }
 
+    @Override
     public void manager(Object obj) throws IllegalAccessException, InvocationTargetException {
         if (obj == null) return;
         if (obj.getClass() == null) return;
@@ -218,7 +218,6 @@ public class ActionManagerImpl implements ActionManager {
         need1.add('*');
         need1.add('^');
         need1.add('{');
-//        "dsadsad".matches("\\.\\{0,}")
     }
 
     public static String m1(String m1) {
@@ -229,6 +228,22 @@ public class ActionManagerImpl implements ActionManager {
             sb.append(c);
         }
         return sb.toString();
+    }
+
+    @Override
+    public synchronized void replaceAction(String oStr, String nowStr) {
+        if (maps.containsKey(oStr)) {
+            Set<Method> set = maps.get(oStr);
+            maps.put(nowStr, set);
+            maps.remove(oStr);
+            for (char c : oStr.toCharArray()) {
+                indexMap.remove(c);
+            }
+            for (char c : nowStr.toCharArray()) {
+                MapUtils.append(indexMap, c, nowStr);
+            }
+            histIndexes.clear();
+        }
     }
 }
 

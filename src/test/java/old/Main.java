@@ -41,7 +41,7 @@ public class Main {
 
     @Action("abcdef<.{0,}>")
     public void m4(@Param("name") String s) {
-        System.out.println(s);
+        System.out.println("==============================>>>>>>>");
         System.out.println("m4");
 //        try {
 //            Thread.sleep(1500);
@@ -65,7 +65,7 @@ public class Main {
         System.out.println("333333333333333333333333333");
     }
 
-    public static void main(String[] args) throws IllegalAccessException, InvocationTargetException {
+    public static void main(String[] args) throws IllegalAccessException, InvocationTargetException, InterruptedException {
         new StarterApplication.Setting() {
             @Override
             protected void defaultInit() {
@@ -119,7 +119,14 @@ public class Main {
 //
 //
         User user = new User(1L, 10L, "nickname", "name");
-        StarterApplication.ExecuteMethod(1002L, "abcdef bbhh", "我是", 111111);
+        StarterApplication.ExecuteMethod(1001L, "abcdef bbhh", "我是", 111111);
+        StarterApplication.ExecuteMethod(1001L, "aaaaf bbhh", "我是", 111111);
+        Thread.sleep(1000);
+        Thread.sleep(1000);
+        StarterApplication.Setting.INSTANCE.getActionManager().replaceAction("abcdef<.{0,}>","aaaa.+");
+        StarterApplication.ExecuteMethod(1001L, "abcdef bbhh", "我是", 111111);
+        StarterApplication.ExecuteMethod(1001L, "aaaaf bbhh", "我是", 111111);
+
         System.out.println("===========");
 //        System.out.println(m2.doc());
     }
