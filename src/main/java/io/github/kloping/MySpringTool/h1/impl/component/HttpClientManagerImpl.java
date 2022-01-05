@@ -53,6 +53,8 @@ public class HttpClientManagerImpl implements HttpClientManager {
         classManager.registeredAnnotation(HttpClient.class, this);
     }
 
+    public static final String SPLIT = "/";
+
     @Override
     public void manager(Method method, ContextManager contextManager) throws IllegalAccessException, InvocationTargetException {
         method.setAccessible(true);
@@ -60,11 +62,11 @@ public class HttpClientManagerImpl implements HttpClientManager {
         if (method.isAnnotationPresent(GetPath.class)) {
             String path = method.getAnnotation(GetPath.class).value();
             path = ali(host, path);
-            InitMethod(method, path, 0);
+            initMethod(method, path, 0);
         } else if (method.isAnnotationPresent(PostPath.class)) {
             String path = method.getAnnotation(PostPath.class).value();
             path = ali(host, path);
-            InitMethod(method, path, 1);
+            initMethod(method, path, 1);
         }
     }
 
@@ -91,13 +93,19 @@ public class HttpClientManagerImpl implements HttpClientManager {
     }
 
     private String ali(String host, String path) {
-        if (!host.endsWith("/")) host += "/";
-        if (path.startsWith("/")) path = path.substring(1, path.length());
-        if (path.endsWith("/")) path = path.substring(0, path.length() - 1);
+        if (!host.endsWith(SPLIT)) {
+            host += SPLIT;
+        }
+        if (path.startsWith(SPLIT)) {
+            path = path.substring(1, path.length());
+        }
+        if (path.endsWith(SPLIT)) {
+            path = path.substring(0, path.length() - 1);
+        }
         return host + path;
     }
 
-    private void InitMethod(Method method, String url, int type) {
+    private void initMethod(Method method, String url, int type) {
         Method[] methods = null;
         if (method.isAnnotationPresent(Callback.class)) {
             Callback callback = method.getDeclaredAnnotation(Callback.class);
@@ -114,17 +122,20 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         Connection connection = getConnection(trueUrl);
                         initCookie(connection, method, trueUrl, objects);
                         Class<?> cls = method.getReturnType();
-                        if (cls == String.class)
+                        if (cls == String.class) {
                             return connection.get().toString();
-                        if (cls == Document.class)
+                        }
+                        if (cls == Document.class) {
                             return connection.get();
-                        if (cls == byte[].class)
+                        }
+                        if (cls == byte[].class) {
                             return connection.method(Connection.Method.GET).execute().bodyAsBytes();
+                        }
                         if (cls == CookieStore.class) {
                             connection.get();
                             return connection.cookieStore();
                         }
-                        return Type(cls, connection.get(), finalMethods1);
+                        return toType(cls, connection.get(), finalMethods1);
                     } catch (Exception e) {
                         StarterApplication.logger.Log(getExceptionLine(e), -1);
                     }
@@ -157,7 +168,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                             connection.post();
                             return connection.cookieStore();
                         }
-                        return Type(cls, connection.post(), finalMethods);
+                        return toType(cls, connection.post(), finalMethods);
                     } catch (Exception e) {
                         StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
                     }
@@ -178,8 +189,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 Class<?> cla = Class.forName(className);
                 Method method = null;
                 for (Method declaredMethod : cla.getDeclaredMethods()) {
-                    if (declaredMethod.getName().equals(methodName))
+                    if (declaredMethod.getName().equals(methodName)) {
                         method = declaredMethod;
+                    }
                 }
                 if (method == null) {
                     methods[i] = null;
@@ -234,7 +246,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         });
     }
 
-    public String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53";
+    public static String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53";
 
     private Connection getConnection(String trueUrl) throws Exception {
         return Jsoup.connect(trueUrl).ignoreContentType(true)
@@ -262,9 +274,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
         return sb.toString();
     }
 
-    private static final AutomaticWiringParamsImpl awp = new AutomaticWiringParamsImpl();
+    private static final AutomaticWiringParamsImpl AWP = new AutomaticWiringParamsImpl();
 
-    private <T> T Type(Class<T> cls, final Document doc, Method[] methods) {
+    private <T> T toType(Class<T> cls, final Document doc, Method[] methods) {
         String finalText = doc.body().text();
         String text = finalText;
         if (methods != null) {
@@ -273,7 +285,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     continue;
                 }
                 try {
-                    Object[] os = awp.wiring(method, doc, text);
+                    Object[] os = AWP.wiring(method, doc, text);
                     text = method.invoke(null, os).toString();
                 } catch (Exception e) {
                     StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
@@ -281,7 +293,11 @@ public class HttpClientManagerImpl implements HttpClientManager {
             }
         }
         try {
-            return JSON.parseObject(text == null ? finalText : text).toJavaObject(cls);
+            if (cls.isArray()) {
+                return JSON.parseArray(text == null ? finalText : text).toJavaObject(cls);
+            } else {
+                return JSON.parseObject(text == null ? finalText : text).toJavaObject(cls);
+            }
         } catch (Exception e) {
             StarterApplication.logger.Log(e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e), -1);
             return null;
@@ -294,16 +310,19 @@ public class HttpClientManagerImpl implements HttpClientManager {
             try {
                 Connection connection = null;
                 CookieStore sc1 = null;
-                if (u1.trim().toLowerCase().equals("this")) {
+                if ("this".equals(u1.trim().toLowerCase())) {
                     u1 = url.trim();
                 }
                 connection = getConnection(u1);
-                if (method == Connection.Method.GET) connection.get();
-                else if (method == Connection.Method.POST) connection.post();
+                if (method == Connection.Method.GET) {
+                    connection.get();
+                } else if (method == Connection.Method.POST) {
+                    connection.post();
+                }
                 sc1 = connection.cookieStore();
-                if (store == null)
+                if (store == null) {
                     store = sc1;
-                else {
+                } else {
                     List<HttpCookie> httpCookies = sc1.getCookies();
                     for (int i1 = 0; i1 < httpCookies.size(); i1++) {
                         store.add(store.getURIs().get(i1), httpCookies.get(i1));
@@ -319,9 +338,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     private String getGetUrl(String url, Method method, Object... objects) {
         Parameter[] parameters = method.getParameters();
-        StringBuilder sbend = new StringBuilder();
+        StringBuilder sb_end = new StringBuilder();
         StringBuilder sb = new StringBuilder();
-        sbend.append(url);
+        sb_end.append(url);
         for (int i = 0; i < parameters.length; i++) {
             if (objects[i] instanceof Params) {
                 Params params = (Params) objects[i];
@@ -349,15 +368,23 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 });
             } else if (parameters[i].isAnnotationPresent(PathValue.class)) {
                 PathValue pn = parameters[i].getAnnotation(PathValue.class);
-                if (!sbend.toString().endsWith("/"))
-                    sbend.append("/");
-                sbend.append(objects[i].toString());
+                if (!sb_end.toString().endsWith(SPLIT)) {
+                    sb_end.append(SPLIT);
+                }
+                sb_end.append(objects[i].toString());
             }
         }
-        if (sb.toString().endsWith("?")) sb.delete(sb.length() - 1, sb.length());
-        if (sb.toString().endsWith("&")) sb.delete(sb.length() - 1, sb.length());
-        sbend.append("?");
-        sbend.append(sb.toString());
-        return sbend.toString();
+        if (sb.toString().endsWith(DO)) {
+            sb.delete(sb.length() - 1, sb.length());
+        }
+        if (sb.toString().endsWith(AND)) {
+            sb.delete(sb.length() - 1, sb.length());
+        }
+        sb_end.append(DO);
+        sb_end.append(sb.toString());
+        return sb_end.toString();
     }
+
+    private static final String AND = "&";
+    private static final String DO = "?";
 }

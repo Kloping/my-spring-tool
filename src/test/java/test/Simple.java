@@ -6,6 +6,9 @@ import io.github.kloping.MySpringTool.annotations.CommentScan;
 import test.entitys.pvpQQH0.PvpQQH0;
 import test.interfaces.M2;
 import test.interfaces.PvpQq;
+import test.interfaces.SearchPics;
+
+import java.util.Arrays;
 
 @CommentScan(path = "test")
 public class Simple {
@@ -18,6 +21,8 @@ public class Simple {
         System.out.println(m2.doc());
 
         System.out.println("end");
+
+        System.out.println(Arrays.toString(searchPics.parsePic("https://v.kuaishou.com/hbGyGf", null)));
     }
 
     public static String c1(String arg) {
@@ -25,6 +30,9 @@ public class Simple {
         int i2 = arg.lastIndexOf(")");
         return arg.substring(i1 + 1, i2);
     }
+
+    @AutoStand
+    static SearchPics searchPics;
 
     @AutoStand
     static M2 m2;
