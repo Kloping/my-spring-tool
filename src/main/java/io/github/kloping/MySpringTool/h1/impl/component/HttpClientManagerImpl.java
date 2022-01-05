@@ -119,7 +119,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 Object run(Object... objects) {
                     try {
                         String trueUrl = getGetUrl(url, method, objects);
-                        Connection connection = getConnection(trueUrl);
+                        Connection connection = getConnection(trueUrl, getHeaders(method, objects));
                         initCookie(connection, method, trueUrl, objects);
                         Class<?> cls = method.getReturnType();
                         if (cls == String.class) {
@@ -150,7 +150,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     try {
                         String trueUrl = getGetUrl(url, method, objects);
                         String body = getPostBody(method, objects);
-                        Connection connection = getConnection(trueUrl);
+                        Connection connection = getConnection(trueUrl, getHeaders(method, objects));
                         connection.requestBody(body);
                         connection.data(body);
                         initCookie(connection, method, trueUrl, objects);
@@ -211,7 +211,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         CookieStore cookieStore = connection.cookieStore();
         if (method.isAnnotationPresent(CookieFrom.class)) {
             CookieFrom cf = method.getAnnotation(CookieFrom.class);
-            cookieStore = getCookieStore(cf.value(), Connection.Method.valueOf(cf.method()), trueUrl);
+            cookieStore = getCookieStore(cf.value(), Connection.Method.valueOf(cf.method()), trueUrl, method, objects);
             connection.cookieStore(cookieStore);
         }
         Parameter[] parameters = method.getParameters();
@@ -248,9 +248,17 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     public static String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53";
 
-    private Connection getConnection(String trueUrl) throws Exception {
-        return Jsoup.connect(trueUrl).ignoreContentType(true)
+    private Connection getConnection(String trueUrl, Map<String, String> headers) throws Exception {
+        if (trueUrl.startsWith(SPLIT)) {
+            trueUrl = trueUrl.substring(1);
+        }
+        Connection connection = null;
+        connection = Jsoup.connect(trueUrl).ignoreContentType(true)
                 .userAgent(userAgent);
+        if (headers != null) {
+            connection = connection.headers(headers);
+        }
+        return connection;
     }
 
     private String getPostBody(Method method, Object[] objects) throws Exception {
@@ -304,7 +312,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
     }
 
-    private CookieStore getCookieStore(String[] urls, Connection.Method method, String url) throws IOException, URISyntaxException {
+    private CookieStore getCookieStore(String[] urls, Connection.Method method, String url, Method m0, Object... objects) throws IOException, URISyntaxException {
         CookieStore store = null;
         for (String u1 : urls) {
             try {
@@ -313,7 +321,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 if ("this".equals(u1.trim().toLowerCase())) {
                     u1 = url.trim();
                 }
-                connection = getConnection(u1);
+                connection = getConnection(u1, getHeaders(m0, objects));
                 if (method == Connection.Method.GET) {
                     connection.get();
                 } else if (method == Connection.Method.POST) {
@@ -383,6 +391,30 @@ public class HttpClientManagerImpl implements HttpClientManager {
         sb_end.append(DO);
         sb_end.append(sb.toString());
         return sb_end.toString();
+    }
+
+    private Map<String, String> getHeaders(Method method, Object... objects) {
+        Parameter[] parameters = method.getParameters();
+        Map<String, String> map = null;
+        int i = 0;
+        for (Parameter parameter : parameters) {
+            if (parameter.isAnnotationPresent(Headers.class)) {
+                try {
+                    if (Map.class.isAssignableFrom(parameter.getType())) {
+                        Map<String, String> map2 = (Map) objects[i];
+                        if (map2.keySet().iterator().next() instanceof String) {
+                            if (map2.values().iterator().next() instanceof String) {
+                                map = map2;
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    StarterApplication.logger.Log("The Parameter Type not is Map<String,String>", 2);
+                }
+            }
+            i++;
+        }
+        return map;
     }
 
     private static final String AND = "&";

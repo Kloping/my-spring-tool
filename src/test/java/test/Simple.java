@@ -9,6 +9,8 @@ import test.interfaces.PvpQq;
 import test.interfaces.SearchPics;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @CommentScan(path = "test")
 public class Simple {
@@ -16,13 +18,25 @@ public class Simple {
         StarterApplication.addConfFile("./src/test/java/conf.txt");
         StarterApplication.run(Simple.class);
 
-        PvpQQH0 v2 = pvpQq.get1(null);
+//        PvpQQH0 v2 = pvpQq.get1(null);
+        Map<String, String> maps = new HashMap<>();
+        maps.put("referer", "https://www.feijisu09.com/");
+        maps.put("sec-fetch-site", "cross-site");
+        maps.put("accept-language", "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6");
+        maps.put("origin", "https://www.feijisu09.com");
+        maps.put("pragma", "no-cache");
+        maps.put("accept", "*/*");
+        maps.put("sec-ch-ua", "\" Not A;Brand\";v=\"99\", \"Chromium\";v=\"96\", \"Microsoft Edge\";v=\"96\"");
+        maps.put("sec-ch-ua-mobile", "?0");
+        maps.put("sec-ch-ua-platform", "\"Windows\"");
+        maps.put("cache-control", "no-cache");
+        maps.put("accept-encoding", "gzip, deflate, br");
+        maps.put("sec-fetch-dest", "empty");
 
-        System.out.println(m2.doc());
+        System.out.println(m2.doc(10, "斗罗大陆", maps));
 
         System.out.println("end");
 
-        System.out.println(Arrays.toString(searchPics.parsePic("https://v.kuaishou.com/hbGyGf", null)));
     }
 
     public static String c1(String arg) {

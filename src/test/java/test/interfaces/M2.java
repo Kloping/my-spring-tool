@@ -1,10 +1,14 @@
 package test.interfaces;
 
-import io.github.kloping.MySpringTool.annotations.http.GetPath;
-import io.github.kloping.MySpringTool.annotations.http.HttpClient;
+import io.github.kloping.MySpringTool.annotations.http.*;
 
-@HttpClient("http://www.baidu.com")
+import java.util.Map;
+
+@HttpClient("")
 public interface M2 {
-    @GetPath("/")
-    String doc();
+    @GetPath("https://v.quelingfei.com:4438//sssv.php?")
+    String doc(
+            @ParamName("top") @DefaultValue("10") Integer top
+            , @ParamName("q") String keyword
+            , @Headers Map<String, String> map);
 }
