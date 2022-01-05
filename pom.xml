@@ -13,9 +13,9 @@
     <licenses>
         <license>
             <name>GNU AFFERO GENERAL PUBLIC LICENSE Version 3</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://raw.githubusercontent.com/Kloping/my-spring-tool/master/LICENSE</url>
             <distribution>repo</distribution>
-            <comments>A business-friendly OSS license</comments>
+            <comments>--</comments>
         </license>
     </licenses>
     <scm>
