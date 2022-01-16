@@ -26,11 +26,11 @@
 
 ## 使用说明(旧版):
 
+### 该框架已 应用于 [SimpleMiraiCore](https://github.com/kloping/simplemiraicore)
+
 [NEW](https://github.com/Kloping/my-spring-tool/blob/master/docs/StarterApplication.md)
 
 框架运行于JVM class 和 jar 环境
-
-该框架已 应用于 [SimpleMiraiCore](https://github.com/kloping/simplemiraicore)
 
 ### 类注解
 
