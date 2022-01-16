@@ -5,7 +5,7 @@
 ### 一切开发旨在学习，请勿用于非法用途
 
   <h4>
-  <li>此框架由GitHhub: <a herf="https://github.com/Kloping"> Kloping </a> 开发</li>
+  <li>此框架由GitHhub: <a href="https://github.com/kloping"> Kloping </a> 开发</li>
   <li>此框架 是完全免费且开放源代码</li>
   <li>且 仅用于 学习和娱乐<u><b><i>禁止用于非法用途</i></b></u>
 </h4>
@@ -18,17 +18,19 @@
     <dependency>
         <groupId>io.github.Kloping</groupId>
         <artifactId>SpringTool</artifactId>
-        <version>0.2.9</version>
+        <version>0.3.9</version>
     </dependency>
 </dependencies>
 
 ```
 
-
 ## 使用说明(旧版):
+
 [NEW](https://github.com/Kloping/my-spring-tool/blob/master/docs/StarterApplication.md)
 
 框架运行于JVM class 和 jar 环境
+
+该框架已 应用于 [SimpleMiraiCore](https://github.com/kloping/simplemiraicore)
 
 ### 类注解
 
