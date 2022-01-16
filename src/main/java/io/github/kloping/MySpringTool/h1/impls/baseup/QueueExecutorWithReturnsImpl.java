@@ -10,10 +10,7 @@ import io.github.kloping.MySpringTool.interfaces.entitys.MatherResult;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static io.github.kloping.MySpringTool.StarterApplication.Setting.INSTANCE;
@@ -67,14 +64,14 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     }
 
     public static QueueExecutorWithReturnsImpl create(Class<?> cla, int poolSize, long waitTime, Executor executor) {
-        return new QueueExecutorWithReturnsImpl(cla,poolSize,waitTime,executor);
+        return new QueueExecutorWithReturnsImpl(cla, poolSize, waitTime, executor);
     }
 
     @Override
-    public Object execute(Object this_, Method method, Object... objects) throws InvocationTargetException, IllegalAccessException {
+    public Object execute(Object This, Method method, Object... objects) throws InvocationTargetException, IllegalAccessException {
         Object o = null;
         try {
-            o = executor.execute(this_, method, objects);
+            o = executor.execute(This, method, objects);
         } catch (InvocationTargetException e) {
             InvocationTargetException ite = e;
             if (ite.getTargetException().getClass() == NoRunException.class) {
@@ -88,7 +85,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     }
 
     @Override
-    public <T> int QueueExecute(T t, Object... objects) {
+    public <T> int queueExecute(T t, Object... objects) {
         if (t.getClass() != cla) {
             logger.Log("not is mainKey type for " + t.getClass().getSimpleName(), 2);
             return 0;
@@ -133,12 +130,15 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
                 Method[] methods = result.getMethods();
                 Class cla = methods[0].getDeclaringClass();
                 Object o = INSTANCE.getContextManager().getContextEntity(cla);
+                List<Object> results = new ArrayList<>();
                 for (Method m : methods) {
-                    Object[] parObjs = INSTANCE.getAutomaticWiringParams().wiring(m, result, parts);
+                    Object[] parObjs = INSTANCE.getAutomaticWiringParams().wiring(m, result, results, (Object) parts);
                     if (runner1 != null) {
                         runner1.methodRuined(null, m, t, objects);
                     }
                     Object o1 = executor.execute(o, m, parObjs);
+                    results.add(o1);
+
                     if (runner2 != null) {
                         runner2.methodRuined(o1, m, t, objects);
                     }
@@ -167,7 +167,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     protected <T> void runEnd(T t) {
         runSet.remove(t);
         if (queueMap.containsKey(t)) {
-            QueueExecute(t, end(t));
+            queueExecute(t, end(t));
         }
     }
 

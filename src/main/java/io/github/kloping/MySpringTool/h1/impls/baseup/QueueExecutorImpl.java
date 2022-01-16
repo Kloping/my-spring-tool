@@ -8,10 +8,7 @@ import io.github.kloping.MySpringTool.interfaces.entitys.MatherResult;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 
 import static io.github.kloping.MySpringTool.StarterApplication.Setting.INSTANCE;
@@ -85,7 +82,7 @@ public class QueueExecutorImpl implements QueueExecutor {
     private Set<Object> runSet = new CopyOnWriteArraySet<>();
 
     @Override
-    public <T> int QueueExecute(T t, Object... objects) {
+    public <T> int queueExecute(T t, Object... objects) {
         if (t.getClass() != cla) {
             logger.Log("not is mainKey type for " + t.getClass().getSimpleName(), 2);
             return 0;
@@ -105,9 +102,11 @@ public class QueueExecutorImpl implements QueueExecutor {
                                         Class cla = methods[0].getDeclaringClass();
                                         Object o = INSTANCE.getContextManager().getContextEntity(cla);
                                         Object reo = null;
+                                        List<Object> results = new ArrayList<>();
                                         for (Method m : methods) {
-                                            Object[] parObjs = INSTANCE.getAutomaticWiringParams().wiring(m, result, (Object) parts);
+                                            Object[] parObjs = INSTANCE.getAutomaticWiringParams().wiring(m, result, results, (Object) parts);
                                             Object to = executor.execute(o, m, parObjs);
+                                            results.add(to);
                                             if (to != null) reo = to;
                                         }
                                         if (runner2 != null) runner2.run(reo, objects);
@@ -152,7 +151,7 @@ public class QueueExecutorImpl implements QueueExecutor {
                     }
                     runSet.remove(t);
                     if (queueMap.containsKey(t)) {
-                        QueueExecute(t, end(t));
+                        queueExecute(t, end(t));
                     }
                 });
                 return queueMap.size();

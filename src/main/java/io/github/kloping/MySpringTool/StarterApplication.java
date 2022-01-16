@@ -247,7 +247,7 @@ public final class StarterApplication {
      * @return
      */
     public static synchronized int ExecuteMethod(Object... objects) {
-        return getInstance().queueExecutor.QueueExecute(objects[0], objects);
+        return getInstance().queueExecutor.queueExecute(objects[0], objects);
     }
 
     /**
@@ -315,8 +315,8 @@ public final class StarterApplication {
 
     private static void work(Class<?> main) {
         try {
-            Object main_ = getInstance().instanceCrater.create(main, getInstance().contextManager);
-            getInstance().contextManager.append(main_);
+            Object startClass = getInstance().instanceCrater.create(main, getInstance().contextManager);
+            getInstance().contextManager.append(startClass);
             getInstance().classManager.add(main);
             for (Class<?> aClass : getInstance().packageScanner.scan(scanPath)) {
                 getInstance().classManager.add(aClass);

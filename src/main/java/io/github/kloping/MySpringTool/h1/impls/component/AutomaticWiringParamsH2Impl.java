@@ -2,6 +2,7 @@ package io.github.kloping.MySpringTool.h1.impls.component;
 
 import io.github.kloping.MySpringTool.annotations.AllMess;
 import io.github.kloping.MySpringTool.annotations.Param;
+import io.github.kloping.MySpringTool.annotations.ReturnResult;
 import io.github.kloping.MySpringTool.interfaces.AutomaticWiringParams;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.entitys.MatherResult;
@@ -10,6 +11,8 @@ import io.github.kloping.object.ObjectUtils;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.util.ArrayList;
+import java.util.List;
 
 import static io.github.kloping.object.ObjectUtils.baseToPack;
 
@@ -46,9 +49,11 @@ public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
     @Override
     public Object[] wiring(Method method, Object... objs) throws IllegalAccessException {
         MatherResult result = (MatherResult) objs[0];
-        Object[] objects = (Object[]) objs[1];
+        List results = (List) objs[1];
+        Object[] objects = (Object[]) objs[2];
         Parameter[] parameters = method.getParameters();
         Object[] ros = new Object[parameters.length];
+        List<Object> list = new ArrayList<>();
         for (int i = 0; i < parameters.length; i++) {
             Class<?> cla = parameters[i].getType();
             if (parameters[i].isAnnotationPresent(Param.class)) {
@@ -75,17 +80,37 @@ public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
             } else if (parameters[i].isAnnotationPresent(AllMess.class)) {
                 AllMess param = parameters[i].getAnnotation(AllMess.class);
                 ros[i] = result.getRegx();
+            } else if (parameters[i].isAnnotationPresent(ReturnResult.class)) {
+                m1(results, parameters, ros, i);
             } else if (parameters[i].getType() == Class2OMap.class) {
                 ros[i] = io.github.kloping.arr.Class2OMap.create(objects);
             } else {
-                for (Object o : objects) {
-                    Class pc = ObjectUtils.baseToPack(parameters[i].getType());
-                    if (ObjectUtils.isSuperOrInterface(o.getClass(), pc)) {
-                        ros[i] = o;
-                    }
-                }
+                m0(objects, parameters[i], ros, list, i);
             }
         }
         return ros;
+    }
+
+    private void m1(List results, Parameter[] parameters, Object[] ros, int i) {
+        for (Object o : results) {
+            if (parameters[i].getType().isAssignableFrom(o.getClass())) {
+                ros[i] = o;
+                results.remove(o);
+                return;
+            }
+        }
+    }
+
+    private void m0(Object[] objects, Parameter parameter, Object[] ros, List<Object> list, int i) {
+        for (Object o : objects) {
+            Class pc = ObjectUtils.baseToPack(parameter.getType());
+            if (ObjectUtils.isSuperOrInterface(o.getClass(), pc)) {
+                if (!list.contains(o)) {
+                    ros[i] = o;
+                    list.add(o);
+                    return;
+                }
+            }
+        }
     }
 }

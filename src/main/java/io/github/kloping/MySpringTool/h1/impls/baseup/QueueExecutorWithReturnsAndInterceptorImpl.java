@@ -12,6 +12,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static io.github.kloping.MySpringTool.StarterApplication.logger;
 
+/**
+ * @author github-kloping
+ */
 public class QueueExecutorWithReturnsAndInterceptorImpl
         extends QueueExecutorWithReturnsImpl
         implements Interceptor, InterceptorCallback {
@@ -65,7 +68,7 @@ public class QueueExecutorWithReturnsAndInterceptorImpl
     }
 
     @Override
-    public <T> int QueueExecute(T t, Object... objects) {
+    public <T> int queueExecute(T t, Object... objects) {
         if (t.getClass() != cla) {
             logger.Log("not is mainKey type for " + t.getClass().getSimpleName(), 2);
             return 0;

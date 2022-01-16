@@ -7,6 +7,9 @@ import io.github.kloping.object.ObjectUtils;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
+/**
+ * @author github-kloping
+ */
 public class AutomaticWiringParamsImpl implements AutomaticWiringParams {
     @Override
     public Object[] wiring(Method method, ContextManager contextManager) throws IllegalAccessException {

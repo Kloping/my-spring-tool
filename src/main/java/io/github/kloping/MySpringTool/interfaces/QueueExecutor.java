@@ -10,5 +10,5 @@ import java.lang.reflect.Method;
 public interface QueueExecutor extends Executor {
     Object execute(Object this_, Method method, Object... objects) throws InvocationTargetException, IllegalAccessException;
 
-    <T> int QueueExecute(T t, Object... objects);
+    <T> int queueExecute(T t, Object... objects);
 }

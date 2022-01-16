@@ -6,6 +6,9 @@ import io.github.kloping.MySpringTool.interfaces.Executor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+/**
+ * @author github-kloping
+ */
 public class ExecutorNowImpl implements Executor {
     @Override
     public Object execute(Object this_, Method method, Object... objects) throws InvocationTargetException, IllegalAccessException {
