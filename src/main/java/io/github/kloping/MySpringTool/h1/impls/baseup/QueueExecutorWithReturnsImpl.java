@@ -137,10 +137,11 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
                         runner1.methodRuined(null, m, t, objects);
                     }
                     Object o1 = executor.execute(o, m, parObjs);
-                    results.add(o1);
-
-                    if (runner2 != null) {
-                        runner2.methodRuined(o1, m, t, objects);
+                    if (o1 != null) {
+                        results.add(o1);
+                        if (runner2 != null) {
+                            runner2.methodRuined(o1, m, t, objects);
+                        }
                     }
                 }
                 logger.Log("lost time "

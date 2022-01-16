@@ -106,8 +106,10 @@ public class QueueExecutorImpl implements QueueExecutor {
                                         for (Method m : methods) {
                                             Object[] parObjs = INSTANCE.getAutomaticWiringParams().wiring(m, result, results, (Object) parts);
                                             Object to = executor.execute(o, m, parObjs);
-                                            results.add(to);
-                                            if (to != null) reo = to;
+                                            if (to != null) {
+                                                results.add(to);
+                                                reo = to;
+                                            }
                                         }
                                         if (runner2 != null) runner2.run(reo, objects);
                                         logger.Log("lost time "
