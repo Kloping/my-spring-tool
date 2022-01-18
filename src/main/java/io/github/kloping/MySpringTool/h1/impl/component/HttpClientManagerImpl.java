@@ -122,9 +122,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         Connection connection = getConnection(trueUrl, getHeaders(method, objects));
                         initCookie(connection, method, trueUrl, objects);
                         Class<?> cls = method.getReturnType();
-                        if (cls == String.class) {
-                            return connection.get().toString();
-                        }
                         if (cls == Document.class) {
                             return connection.get();
                         }
@@ -155,9 +152,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         connection.data(body);
                         initCookie(connection, method, trueUrl, objects);
                         Class<?> cls = method.getReturnType();
-                        if (cls == String.class) {
-                            return connection.post().toString();
-                        }
                         if (cls == Document.class) {
                             return connection.post();
                         }
@@ -301,7 +295,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
             }
         }
         try {
-            if (cls.isArray()) {
+            if (cls == String.class) {
+                return (T) (text == null ? finalText : text);
+            } else if (cls.isArray()) {
                 return JSON.parseArray(text == null ? finalText : text).toJavaObject(cls);
             } else {
                 return JSON.parseObject(text == null ? finalText : text).toJavaObject(cls);
