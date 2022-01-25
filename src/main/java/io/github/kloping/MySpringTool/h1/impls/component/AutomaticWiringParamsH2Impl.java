@@ -16,12 +16,17 @@ import java.util.List;
 
 import static io.github.kloping.object.ObjectUtils.baseToPack;
 
+/**
+ * @author github-kloping
+ */
 public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
 
     @Override
     public Object[] wiring(Method method, ContextManager contextManager) throws IllegalAccessException {
         Parameter[] parameters = method.getParameters();
-        if (!m2(contextManager, parameters)) return null;
+        if (!m2(contextManager, parameters)) {
+            return null;
+        }
         Object[] objects = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             objects[i] = contextManager.getContextEntity(parameters[i].getType());
@@ -31,8 +36,11 @@ public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
 
     private boolean m2(ContextManager contextManager, Parameter[] parameters) {
         for (Parameter parameter : parameters) {
-            if (contextManager.getContextEntity(parameter.getType()) != null) continue;
-            else return false;
+            if (contextManager.getContextEntity(parameter.getType()) != null) {
+                continue;
+            } else {
+                return false;
+            }
         }
         return true;
     }

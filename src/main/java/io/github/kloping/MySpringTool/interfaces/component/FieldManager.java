@@ -1,5 +1,7 @@
 package io.github.kloping.MySpringTool.interfaces.component;
 
+import io.github.kloping.MySpringTool.interfaces.component.up0.ClassAttributeManager;
+
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -16,6 +18,7 @@ public interface FieldManager extends ClassAttributeManager {
 
     void manager(Field field, ContextManager contextManager) throws IllegalAccessException;
 
+    @Override
     void manager(Class clsz, ContextManager contextManager) throws IllegalAccessException;
 }
 

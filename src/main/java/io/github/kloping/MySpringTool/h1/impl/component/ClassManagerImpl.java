@@ -5,6 +5,7 @@ import io.github.kloping.MySpringTool.annotations.Controller;
 import io.github.kloping.MySpringTool.annotations.Entity;
 import io.github.kloping.MySpringTool.interfaces.AutomaticWiringParams;
 import io.github.kloping.MySpringTool.interfaces.component.*;
+import io.github.kloping.MySpringTool.interfaces.component.up0.ClassAttributeManager;
 import io.github.kloping.map.MapUtils;
 
 import java.lang.annotation.Annotation;
@@ -16,9 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+/**
+ * @author github-kloping
+ */
 public class ClassManagerImpl implements ClassManager {
-//    private MethodManager methodManager;
-//    private FieldManager fieldManager;
 
     private InstanceCrater instanceCrater;
 
@@ -28,19 +30,19 @@ public class ClassManagerImpl implements ClassManager {
 
     private ActionManager actionManager;
 
-    public ClassManagerImpl(/*MethodManager methodManager, FieldManager fieldManager, */InstanceCrater instanceCrater,
-                                                                                        ContextManager contextManager, AutomaticWiringParams automaticWiringParams, ActionManager actionManager) {
+    public ClassManagerImpl(InstanceCrater instanceCrater, ContextManager contextManager
+            , AutomaticWiringParams automaticWiringParams, ActionManager actionManager) {
         this.instanceCrater = instanceCrater;
         this.contextManager = contextManager;
         this.automaticWiringParams = automaticWiringParams;
         this.actionManager = actionManager;
     }
 
-    private Map<Class<? extends Annotation>, List<ClassAttributeManager>> maplist = new ConcurrentHashMap<>();
+    private Map<Class<? extends Annotation>, List<ClassAttributeManager>> registeredAnnotations = new ConcurrentHashMap<>();
 
     @Override
     public <T extends Annotation> void registeredAnnotation(Class<T> annotation, ClassAttributeManager attributeManager) {
-        MapUtils.append(maplist, annotation, attributeManager, CopyOnWriteArrayList.class);
+        MapUtils.append(registeredAnnotations, annotation, attributeManager, CopyOnWriteArrayList.class);
     }
 
     private Set<Class<?>> set = new CopyOnWriteArraySet<>();
@@ -66,10 +68,11 @@ public class ClassManagerImpl implements ClassManager {
                 o = m1(id, cla);
             }
         }
-        for (Class<? extends Annotation> annotationClass : maplist.keySet()) {
+        for (Class<? extends Annotation> annotationClass : registeredAnnotations.keySet()) {
             if (cla.isAnnotationPresent(annotationClass)) {
-                for (ClassAttributeManager classAttributeManager : maplist.get(annotationClass))
+                for (ClassAttributeManager classAttributeManager : registeredAnnotations.get(annotationClass)) {
                     classAttributeManager.manager(cla, contextManager);
+                }
             }
         }
     }

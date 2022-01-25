@@ -1,5 +1,7 @@
 package io.github.kloping.MySpringTool.interfaces.component;
 
+import io.github.kloping.MySpringTool.interfaces.component.up0.ClassAttributeManager;
+
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

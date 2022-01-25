@@ -114,12 +114,12 @@ public class Main {
             }
         });
         StarterApplication.run(Main.class);
-        StarterApplication.ExecuteMethod(1000L, "a", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1001L, "ab", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "abc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "adsadbc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "abffdsfc", "我是参数", 111111);
-        StarterApplication.ExecuteMethod(1002L, "abeeeeec", "我是参数", 111111);
+        StarterApplication.executeMethod(1000L, "a", "我是参数", 111111);
+        StarterApplication.executeMethod(1001L, "ab", "我是参数", 111111);
+        StarterApplication.executeMethod(1002L, "abc", "我是参数", 111111);
+        StarterApplication.executeMethod(1002L, "adsadbc", "我是参数", 111111);
+        StarterApplication.executeMethod(1002L, "abffdsfc", "我是参数", 111111);
+        StarterApplication.executeMethod(1002L, "abeeeeec", "我是参数", 111111);
         System.out.println("===========");
         System.out.println(m2.doc());
     }

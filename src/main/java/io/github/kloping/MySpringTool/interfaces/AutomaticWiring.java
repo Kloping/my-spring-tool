@@ -6,7 +6,8 @@ import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
 
 /**
- * 所有自动布线父接口
+ * All automatic wiring parent interfaces
+ * @author github-kloping
  */
 public interface AutomaticWiring {
 }

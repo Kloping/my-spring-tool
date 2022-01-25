@@ -26,7 +26,7 @@ public class FieldManagerImpl implements FieldManager {
         classManager.registeredAnnotation(Entity.class, this);
         classManager.registeredAnnotation(Controller.class, this);
         classManager.registeredAnnotation(CommentScan.class, this);
-        StarterApplication.startAfterRunnerList.add(() -> {
+        StarterApplication.STARTED_RUNNABLE.add(() -> {
             for (Class claz : setClass) {
                 for (Field declaredField : claz.getDeclaredFields()) {
                     declaredField.setAccessible(true);

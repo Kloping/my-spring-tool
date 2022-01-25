@@ -26,7 +26,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
     public TimeMethodManagerImpl(ClassManager classManager, AutomaticWiringParams wiringParams) {
         this.automaticWiringParams = wiringParams;
         classManager.registeredAnnotation(Controller.class, this);
-        StarterApplication.startAfterRunnerList.add(() -> {
+        StarterApplication.STARTED_RUNNABLE.add(() -> {
             startTimer();
         });
     }

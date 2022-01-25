@@ -1,5 +1,8 @@
 package io.github.kloping.MySpringTool.interfaces.component;
 
+import io.github.kloping.MySpringTool.interfaces.component.up0.BaseManager;
+import io.github.kloping.MySpringTool.interfaces.component.up0.ClassAttributeManager;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 

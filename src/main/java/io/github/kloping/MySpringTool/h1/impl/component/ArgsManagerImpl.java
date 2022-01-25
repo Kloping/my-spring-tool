@@ -4,6 +4,9 @@ import io.github.kloping.MySpringTool.interfaces.component.ArgsManager;
 import io.github.kloping.judge.Judge;
 import io.github.kloping.object.ObjectUtils;
 
+/**
+ * @author github-kloping
+ */
 public class ArgsManagerImpl implements ArgsManager {
     private Class<?>[] classes = new Class[]{Object.class};
 

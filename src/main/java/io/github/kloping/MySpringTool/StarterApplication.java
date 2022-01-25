@@ -44,6 +44,8 @@ public final class StarterApplication {
         protected QueueExecutor queueExecutor;
         protected TimeMethodManager timeMethodManager;
         protected HttpClientManager httpClientManager;
+        protected FieldSourceManager fieldSourceManager;
+
 //        protected DataBaseManager dataBaseManager;
 
         protected Setting() {
@@ -91,8 +93,9 @@ public final class StarterApplication {
                 httpClientManager = new HttpClientManagerImpl(classManager);
             if (fieldManager == null)
                 fieldManager = new FieldManagerImpl(automaticWiringValue, classManager);
-//            if (dataBaseManager == null)
-//                dataBaseManager = new DataBaseManagerImpl(classManager);
+            if (fieldSourceManager == null)
+                fieldSourceManager = new FieldSourceManagerImpl0(classManager);
+
             inited = true;
             Field[] fields = Setting.class.getDeclaredFields();
             for (Field field : fields) {
@@ -102,8 +105,9 @@ public final class StarterApplication {
                 } catch (Exception e) {
                     continue;
                 }
-                if (o != null)
+                if (o != null) {
                     contextManager.append(o);
+                }
             }
         }
 
@@ -141,6 +145,10 @@ public final class StarterApplication {
 
         public FieldManager getFieldManager() {
             return fieldManager;
+        }
+
+        public FieldSourceManager getFieldSourceManager() {
+            return fieldSourceManager;
         }
 
         public ClassManager getClassManager() {
@@ -184,7 +192,7 @@ public final class StarterApplication {
     }
 
     /**
-     * 启动 SpringTool
+     * start SpringTool
      *
      * @param cla
      */
@@ -199,7 +207,7 @@ public final class StarterApplication {
             startAfter();
         } else {
             try {
-                throw new NoRunException("此类上必须存在 CommentScan 注解 (class must has @interface CommentScan )");
+                throw new NoRunException("this class must must has @CommentScan");
             } finally {
                 System.exit(0);
             }
@@ -207,12 +215,12 @@ public final class StarterApplication {
     }
 
     /**
-     * 启动后 runnable
+     * started runnable
      */
-    public static List<Runnable> startAfterRunnerList = new LinkedList<>();
+    public static final List<Runnable> STARTED_RUNNABLE = new LinkedList<>();
 
     private static void startAfter() {
-        for (Runnable runnable : startAfterRunnerList) {
+        for (Runnable runnable : STARTED_RUNNABLE) {
             try {
                 runnable.run();
             } catch (Exception e) {
@@ -222,8 +230,7 @@ public final class StarterApplication {
     }
 
     /**
-     * 设置主键参数
-     * 约束不可同一主键 多个运行
+     * Constraints on setting primary key parameters Cannot be multiple runs for the same primary key
      *
      * @param cla
      */
@@ -232,7 +239,7 @@ public final class StarterApplication {
     }
 
     /**
-     * 设置接收参数
+     * set Access Types
      *
      * @param classes
      */
@@ -241,17 +248,17 @@ public final class StarterApplication {
     }
 
     /**
-     * 开始匹配运行
+     * matcher and run
      *
      * @param objects
      * @return
      */
-    public static synchronized int ExecuteMethod(Object... objects) {
+    public static synchronized int executeMethod(Object... objects) {
         return getInstance().queueExecutor.queueExecute(objects[0], objects);
     }
 
     /**
-     * 设置所有运行之后
+     * on matched and run ed
      *
      * @param runner
      */
@@ -260,7 +267,7 @@ public final class StarterApplication {
     }
 
     /**
-     * 设置所有运行之前
+     * on run before
      *
      * @param runner
      */
@@ -290,8 +297,8 @@ public final class StarterApplication {
     }
 
     /**
-     * 添加 一个配置文件
-     * 并返回 当前所有配置文件
+     * add conf file
+     * and return this all conf file
      *
      * @param file
      * @return
@@ -302,8 +309,8 @@ public final class StarterApplication {
     }
 
     /**
-     * 添加 一个配置文件
-     * 并返回 当前所有配置文件
+     * add conf file
+     * and return this all conf file
      *
      * @param file
      * @return this
@@ -323,7 +330,7 @@ public final class StarterApplication {
             }
             logger.Log("start sptool success", 1);
         } catch (Exception e) {
-            logger.Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+            logger.Log("There is an exception=>" + e + " at " + getExceptionLine(e), -1);
         }
     }
 
