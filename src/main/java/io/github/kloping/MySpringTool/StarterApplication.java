@@ -328,9 +328,10 @@ public final class StarterApplication {
             for (Class<?> aClass : getInstance().packageScanner.scan(scanPath)) {
                 getInstance().classManager.add(aClass);
             }
-            logger.Log("start sptool success", 1);
-        } catch (Exception e) {
-            logger.Log("There is an exception=>" + e + " at " + getExceptionLine(e), -1);
+            logger.info("start sptool success");
+        } catch (Throwable e) {
+            logger.error("There is an exception=>" + e + " at " + getExceptionLine(e));
+            e.printStackTrace();
         }
     }
 

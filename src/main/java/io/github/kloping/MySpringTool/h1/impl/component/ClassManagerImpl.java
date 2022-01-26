@@ -78,8 +78,14 @@ public class ClassManagerImpl implements ClassManager {
     }
 
     private Object m1(String id, Class cla) throws InvocationTargetException, IllegalAccessException, InstantiationException {
-        Object o = instanceCrater.create(cla, contextManager);
-        contextManager.append(o, id);
-        return o;
+        try {
+            Object o = instanceCrater.create(cla, contextManager);
+            contextManager.append(o, id);
+            return o;
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.err.println("exception on " + cla.getName());
+            return null;
+        }
     }
 }
