@@ -384,6 +384,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
         if (sb.toString().endsWith(AND)) {
             sb.delete(sb.length() - 1, sb.length());
         }
+        if (sb.toString().startsWith(SPLIT)) {
+            sb.delete(0, 1);
+        }
         sb_end.append(DO);
         sb_end.append(sb.toString());
         return sb_end.toString();
