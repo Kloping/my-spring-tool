@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 /**
  * The parameter type annotated by this annotation should be {@link java.util.Map.Entry<String,String>}
  *
- * @author github-kloping
+ * @author github.kloping
  */
 @Target({ElementType.PARAMETER})
 @Retention(RetentionPolicy.RUNTIME)
