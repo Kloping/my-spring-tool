@@ -24,6 +24,7 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -120,6 +121,8 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     try {
                         String trueUrl = getGetUrl(url, method, objects);
                         Connection connection = getConnection(trueUrl, getHeaders(method, objects));
+                        initBody(connection, method, objects);
+                        initData(connection, method, objects);
                         initCookie(connection, method, trueUrl, objects);
                         Class<?> cls = method.getReturnType();
                         if (cls == Document.class) {
@@ -146,10 +149,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 Object run(Object... objects) {
                     try {
                         String trueUrl = getGetUrl(url, method, objects);
-                        String body = getPostBody(method, objects);
                         Connection connection = getConnection(trueUrl, getHeaders(method, objects));
-                        connection.requestBody(body);
-                        connection.data(body);
+                        initBody(connection, method, objects);
+                        initData(connection, method, objects);
                         initCookie(connection, method, trueUrl, objects);
                         Class<?> cls = method.getReturnType();
                         if (cls == Document.class) {
@@ -169,6 +171,43 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     return null;
                 }
             });
+        }
+    }
+
+    private void initBody(Connection connection, Method method, Object[] objects) {
+        Parameter[] parameters = method.getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            Class cla = parameter.getType();
+            if (parameter.isAnnotationPresent(RequestBody.class)) {
+                RequestBody rb = parameter.getAnnotation(RequestBody.class);
+                switch (rb.type()) {
+                    case toString:
+                        connection.requestBody(objects[i].toString());
+                        break;
+                    case json:
+                        connection.requestBody(JSON.toJSONString(objects[i]));
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
+    private void initData(Connection connection, Method method, Object[] objects) {
+        Parameter[] parameters = method.getParameters();
+        for (int i = 0; i < parameters.length; i++) {
+            Parameter parameter = parameters[i];
+            Class cla = parameter.getType();
+            if (parameter.isAnnotationPresent(RequestData.class)) {
+                if (cla == Entry.class) {
+                    Entry entry = (Entry) objects[i];
+                    connection.data(entry.getKey().toString(), entry.getValue().toString());
+                } else if (cla == String.class) {
+                    connection.data(objects[i].toString());
+                }
+            }
         }
     }
 
@@ -212,7 +251,10 @@ public class HttpClientManagerImpl implements HttpClientManager {
         for (int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
             Class cla = parameter.getType();
-            if (cla == CookieStore.class) {
+            if (parameter.isAnnotationPresent(CookieValue.class)) {
+                Entry<String, String> entry = (Entry<String, String>) objects[i];
+                connection.cookie(entry.getKey(), entry.getValue());
+            } else if (cla == CookieStore.class) {
                 CookieStore store = (CookieStore) objects[i];
                 addCookieStore(store, cookieStore);
             } else if (ObjectUtils.isSuperOrInterface(cla, Collection.class)) {
