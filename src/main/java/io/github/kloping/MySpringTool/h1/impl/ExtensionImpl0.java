@@ -13,7 +13,7 @@ public class ExtensionImpl0 implements Extension {
     public static final List<String> EXTENSIONS = new ArrayList<>();
 
     static {
-        EXTENSIONS.add("com.github.kloping.little_web.WebExtension");
+        EXTENSIONS.add("io.github.kloping.little_web.WebExtension");
     }
 
     public static ExtensionImpl0 INSTANCE = null;
