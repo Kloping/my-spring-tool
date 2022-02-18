@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * @author github-kloping
+ */
 public class ContextManagerWithEIImpl implements ContextManager {
     private Map<Class<?>, Map<String, Object>> contexts = new ConcurrentHashMap<>();
 

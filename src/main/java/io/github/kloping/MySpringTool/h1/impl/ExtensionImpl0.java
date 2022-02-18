@@ -27,7 +27,9 @@ public class ExtensionImpl0 implements Extension {
             ExtensionRunnable runnable = null;
             try {
                 Class<ExtensionRunnable> cla = (Class<ExtensionRunnable>) Class.forName(extension);
-                runnable = cla.newInstance();
+                Object o = StarterApplication.Setting.INSTANCE.getInstanceCrater().create(cla, StarterApplication.Setting.INSTANCE.getContextManager());
+                StarterApplication.Setting.INSTANCE.getContextManager().append(o, extension);
+                runnable = (ExtensionRunnable) o;
                 runnable.run();
                 StarterApplication.logger.info(runnable.getName() + " extension load");
             } catch (ClassNotFoundException e) {

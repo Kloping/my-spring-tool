@@ -140,7 +140,6 @@ public final class Starter {
         } else {
             throw new NoRunException("此类上必须存在 CommentScan 注解 (class must has @interface CommentScan )");
         }
-        ExtensionImpl0.INSTANCE = new ExtensionImpl0();
     }
 
     private static void check(String scanPath) {

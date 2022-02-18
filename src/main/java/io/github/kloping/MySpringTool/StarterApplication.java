@@ -18,12 +18,13 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import static io.github.kloping.MySpringTool.partUtils.*;
+import static io.github.kloping.common.Public.EXECUTOR_SERVICE;
 
 /**
  * @author github-kloping
  */
 public final class StarterApplication {
-    public static Logger logger;
+    public static Logger logger = new LoggerImpl();
 
     public static class Setting {
         protected ContextManager contextManager;
@@ -183,10 +184,14 @@ public final class StarterApplication {
      * started runnable
      */
     public static final List<Runnable> STARTED_RUNNABLE = new LinkedList<>();
-
-    static{
-        STARTED_RUNNABLE.add(()->{ExtensionImpl0.INSTANCE = new ExtensionImpl0();});
-    }
+    /**
+     * on scan before
+     */
+    public static final List<Runnable> PRE_SCAN_RUNNABLE = new LinkedList<>();
+    /**
+     * on scan after
+     */
+    public static final List<Runnable> POST_SCAN_RUNNABLE = new LinkedList<>();
 
     public static void setPoolSize(int poolSize) {
         StarterApplication.poolSize = poolSize;
@@ -325,13 +330,32 @@ public final class StarterApplication {
             Object startClass = getInstance().instanceCrater.create(main, getInstance().contextManager);
             getInstance().contextManager.append(startClass);
             getInstance().classManager.add(main);
+            preScan();
             for (Class<?> aClass : getInstance().packageScanner.scan(scanPath)) {
                 getInstance().classManager.add(aClass);
             }
+            postScan();
             logger.info("start sptool success");
         } catch (Throwable e) {
             logger.error("There is an exception=>" + e + " at " + getExceptionLine(e));
             e.printStackTrace();
+        }
+    }
+
+    private static void postScan() {
+        for (Runnable runnable : POST_SCAN_RUNNABLE) {
+            EXECUTOR_SERVICE.submit(runnable);
+        }
+    }
+
+    private static void preScan() {
+        ExtensionImpl0.INSTANCE = new ExtensionImpl0();
+        for (Runnable runnable : PRE_SCAN_RUNNABLE) {
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                logger.error("There is an exception=>" + e + " at " + getExceptionLine(e));
+            }
         }
     }
 

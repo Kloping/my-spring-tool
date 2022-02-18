@@ -7,6 +7,9 @@ import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
+/**
+ * @author github-kloping
+ */
 public class AutomaticWiringValueImpl implements AutomaticWiringValue {
     @Override
     public boolean wiring(Object o, Field field, ContextManager contextManager) throws IllegalAccessException {
