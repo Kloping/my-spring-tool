@@ -1,0 +1,50 @@
+package io.github.kloping.MySpringTool.h1.impl;
+
+import io.github.kloping.MySpringTool.StarterApplication;
+import io.github.kloping.MySpringTool.interfaces.Extension;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author github.kloping
+ */
+public class ExtensionImpl0 implements Extension {
+    public static final List<String> EXTENSIONS = new ArrayList<>();
+
+    static {
+        EXTENSIONS.add("com.github.kloping.little_web.WebExtension");
+    }
+
+    public static ExtensionImpl0 INSTANCE = null;
+
+    public ExtensionImpl0() {
+        load();
+    }
+
+    private void load() {
+        for (String extension : getExtensions()) {
+            ExtensionRunnable runnable = null;
+            try {
+                Class<ExtensionRunnable> cla = (Class<ExtensionRunnable>) Class.forName(extension);
+                runnable = cla.newInstance();
+                runnable.run();
+                StarterApplication.logger.info(runnable.getName() + " extension load");
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            } catch (InstantiationException e) {
+                e.printStackTrace();
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+                StarterApplication.logger.info(extension + " extension load failed");
+            }
+        }
+    }
+
+    @Override
+    public List<String> getExtensions() {
+        return EXTENSIONS;
+    }
+}

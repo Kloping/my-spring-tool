@@ -3,10 +3,7 @@ package io.github.kloping.MySpringTool;
 import io.github.kloping.MySpringTool.annotations.CommentScan;
 import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
-import io.github.kloping.MySpringTool.h1.impl.AutomaticWiringValueImpl;
-import io.github.kloping.MySpringTool.h1.impl.ConfigFileManagerImpl;
-import io.github.kloping.MySpringTool.h1.impl.InstanceCraterImpl;
-import io.github.kloping.MySpringTool.h1.impl.LoggerImpl;
+import io.github.kloping.MySpringTool.h1.impl.*;
 import io.github.kloping.MySpringTool.h1.impl.component.*;
 import io.github.kloping.MySpringTool.h1.impls.baseup.QueueExecutorImpl;
 import io.github.kloping.MySpringTool.h1.impls.component.AutomaticWiringParamsH2Impl;
@@ -26,6 +23,10 @@ import static io.github.kloping.MySpringTool.partUtils.*;
  * @author github-kloping
  */
 public final class StarterApplication {
+    static {
+        ExtensionImpl0.INSTANCE = new ExtensionImpl0();
+    }
+
     public static Logger logger;
 
     public static class Setting {

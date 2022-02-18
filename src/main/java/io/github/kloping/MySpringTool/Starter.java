@@ -3,6 +3,7 @@ package io.github.kloping.MySpringTool;
 import io.github.kloping.MySpringTool.annotations.*;
 import io.github.kloping.MySpringTool.annotations.http.HttpClient;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
+import io.github.kloping.MySpringTool.h1.impl.ExtensionImpl0;
 import io.github.kloping.arr.Class2OMap;
 import io.github.kloping.map.MapUtils;
 
@@ -88,6 +89,10 @@ public final class Starter {
     private static final Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
 
     private static final List<Class[]> acceptClasses = new CopyOnWriteArrayList<>();
+
+    static {
+        ExtensionImpl0.INSTANCE = new ExtensionImpl0();
+    }
 
     public static void set_key(Class<?> _key) {
         Starter._key = _key;
