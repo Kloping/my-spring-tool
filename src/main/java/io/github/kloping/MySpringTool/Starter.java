@@ -90,10 +90,6 @@ public final class Starter {
 
     private static final List<Class[]> acceptClasses = new CopyOnWriteArrayList<>();
 
-    static {
-        ExtensionImpl0.INSTANCE = new ExtensionImpl0();
-    }
-
     public static void set_key(Class<?> _key) {
         Starter._key = _key;
     }
@@ -144,6 +140,7 @@ public final class Starter {
         } else {
             throw new NoRunException("此类上必须存在 CommentScan 注解 (class must has @interface CommentScan )");
         }
+        ExtensionImpl0.INSTANCE = new ExtensionImpl0();
     }
 
     private static void check(String scanPath) {

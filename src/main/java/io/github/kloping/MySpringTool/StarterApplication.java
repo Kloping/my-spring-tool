@@ -23,10 +23,6 @@ import static io.github.kloping.MySpringTool.partUtils.*;
  * @author github-kloping
  */
 public final class StarterApplication {
-    static {
-        ExtensionImpl0.INSTANCE = new ExtensionImpl0();
-    }
-
     public static Logger logger;
 
     public static class Setting {
@@ -183,6 +179,14 @@ public final class StarterApplication {
     private static String scanPath;
     private static boolean inited = false;
     private static Class<?> mainKey = Long.class;
+    /**
+     * started runnable
+     */
+    public static final List<Runnable> STARTED_RUNNABLE = new LinkedList<>();
+
+    static{
+        STARTED_RUNNABLE.add(()->{ExtensionImpl0.INSTANCE = new ExtensionImpl0();});
+    }
 
     public static void setPoolSize(int poolSize) {
         StarterApplication.poolSize = poolSize;
@@ -214,11 +218,6 @@ public final class StarterApplication {
             }
         }
     }
-
-    /**
-     * started runnable
-     */
-    public static final List<Runnable> STARTED_RUNNABLE = new LinkedList<>();
 
     private static void startAfter() {
         for (Runnable runnable : STARTED_RUNNABLE) {
