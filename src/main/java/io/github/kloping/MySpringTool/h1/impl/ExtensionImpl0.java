@@ -33,11 +33,11 @@ public class ExtensionImpl0 implements Extension {
                 runnable.run();
                 StarterApplication.logger.info(runnable.getName() + " extension load");
             } catch (ClassNotFoundException e) {
-                e.printStackTrace();
+
             } catch (InstantiationException e) {
-                e.printStackTrace();
+
             } catch (IllegalAccessException e) {
-                e.printStackTrace();
+
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
                 StarterApplication.logger.info(extension + " extension load failed");
