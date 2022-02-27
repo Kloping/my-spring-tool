@@ -206,6 +206,11 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     connection.data(entry.getKey().toString(), entry.getValue().toString());
                 } else if (cla == String.class) {
                     connection.data(objects[i].toString());
+                } else if (objects[i] instanceof io.github.kloping.MySpringTool.entity.RequestData) {
+                    io.github.kloping.MySpringTool.entity.RequestData data = (io.github.kloping.MySpringTool.entity.RequestData) objects[i];
+                    for (Entry<String, String> entry : data.getEntrySet()) {
+                        connection.data(entry.getKey(), entry.getValue());
+                    }
                 }
             }
         }
