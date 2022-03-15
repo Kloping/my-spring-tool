@@ -52,9 +52,8 @@ public class ActionManagerImpl implements ActionManager {
                     e.printStackTrace();
                 }
             }
-            int i = -1;
-            while (++i < regx.length()) {
-                char c = regx.charAt(i);
+
+            for (char c : getShortestSortedChars(regx)) {
                 if (indexMap.containsKey(c)) {
                     for (String s : indexMap.get(c)) {
                         MatherResult r = null;
@@ -70,8 +69,31 @@ public class ActionManagerImpl implements ActionManager {
                     }
                 }
             }
+
         }
         return null;
+    }
+
+    private List<Character> getShortestSortedChars(String s0) {
+        Map<Character, Integer> c2n = new HashMap<>();
+        for (char c : s0.toCharArray()) {
+            if (indexMap.containsKey(c)) {
+                int n = indexMap.get(c).size();
+                c2n.put(c, n);
+            }
+        }
+        List<Map.Entry<Character, Integer>> ls = new LinkedList<>(c2n.entrySet());
+        Collections.sort(ls, new Comparator<Map.Entry<Character, Integer>>() {
+            @Override
+            public int compare(Map.Entry<Character, Integer> o1, Map.Entry<Character, Integer> o2) {
+                return o1.getValue() - o2.getValue();
+            }
+        });
+        List<Character> endLs = new LinkedList<>();
+        for (Map.Entry<Character, Integer> l : ls) {
+            endLs.add(l.getKey());
+        }
+        return endLs;
     }
 
     private MatherResult mr(String regx, String s) throws Exception {
