@@ -88,7 +88,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     public <T> int queueExecute(T t, Object... objects) {
         if (t.getClass() != cla) {
             logger.Log("not is mainKey type for " + t.getClass().getSimpleName(), 2);
-            return 0;
+            return -1;
         } else {
             if (runSet.add(t)) {
                 tryRun(t, objects);

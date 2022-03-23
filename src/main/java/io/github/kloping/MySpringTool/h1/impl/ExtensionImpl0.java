@@ -14,6 +14,7 @@ public class ExtensionImpl0 implements Extension {
 
     static {
         EXTENSIONS.add("io.github.kloping.little_web.WebExtension");
+        EXTENSIONS.add("io.github.kloping.spt.SptRedis");
     }
 
     public static ExtensionImpl0 INSTANCE = null;
@@ -33,10 +34,6 @@ public class ExtensionImpl0 implements Extension {
                 runnable.run();
                 StarterApplication.logger.info(runnable.getName() + " extension load");
             } catch (ClassNotFoundException e) {
-
-            } catch (InstantiationException e) {
-
-            } catch (IllegalAccessException e) {
 
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
