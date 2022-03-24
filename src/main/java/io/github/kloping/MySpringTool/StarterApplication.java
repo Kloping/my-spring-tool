@@ -16,6 +16,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.CountDownLatch;
 
 import static io.github.kloping.MySpringTool.partUtils.*;
 import static io.github.kloping.common.Public.EXECUTOR_SERVICE;
@@ -343,8 +344,24 @@ public final class StarterApplication {
     }
 
     private static void postScan() {
+        CountDownLatch cdl = new CountDownLatch(POST_SCAN_RUNNABLE.size());
         for (Runnable runnable : POST_SCAN_RUNNABLE) {
-            EXECUTOR_SERVICE.submit(runnable);
+            EXECUTOR_SERVICE.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        runnable.run();
+                    } catch (Throwable e) {
+                        e.printStackTrace();
+                    }
+                    cdl.countDown();
+                }
+            });
+        }
+        try {
+            cdl.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
