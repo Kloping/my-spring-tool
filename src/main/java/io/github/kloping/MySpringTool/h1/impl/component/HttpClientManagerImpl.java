@@ -3,7 +3,6 @@ package io.github.kloping.MySpringTool.h1.impl.component;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import io.github.kloping.MySpringTool.StarterApplication;
-import io.github.kloping.MySpringTool.annotations.AutoStand;
 import io.github.kloping.MySpringTool.annotations.PathValue;
 import io.github.kloping.MySpringTool.annotations.http.*;
 import io.github.kloping.MySpringTool.entity.Params;
@@ -438,9 +437,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
         return url0;
     }
 
-    @AutoStand
-    private ContextManager contextManager;
-
     private Map<String, String> getHeaders(Method method, Object... objects) {
         Class cn0 = method.getDeclaringClass();
         Parameter[] parameters = method.getParameters();
@@ -474,28 +470,26 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         Map<String, String> m = (Map<String, String>) o;
                         map.putAll(m);
                     }
-                } catch (ClassNotFoundException e) {
+                } catch (Throwable e) {
                     e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
+                    StarterApplication.logger.error("parse error at " + cn0 + " Annotation @Headers");
                 }
             }
         }
         return map;
     }
 
-    private Object getValue(AccessibleObject ao, Class c) throws IllegalAccessException, InvocationTargetException {
+    private Object getValue(AccessibleObject ao, Class c) throws Throwable {
         if (ao == null) return null;
         ao.setAccessible(true);
+        ContextManager contextManager = StarterApplication.Setting.INSTANCE.getContextManager();
         if (ao instanceof Method) {
             Method method = (Method) ao;
-            Object o = method.invoke(contextManager.getContextEntity(c), new Object[]{});
+            Object o = method.invoke(contextManager.getContextEntity(method.getDeclaringClass()));
             return o;
         } else if (ao instanceof Field) {
             Field field = (Field) ao;
-            Object o = field.get(contextManager.getContextEntity(c));
+            Object o = field.get(contextManager.getContextEntity(field.getDeclaringClass()));
             return o;
         }
         return null;
@@ -510,13 +504,11 @@ public class HttpClientManagerImpl implements HttpClientManager {
         try {
             accessibleObject = cl0.getDeclaredField(fn);
         } catch (NoSuchFieldException e) {
-            e.printStackTrace();
         }
         if (accessibleObject == null) {
             try {
                 accessibleObject = cl0.getDeclaredMethod(fn);
             } catch (NoSuchMethodException e) {
-                e.printStackTrace();
             }
         }
         return accessibleObject;
