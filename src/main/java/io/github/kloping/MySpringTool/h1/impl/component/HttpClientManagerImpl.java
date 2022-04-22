@@ -3,6 +3,7 @@ package io.github.kloping.MySpringTool.h1.impl.component;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import io.github.kloping.MySpringTool.StarterApplication;
+import io.github.kloping.MySpringTool.annotations.AutoStand;
 import io.github.kloping.MySpringTool.annotations.PathValue;
 import io.github.kloping.MySpringTool.annotations.http.*;
 import io.github.kloping.MySpringTool.entity.Params;
@@ -21,11 +22,8 @@ import java.net.CookieStore;
 import java.net.HttpCookie;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static io.github.kloping.MySpringTool.partUtils.getExceptionLine;
@@ -440,9 +438,13 @@ public class HttpClientManagerImpl implements HttpClientManager {
         return url0;
     }
 
+    @AutoStand
+    private ContextManager contextManager;
+
     private Map<String, String> getHeaders(Method method, Object... objects) {
+        Class cn0 = method.getDeclaringClass();
         Parameter[] parameters = method.getParameters();
-        Map<String, String> map = null;
+        Map<String, String> map = new HashMap<>();
         int i = 0;
         for (Parameter parameter : parameters) {
             if (parameter.isAnnotationPresent(Headers.class)) {
@@ -461,7 +463,63 @@ public class HttpClientManagerImpl implements HttpClientManager {
             }
             i++;
         }
+        if (cn0.isAnnotationPresent(Headers.class)) {
+            Headers headers = method.getDeclaringClass().getDeclaredAnnotation(Headers.class);
+            String s = headers.value();
+            if (!(s == null || s.isEmpty())) {
+                try {
+                    AccessibleObject field = parse(s);
+                    Object o = getValue(field, cn0);
+                    if (o instanceof Map) {
+                        Map<String, String> m = (Map<String, String>) o;
+                        map.putAll(m);
+                    }
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                } catch (InvocationTargetException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
         return map;
+    }
+
+    private Object getValue(AccessibleObject ao, Class c) throws IllegalAccessException, InvocationTargetException {
+        if (ao == null) return null;
+        ao.setAccessible(true);
+        if (ao instanceof Method) {
+            Method method = (Method) ao;
+            Object o = method.invoke(contextManager.getContextEntity(c), new Object[]{});
+            return o;
+        } else if (ao instanceof Field) {
+            Field field = (Field) ao;
+            Object o = field.get(contextManager.getContextEntity(c));
+            return o;
+        }
+        return null;
+    }
+
+    private static final AccessibleObject parse(String str) throws ClassNotFoundException {
+        AccessibleObject accessibleObject = null;
+        int i0 = str.lastIndexOf(".");
+        String clan = str.substring(0, i0);
+        String fn = str.substring(i0 + 1);
+        Class cl0 = Class.forName(clan);
+        try {
+            accessibleObject = cl0.getDeclaredField(fn);
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        if (accessibleObject == null) {
+            try {
+                accessibleObject = cl0.getDeclaredMethod(fn);
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+        }
+        return accessibleObject;
     }
 
     private static final String AND = "&";
