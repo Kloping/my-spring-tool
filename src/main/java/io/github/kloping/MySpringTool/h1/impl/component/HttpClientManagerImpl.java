@@ -388,6 +388,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         Parameter[] parameters = method.getParameters();
         StringBuilder sb_end = new StringBuilder();
         StringBuilder sb = new StringBuilder();
+        Map<String, Object> replaceMap = new HashMap<>();
         sb_end.append(url);
         for (int i = 0; i < parameters.length; i++) {
             if (objects[i] instanceof Params) {
@@ -416,10 +417,16 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 });
             } else if (parameters[i].isAnnotationPresent(PathValue.class)) {
                 PathValue pn = parameters[i].getAnnotation(PathValue.class);
-                if (!sb_end.toString().endsWith(SPLIT)) {
-                    sb_end.append(SPLIT);
+                if (pn.value() == null || pn.value().isEmpty()) {
+                    if (!sb_end.toString().endsWith(SPLIT)) {
+                        sb_end.append(SPLIT);
+                    }
+                    sb_end.append(objects[i].toString());
+                } else {
+                    String name = pn.value();
+                    name = "{" + name + "}";
+                    replaceMap.put(name, objects[i]);
                 }
-                sb_end.append(objects[i].toString());
             }
         }
         if (sb.toString().endsWith(DO)) {
@@ -433,6 +440,12 @@ public class HttpClientManagerImpl implements HttpClientManager {
         String url0 = sb_end.toString();
         if (url0.startsWith(SPLIT)) {
             url0 = url0.substring(1);
+        }
+        if (url0.endsWith(DO)) {
+            url0 = url0.substring(0, url0.length() - 1);
+        }
+        for (String s : replaceMap.keySet()) {
+            url0 = url0.replace(s, replaceMap.get(s).toString());
         }
         return url0;
     }
