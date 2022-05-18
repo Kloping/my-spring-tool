@@ -176,6 +176,7 @@ public final class StarterApplication {
 
     }
 
+    public static ClassLoader SCAN_LOADER = ClassLoader.getSystemClassLoader();
     private static int poolSize = 20;
     private static long waitTime = 12 * 1000L;
     private static String scanPath;
@@ -332,7 +333,7 @@ public final class StarterApplication {
             getInstance().contextManager.append(startClass);
             getInstance().classManager.add(main);
             preScan();
-            for (Class<?> aClass : getInstance().packageScanner.scan(scanPath)) {
+            for (Class<?> aClass : getInstance().packageScanner.scan(SCAN_LOADER, scanPath)) {
                 getInstance().classManager.add(aClass);
             }
             postScan();

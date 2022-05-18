@@ -1,6 +1,8 @@
 package io.github.kloping.MySpringTool.h1.impl.component;
 
 import io.github.kloping.MySpringTool.interfaces.component.PackageScanner;
+import io.github.kloping.file.FileUtils;
+import io.github.kloping.url.UrlUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,6 +16,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+/**
+ * @author github-kloping
+ */
 public class PackageScannerImpl implements PackageScanner {
     private boolean isRecursion = true;
 
@@ -22,16 +27,15 @@ public class PackageScannerImpl implements PackageScanner {
     }
 
     @Override
-    public Class<?>[] scan(String packageName) throws IOException, ClassNotFoundException {
+    public Class<?>[] scan(ClassLoader loader, String packageName) throws IOException, ClassNotFoundException {
         Set<String> classNames = null;
-        ClassLoader loader = this.getClass().getClassLoader();
         String packagePath = packageName.replace(".", "/");
         URL url = loader.getResource(packagePath);
         if (url != null) {
             String protocol = url.getProtocol().trim();
-            if (protocol.equals("file")) {
+            if ("file".equals(protocol)) {
                 classNames = getClassNameFromDir(url.getPath(), packageName, isRecursion);
-            } else if (protocol.equals("jar")) {
+            } else if ("jar".equals(protocol)) {
                 JarFile jarFile = null;
                 jarFile = ((JarURLConnection) url.openConnection()).getJarFile();
                 if (jarFile != null) {
@@ -95,13 +99,22 @@ public class PackageScannerImpl implements PackageScanner {
         Set<String> classNames = new HashSet<>();
         for (int i = 0; i < urls.length; i++) {
             String classPath = urls[i].getPath();
+            JarFile jarFile = null;
             if (classPath.endsWith("classes/")) {
                 continue;
-            }
-            JarFile jarFile = null;
-            jarFile = new JarFile(classPath.substring(classPath.indexOf("/")));
-            if (jarFile != null) {
-                classNames.addAll(getClassNameFromJar(jarFile.entries(), packageName, isRecursion));
+            } else if (classPath.startsWith("http")) {
+                File temp = File.createTempFile("temp0", ".jar");
+                FileUtils.writeBytesToFile(UrlUtils.getBytesFromHttpUrl(classPath.substring(0, classPath.indexOf("!"))), temp);
+                jarFile = new JarFile(temp);
+                if (jarFile != null) {
+                    classNames.addAll(getClassNameFromJar(jarFile.entries(), packageName, isRecursion));
+                }
+                temp.delete();
+            } else {
+                jarFile = new JarFile(classPath.substring(classPath.indexOf("/")));
+                if (jarFile != null) {
+                    classNames.addAll(getClassNameFromJar(jarFile.entries(), packageName, isRecursion));
+                }
             }
         }
         return classNames;
