@@ -213,35 +213,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
     }
 
-    private Method[] parseMethods(String[] ss) {
-        Method[] methods = new Method[ss.length];
-        int i = 0;
-        for (String s : ss) {
-            int i0 = s.lastIndexOf(".");
-            String className = s.substring(0, i0);
-            String methodName = s.substring(i0 + 1, s.length());
-            try {
-                Class<?> cla = StarterApplication.SCAN_LOADER.loadClass(className);
-                Method method = null;
-                for (Method declaredMethod : cla.getDeclaredMethods()) {
-                    if (declaredMethod.getName().equals(methodName)) {
-                        method = declaredMethod;
-                    }
-                }
-                if (method == null) {
-                    methods[i] = null;
-                    continue;
-                }
-                method.setAccessible(true);
-                methods[i] = method;
-            } catch (Exception e) {
-                StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
-            }
-            i++;
-        }
-        return methods;
-    }
-
     private void initCookie(Connection connection, Method method, String trueUrl, Object[] objects) throws Exception {
         CookieStore cookieStore = connection.cookieStore();
         if (method.isAnnotationPresent(CookieFrom.class)) {
@@ -270,6 +241,35 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 }
             }
         }
+    }
+
+    private Method[] parseMethods(String[] ss) {
+        int i = 0;
+        Method[] methods = new Method[ss.length];
+        for (String s : ss) {
+            int i0 = s.lastIndexOf(".");
+            String methodName = s.substring(i0 + 1, s.length());
+            String className = s.substring(0, i0);
+            try {
+                Class<?> cla = StarterApplication.SCAN_LOADER.loadClass(className);
+                Method method = null;
+                for (Method declaredMethod : cla.getDeclaredMethods()) {
+                    if (declaredMethod.getName().equals(methodName)) {
+                        method = declaredMethod;
+                    }
+                }
+                if (method == null) {
+                    methods[i] = null;
+                    continue;
+                }
+                method.setAccessible(true);
+                methods[i] = method;
+            } catch (Exception e) {
+                StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
+            }
+            i++;
+        }
+        return methods;
     }
 
     private static void addCookieStore(CookieStore from, CookieStore to) throws IllegalAccessException, NoSuchFieldException {
