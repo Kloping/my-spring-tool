@@ -221,7 +221,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
             String className = s.substring(0, i0);
             String methodName = s.substring(i0 + 1, s.length());
             try {
-                Class<?> cla = Class.forName(className);
+                Class<?> cla = StarterApplication.SCAN_LOADER.loadClass(className);
                 Method method = null;
                 for (Method declaredMethod : cla.getDeclaredMethods()) {
                     if (declaredMethod.getName().equals(methodName)) {
