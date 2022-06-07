@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.CountDownLatch;
 
-import static io.github.kloping.MySpringTool.partUtils.*;
+import static io.github.kloping.MySpringTool.PartUtils.*;
 import static io.github.kloping.common.Public.EXECUTOR_SERVICE;
 
 

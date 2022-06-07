@@ -26,7 +26,7 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static io.github.kloping.MySpringTool.partUtils.getExceptionLine;
+import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
 
 /**
  * @author github-kloping

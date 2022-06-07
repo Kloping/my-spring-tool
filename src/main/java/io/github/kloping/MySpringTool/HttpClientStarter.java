@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static io.github.kloping.MySpringTool.Starter.Log;
 import static io.github.kloping.MySpringTool.Starter.appendToObjMap;
-import static io.github.kloping.MySpringTool.partUtils.getExceptionLine;
+import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
 
 final class HttpClientStarter {
     private static abstract class M1<T> {

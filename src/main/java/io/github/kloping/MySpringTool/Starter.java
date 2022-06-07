@@ -3,7 +3,6 @@ package io.github.kloping.MySpringTool;
 import io.github.kloping.MySpringTool.annotations.*;
 import io.github.kloping.MySpringTool.annotations.http.HttpClient;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
-import io.github.kloping.MySpringTool.h1.impl.ExtensionImpl0;
 import io.github.kloping.arr.Class2OMap;
 import io.github.kloping.map.MapUtils;
 
@@ -15,7 +14,7 @@ import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static io.github.kloping.MySpringTool.partUtils.*;
+import static io.github.kloping.MySpringTool.PartUtils.*;
 import static io.github.kloping.clasz.ClassUtils.newInstance;
 import static io.github.kloping.object.ObjectUtils.baseToPack;
 

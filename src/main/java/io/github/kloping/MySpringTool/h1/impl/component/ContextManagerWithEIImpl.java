@@ -1,7 +1,7 @@
 package io.github.kloping.MySpringTool.h1.impl.component;
 
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
-import io.github.kloping.MySpringTool.partUtils;
+import io.github.kloping.MySpringTool.PartUtils;
 import io.github.kloping.map.MapUtils;
 import io.github.kloping.object.ObjectUtils;
 
@@ -21,7 +21,7 @@ public class ContextManagerWithEIImpl implements ContextManager {
             MapUtils.append(contexts, cla, id, obj);
         else
             MapUtils.append(contexts, cla, id, obj, ConcurrentHashMap.class);
-        for (Class c1 : partUtils.getAllInterfaceOrSupers(cla))
+        for (Class c1 : PartUtils.getAllInterfaceOrSupers(cla))
             MapUtils.append(contexts, c1, id, obj, ConcurrentHashMap.class);
         return contexts.get(cla).size();
     }
@@ -40,7 +40,7 @@ public class ContextManagerWithEIImpl implements ContextManager {
         else
             MapUtils.append(contexts, cla, id, obj, ConcurrentHashMap.class);
 
-        for (Class c1 : partUtils.getAllInterfaceOrSupers(cla))
+        for (Class c1 : PartUtils.getAllInterfaceOrSupers(cla))
             MapUtils.append(contexts, c1, id, obj, ConcurrentHashMap.class);
         return contexts.get(cla).size();
     }

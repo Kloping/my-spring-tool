@@ -22,9 +22,8 @@ import java.util.jar.JarFile;
 
 import static io.github.kloping.MySpringTool.Starter.Log;
 
-public final class partUtils {
-
-    static Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
+public final class PartUtils {
+    public static Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
         Set<String> classNames = null;
         ClassLoader loader = Starter.class.getClassLoader();
         String packagePath = packageName.replace(".", "/");
@@ -60,7 +59,7 @@ public final class partUtils {
         return classes;
     }
 
-    static Set<String> getClassNameFromDir(String filePath, String packageName, boolean isRecursion) {
+    public static Set<String> getClassNameFromDir(String filePath, String packageName, boolean isRecursion) {
         Set<String> className = new HashSet<>();
         File file = new File(filePath);
         File[] files = file.listFiles();
@@ -79,11 +78,11 @@ public final class partUtils {
         return className;
     }
 
-    static Set<String> getClassNameFromJar(Enumeration<JarEntry> jarEntries, String packageName, boolean isRecursion) {
+    public static Set<String> getClassNameFromJar(Enumeration<JarEntry> jarEntries, String packageName, boolean isRecursion) {
         return getResource0(jarEntries, packageName, isRecursion);
     }
 
-    static Set<String> getResource0(Enumeration<JarEntry> jarEntries, String packageName, boolean isRecursion) {
+    public static Set<String> getResource0(Enumeration<JarEntry> jarEntries, String packageName, boolean isRecursion) {
         Set<String> classNames = new HashSet();
         while (jarEntries.hasMoreElements()) {
             JarEntry jarEntry = jarEntries.nextElement();
@@ -102,7 +101,7 @@ public final class partUtils {
         return classNames;
     }
 
-    static Set<String> getClassNameFromJars(URL[] urls, String packageName, boolean isRecursion) {
+    public static Set<String> getClassNameFromJars(URL[] urls, String packageName, boolean isRecursion) {
         Set<String> classNames = new HashSet<>();
         for (int i = 0; i < urls.length; i++) {
             String classPath = urls[i].getPath();
@@ -147,7 +146,7 @@ public final class partUtils {
         }
     }
 
-    static Class<?>[] ObjectsToClasses(Object... objs) {
+    public static Class<?>[] ObjectsToClasses(Object... objs) {
         Class<?>[] classes = new Class[objs.length];
         for (int i = 0; i < objs.length; i++) {
             classes[i] = objs[i].getClass();
@@ -155,7 +154,7 @@ public final class partUtils {
         return classes;
     }
 
-    static final SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+    public static final SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
 
     public static long getTimeFromNowTo(int hour, int mini, int mil) {
         Date date = null;
@@ -169,17 +168,17 @@ public final class partUtils {
         return millis - now;
     }
 
-    static int getYear() {
+    public static int getYear() {
         String s = myFmt.format(new Date());
         return Integer.parseInt(s.substring(0, 4));
     }
 
-    static int getMon() {
+    public static int getMon() {
         String s = myFmt.format(new Date());
         return Integer.parseInt(s.substring(5, 7));
     }
 
-    static int getDay() {
+    public static int getDay() {
         String s = myFmt.format(new Date());
         return Integer.parseInt(s.substring(8, 10));
     }
@@ -209,7 +208,7 @@ public final class partUtils {
         return entry;
     }
 
-    static boolean superOrImpl(final Class<?> father, final Class<?> son) {
+    public static boolean superOrImpl(final Class<?> father, final Class<?> son) {
         try {
             if (father2son.get(father).contains(son)) {
                 Log("从历史匹配知道 " + father + " 匹配与=>" + son, 0);
@@ -223,13 +222,13 @@ public final class partUtils {
         return k;
     }
 
-    static void appendFather2Son(Class<?> father, Class<?> son) {
+    public static void appendFather2Son(Class<?> father, Class<?> son) {
         MapUtils.append(father2son, father, son, CopyOnWriteArrayList.class);
     }
 
     private static final Map<Class<?>, List<Class>> father2son = new ConcurrentHashMap<>();
 
-    static boolean isInterfaces(Class<?>[] classes1, Class<?> cla) {
+    public static boolean isInterfaces(Class<?>[] classes1, Class<?> cla) {
         if (classes1 == null || classes1.length == 0) return false;
         for (Class c : classes1) {
             if (c == cla) return true;
@@ -240,14 +239,14 @@ public final class partUtils {
         return false;
     }
 
-    static String filter(String path, Class cla) {
+    public static String filter(String path, Class cla) {
         if (path.equals(".") || path.equals("/") || path.equals("./") || path.trim().isEmpty()) {
             path = cla.getName().substring(0, cla.getName().indexOf("."));
         }
         return path;
     }
 
-    static void check(String scanPath) {
+    public static void check(String scanPath) {
         try {
             if (Starter.class.getClassLoader().getResources(scanPath) == null)
                 throw new RuntimeException("欲扫描的包名不存在");

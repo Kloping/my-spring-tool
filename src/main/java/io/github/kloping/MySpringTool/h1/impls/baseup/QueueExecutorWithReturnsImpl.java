@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 import static io.github.kloping.MySpringTool.StarterApplication.logger;
-import static io.github.kloping.MySpringTool.partUtils.getExceptionLine;
+import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
 
 /**
  * @author github-kloping
