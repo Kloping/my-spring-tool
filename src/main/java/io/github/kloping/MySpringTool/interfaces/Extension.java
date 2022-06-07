@@ -1,5 +1,7 @@
 package io.github.kloping.MySpringTool.interfaces;
 
+import io.github.kloping.MySpringTool.Setting;
+
 import java.util.List;
 
 /**
@@ -27,5 +29,12 @@ public interface Extension {
          * @return
          */
         String getName();
+
+        /**
+         * on setting
+         *
+         * @param setting
+         */
+        void setSetting(Setting setting);
     }
 }

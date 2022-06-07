@@ -2,6 +2,7 @@ package io.github.kloping.MySpringTool.h1.impl.component;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.annotations.PathValue;
 import io.github.kloping.MySpringTool.annotations.http.*;
@@ -47,7 +48,10 @@ public class HttpClientManagerImpl implements HttpClientManager {
         abstract T run(Object... objects);
     }
 
-    public HttpClientManagerImpl(ClassManager classManager) {
+    private Setting setting;
+
+    public HttpClientManagerImpl(Setting setting,ClassManager classManager) {
+        this.setting = setting;
         classManager.registeredAnnotation(HttpClient.class, this);
     }
 
@@ -495,7 +499,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
     private Object getValue(AccessibleObject ao, Class c) throws Throwable {
         if (ao == null) return null;
         ao.setAccessible(true);
-        ContextManager contextManager = StarterApplication.Setting.INSTANCE.getContextManager();
+        ContextManager contextManager = setting.getContextManager();
         if (ao instanceof Method) {
             Method method = (Method) ao;
             Object o = method.invoke(contextManager.getContextEntity(method.getDeclaringClass()));

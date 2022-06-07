@@ -1,5 +1,6 @@
 package io.github.kloping.MySpringTool.h1.impls.baseup;
 
+import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
 import io.github.kloping.MySpringTool.interfaces.Executor;
@@ -11,10 +12,12 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static io.github.kloping.MySpringTool.StarterApplication.Setting.INSTANCE;
 import static io.github.kloping.MySpringTool.StarterApplication.logger;
 import static io.github.kloping.MySpringTool.partUtils.getExceptionLine;
 
+/**
+ * @author github-kloping
+ */
 public class QueueExecutorImpl implements QueueExecutor {
     private Class<?> cla = Long.class;
     private Executor executor;
@@ -22,6 +25,11 @@ public class QueueExecutorImpl implements QueueExecutor {
     private long waitTime = 10 * 1000;
     private Runner runner1;
     private Runner runner2;
+    private Setting setting;
+
+    public QueueExecutorImpl(Setting setting) {
+        this.setting = setting;
+    }
 
     @Override
     public void setBefore(Runner runner) {
@@ -47,11 +55,8 @@ public class QueueExecutorImpl implements QueueExecutor {
         runThreads = Executors.newFixedThreadPool(poolSize);
     }
 
-    private QueueExecutorImpl() {
-    }
-
-    public static QueueExecutor create(Class<?> cla, int poolSize, long waitTime, Executor executor) {
-        QueueExecutorImpl queueExecutor = new QueueExecutorImpl();
+    public static QueueExecutor create(Class<?> cla, int poolSize, long waitTime, Executor executor,Setting setting) {
+        QueueExecutorImpl queueExecutor = new QueueExecutorImpl(setting);
         queueExecutor.executor = executor;
         queueExecutor.poolSize = poolSize;
         queueExecutor.cla = cla;
@@ -93,18 +98,18 @@ public class QueueExecutorImpl implements QueueExecutor {
                         try {
                             long startTime = System.currentTimeMillis();
                             Object[] parts = Arrays.copyOfRange(objects, 2, objects.length);
-                            if (INSTANCE.getArgsManager().isLegal(parts)) {
+                            if (setting.getArgsManager().isLegal(parts)) {
                                 try {
-                                    MatherResult result = INSTANCE.getActionManager().mather(objects[1].toString());
+                                    MatherResult result = setting.getActionManager().mather(objects[1].toString());
                                     if (result != null) {
                                         if (runner1 != null) runner1.run(t, objects);
                                         Method[] methods = result.getMethods();
                                         Class cla = methods[0].getDeclaringClass();
-                                        Object o = INSTANCE.getContextManager().getContextEntity(cla);
+                                        Object o = setting.getContextManager().getContextEntity(cla);
                                         Object reo = null;
                                         List<Object> results = new ArrayList<>();
                                         for (Method m : methods) {
-                                            Object[] parObjs = INSTANCE.getAutomaticWiringParams().wiring(m, result, results, (Object) parts);
+                                            Object[] parObjs = setting.getAutomaticWiringParams().wiring(m, result, results, (Object) parts);
                                             Object to = executor.execute(o, m, parObjs);
                                             if (to != null) {
                                                 results.add(to);

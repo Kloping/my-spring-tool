@@ -1,6 +1,7 @@
 
 package io.github.kloping.MySpringTool.h1.impls.baseup;
 
+import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.entity.impls.RunnerEve;
 import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
@@ -13,10 +14,12 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static io.github.kloping.MySpringTool.StarterApplication.Setting.INSTANCE;
 import static io.github.kloping.MySpringTool.StarterApplication.logger;
 import static io.github.kloping.MySpringTool.partUtils.getExceptionLine;
 
+/**
+ * @author github-kloping
+ */
 public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     protected Class<?> cla = Long.class;
     protected Executor executor;
@@ -24,6 +27,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     protected long waitTime = 10 * 1000;
     private RunnerEve runner1;
     private RunnerEve runner2;
+    private Setting setting;
 
     @Override
     public <T extends Runner> void setBefore(T runner) {
@@ -37,7 +41,8 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
             runner2 = (RunnerEve) runner;
     }
 
-    public QueueExecutorWithReturnsImpl(Class<?> cla, Executor executor) {
+    public QueueExecutorWithReturnsImpl(Class<?> cla, Executor executor, Setting setting) {
+        this.setting = setting;
         this.cla = cla;
         this.executor = executor;
         init();
@@ -55,7 +60,8 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
         runThreads = Executors.newFixedThreadPool(poolSize);
     }
 
-    protected QueueExecutorWithReturnsImpl(Class<?> cla, int poolSize, long waitTime, Executor executor) {
+    protected QueueExecutorWithReturnsImpl(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
+        this.setting = setting;
         this.executor = executor;
         this.poolSize = poolSize;
         this.cla = cla;
@@ -63,8 +69,8 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
         this.init();
     }
 
-    public static QueueExecutorWithReturnsImpl create(Class<?> cla, int poolSize, long waitTime, Executor executor) {
-        return new QueueExecutorWithReturnsImpl(cla, poolSize, waitTime, executor);
+    public static QueueExecutorWithReturnsImpl create(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
+        return new QueueExecutorWithReturnsImpl(cla, poolSize, waitTime, executor, setting);
     }
 
     @Override
@@ -107,7 +113,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
                 try {
                     long startTime = System.currentTimeMillis();
                     Object[] parts = Arrays.copyOfRange(objects, 2, objects.length);
-                    if (INSTANCE.getArgsManager().isLegal(parts)) {
+                    if (setting.getArgsManager().isLegal(parts)) {
                         matcherAndRun(t, objects, startTime, (Object) parts);
                     } else {
                         logger.Log("Can't Access types for " + Arrays.toString(objects), 2);
@@ -125,14 +131,14 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
 
     protected <T> void matcherAndRun(T t, Object[] objects, long startTime, Object parts) {
         try {
-            MatherResult result = INSTANCE.getActionManager().mather(objects[1].toString());
+            MatherResult result = setting.getActionManager().mather(objects[1].toString());
             if (result != null) {
                 Method[] methods = result.getMethods();
                 Class cla = methods[0].getDeclaringClass();
-                Object o = INSTANCE.getContextManager().getContextEntity(cla);
+                Object o = setting.getContextManager().getContextEntity(cla);
                 List<Object> results = new ArrayList<>();
                 for (Method m : methods) {
-                    Object[] parObjs = INSTANCE.getAutomaticWiringParams().wiring(m, result, results, (Object) parts);
+                    Object[] parObjs = setting.getAutomaticWiringParams().wiring(m, result, results, (Object) parts);
                     if (runner1 != null) {
                         runner1.methodRuined(null, m, t, objects);
                     }

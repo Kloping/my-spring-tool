@@ -3,15 +3,11 @@ package io.github.kloping.MySpringTool;
 import io.github.kloping.MySpringTool.annotations.CommentScan;
 import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
-import io.github.kloping.MySpringTool.h1.impl.*;
-import io.github.kloping.MySpringTool.h1.impl.component.*;
-import io.github.kloping.MySpringTool.h1.impls.baseup.QueueExecutorImpl;
-import io.github.kloping.MySpringTool.h1.impls.component.AutomaticWiringParamsH2Impl;
-import io.github.kloping.MySpringTool.interfaces.*;
-import io.github.kloping.MySpringTool.interfaces.component.*;
+import io.github.kloping.MySpringTool.h1.impl.ExtensionImpl0;
+import io.github.kloping.MySpringTool.h1.impl.LoggerImpl;
+import io.github.kloping.MySpringTool.interfaces.Logger;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -28,149 +24,6 @@ import static io.github.kloping.common.Public.EXECUTOR_SERVICE;
 public final class StarterObjectApplication {
     public Logger logger = new LoggerImpl();
     public Setting INSTANCE = null;
-
-    public class Setting {
-        protected ContextManager contextManager;
-        protected PackageScanner packageScanner;
-        protected AutomaticWiringParams automaticWiringParams;
-        protected AutomaticWiringValue automaticWiringValue;
-        protected ArgsManager argsManager;
-        protected InstanceCrater instanceCrater;
-        protected ActionManager actionManager;
-        protected MethodManager methodManager;
-        protected FieldManager fieldManager;
-        protected ClassManager classManager;
-        protected ConfigFileManager configFileManager;
-        protected Executor executor;
-        protected QueueExecutor queueExecutor;
-        protected TimeMethodManager timeMethodManager;
-        protected HttpClientManager httpClientManager;
-        protected FieldSourceManager fieldSourceManager;
-
-//        protected DataBaseManager dataBaseManager;
-
-        protected Setting() {
-            INSTANCE = this;
-        }
-
-        protected void defaultInit() {
-            if (logger == null)
-                logger = new LoggerImpl();
-            if (contextManager == null)
-                contextManager = new ContextManagerWithEIImpl();
-            if (configFileManager == null)
-                configFileManager = new ConfigFileManagerImpl(contextManager);
-            if (automaticWiringParams == null)
-                automaticWiringParams = new AutomaticWiringParamsH2Impl();
-            if (automaticWiringValue == null)
-                automaticWiringValue = new AutomaticWiringValueImpl();
-            if (instanceCrater == null)
-                instanceCrater = new InstanceCraterImpl();
-            if (executor == null)
-                executor = new ExecutorNowImpl();
-            if (queueExecutor == null)
-                queueExecutor = QueueExecutorImpl.create(mainKey, poolSize, waitTime, executor);
-            if (argsManager == null)
-                argsManager = new ArgsManagerImpl();
-            if (packageScanner == null)
-                packageScanner = new PackageScannerImpl(true);
-            if (classManager == null)
-                classManager = new ClassManagerImpl(
-                        instanceCrater, contextManager, automaticWiringParams, actionManager
-                );
-            if (methodManager == null)
-                methodManager = new MethodManagerImpl(automaticWiringParams, classManager);
-            if (actionManager == null)
-                actionManager = new ActionManagerImpl(classManager);
-            if (timeMethodManager == null)
-                timeMethodManager = new TimeMethodManagerImpl(classManager, automaticWiringParams);
-            if (httpClientManager == null)
-                httpClientManager = new HttpClientManagerImpl(classManager);
-            if (fieldManager == null)
-                fieldManager = new FieldManagerImpl(automaticWiringValue, classManager);
-            if (fieldSourceManager == null)
-                fieldSourceManager = new FieldSourceManagerImpl0(classManager);
-
-            inited = true;
-            Field[] fields = Setting.class.getDeclaredFields();
-            for (Field field : fields) {
-                Object o = null;
-                try {
-                    o = field.get(this);
-                } catch (Exception e) {
-                    continue;
-                }
-                if (o != null) {
-                    contextManager.append(o);
-                }
-            }
-        }
-
-        public ContextManager getContextManager() {
-            return contextManager;
-        }
-
-        public PackageScanner getPackageScanner() {
-            return packageScanner;
-        }
-
-        public AutomaticWiringParams getAutomaticWiringParams() {
-            return automaticWiringParams;
-        }
-
-        public AutomaticWiringValue getAutomaticWiringValue() {
-            return automaticWiringValue;
-        }
-
-        public ArgsManager getArgsManager() {
-            return argsManager;
-        }
-
-        public InstanceCrater getInstanceCrater() {
-            return instanceCrater;
-        }
-
-        public ActionManager getActionManager() {
-            return actionManager;
-        }
-
-        public MethodManager getMethodManager() {
-            return methodManager;
-        }
-
-        public FieldManager getFieldManager() {
-            return fieldManager;
-        }
-
-        public FieldSourceManager getFieldSourceManager() {
-            return fieldSourceManager;
-        }
-
-        public ClassManager getClassManager() {
-            return classManager;
-        }
-
-        public ConfigFileManager getConfigFileManager() {
-            return configFileManager;
-        }
-
-        public Executor getExecutor() {
-            return executor;
-        }
-
-        public QueueExecutor getQueueExecutor() {
-            return queueExecutor;
-        }
-
-        public TimeMethodManager getTimeMethodManager() {
-            return timeMethodManager;
-        }
-
-        public HttpClientManager getHttpClientManager() {
-            return httpClientManager;
-        }
-
-    }
 
     public ClassLoader SCAN_LOADER = ClassLoader.getSystemClassLoader();
     private int poolSize = 20;
@@ -190,6 +43,8 @@ public final class StarterObjectApplication {
      * on scan after
      */
     public final List<Runnable> POST_SCAN_RUNNABLE = new LinkedList<>();
+
+    private Set<String> fileSet = new CopyOnWriteArraySet<>();
 
     public void setPoolSize(int poolSize) {
         this.poolSize = poolSize;
@@ -290,8 +145,6 @@ public final class StarterObjectApplication {
         if (format != null) logger.setFormat(format);
     }
 
-    private Set<String> fileSet = new CopyOnWriteArraySet<>();
-
     private void loadConf() {
         for (String path : fileSet) {
             getInstance().configFileManager.load(path);
@@ -368,7 +221,7 @@ public final class StarterObjectApplication {
     }
 
     private void preScan() {
-        ExtensionImpl0.INSTANCE = new ExtensionImpl0();
+        ExtensionImpl0.INSTANCE = new ExtensionImpl0(getInstance());
         for (Runnable runnable : PRE_SCAN_RUNNABLE) {
             try {
                 runnable.run();
@@ -381,8 +234,23 @@ public final class StarterObjectApplication {
     private Setting getInstance() {
         synchronized (this) {
             if (!inited) {
-                INSTANCE = new Setting();
-                INSTANCE.defaultInit();
+                INSTANCE = new Setting(){
+                    @Override
+                    public List<Runnable> getSTARTED_RUNNABLE() {
+                        return STARTED_RUNNABLE;
+                    }
+
+                    @Override
+                    public List<Runnable> getPRE_SCAN_RUNNABLE() {
+                        return PRE_SCAN_RUNNABLE;
+                    }
+
+                    @Override
+                    public List<Runnable> getPOST_SCAN_RUNNABLE() {
+                        return POST_SCAN_RUNNABLE;
+                    }
+                };
+                INSTANCE.defaultInit(mainKey, poolSize, waitTime);
             }
         }
         return INSTANCE;

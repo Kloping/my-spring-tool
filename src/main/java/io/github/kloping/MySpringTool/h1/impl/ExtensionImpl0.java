@@ -1,5 +1,6 @@
 package io.github.kloping.MySpringTool.h1.impl;
 
+import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.interfaces.Extension;
 
@@ -17,9 +18,12 @@ public class ExtensionImpl0 implements Extension {
         EXTENSIONS.add("io.github.kloping.spt.SptRedis");
     }
 
+    private Setting setting;
+
     public static ExtensionImpl0 INSTANCE = null;
 
-    public ExtensionImpl0() {
+    public ExtensionImpl0(Setting setting) {
+        this.setting = setting;
         load();
     }
 
@@ -28,9 +32,10 @@ public class ExtensionImpl0 implements Extension {
             ExtensionRunnable runnable = null;
             try {
                 Class<ExtensionRunnable> cla = (Class<ExtensionRunnable>) Class.forName(extension);
-                Object o = StarterApplication.Setting.INSTANCE.getInstanceCrater().create(cla, StarterApplication.Setting.INSTANCE.getContextManager());
-                StarterApplication.Setting.INSTANCE.getContextManager().append(o, extension);
+                Object o = setting.getInstanceCrater().create(cla, setting.getContextManager());
+                setting.getContextManager().append(o, extension);
                 runnable = (ExtensionRunnable) o;
+                runnable.setSetting(setting);
                 runnable.run();
                 StarterApplication.logger.info(runnable.getName() + " extension load");
             } catch (ClassNotFoundException e) {

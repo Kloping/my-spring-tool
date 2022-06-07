@@ -1,6 +1,7 @@
 
 package io.github.kloping.MySpringTool.h1.impls.baseup;
 
+import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.interfaces.Executor;
 import io.github.kloping.MySpringTool.interfaces.component.Callback;
 import io.github.kloping.MySpringTool.interfaces.component.Filter;
@@ -19,16 +20,16 @@ public class QueueExecutorWithReturnsAndInterceptorImpl
         extends QueueExecutorWithReturnsImpl
         implements Interceptor, InterceptorCallback {
 
-    public QueueExecutorWithReturnsAndInterceptorImpl(Class<?> cla, Executor executor) {
-        super(cla, executor);
+    public QueueExecutorWithReturnsAndInterceptorImpl(Class<?> cla, Executor executor, Setting setting) {
+        super(cla, executor, setting);
     }
 
-    protected QueueExecutorWithReturnsAndInterceptorImpl(Class<?> cla, int poolSize, long waitTime, Executor executor) {
-        super(cla, poolSize, waitTime, executor);
+    protected QueueExecutorWithReturnsAndInterceptorImpl(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
+        super(cla, poolSize, waitTime, executor, setting);
     }
 
-    public static QueueExecutorWithReturnsAndInterceptorImpl create(Class<?> cla, int poolSize, long waitTime, Executor executor) {
-        return new QueueExecutorWithReturnsAndInterceptorImpl(cla, poolSize, waitTime, executor);
+    public static QueueExecutorWithReturnsAndInterceptorImpl create(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
+        return new QueueExecutorWithReturnsAndInterceptorImpl(cla, poolSize, waitTime, executor, setting);
     }
 
     private Map<Filter, Integer> interceptMap = new ConcurrentHashMap<>();
