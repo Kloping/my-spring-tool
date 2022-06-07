@@ -183,12 +183,12 @@ public final class StarterObjectApplication {
 
     private void work(Class<?> main) {
         try {
-            Object startClass = getInstance().instanceCrater.create(main, getInstance().contextManager);
-            getInstance().contextManager.append(startClass);
-            getInstance().classManager.add(main);
+            Object startClass = getInstance().getInstanceCrater().create(main, getInstance().contextManager);
+            getInstance().getContextManager().append(startClass);
+            getInstance().getClassManager().add(main);
             preScan();
-            for (Class<?> aClass : getInstance().packageScanner.scan(SCAN_LOADER, scanPath)) {
-                getInstance().classManager.add(aClass);
+            for (Class<?> aClass : getInstance().getPackageScanner().scan(SCAN_LOADER, scanPath)) {
+                getInstance().getClassManager().add(aClass);
             }
             postScan();
             logger.info("start sptool success");
@@ -234,7 +234,8 @@ public final class StarterObjectApplication {
     private Setting getInstance() {
         synchronized (this) {
             if (!inited) {
-                INSTANCE = new Setting(){
+                INSTANCE = new Setting() {
+
                     @Override
                     public List<Runnable> getSTARTED_RUNNABLE() {
                         return STARTED_RUNNABLE;
@@ -251,6 +252,7 @@ public final class StarterObjectApplication {
                     }
                 };
                 INSTANCE.defaultInit(mainKey, poolSize, waitTime);
+                inited = true;
             }
         }
         return INSTANCE;

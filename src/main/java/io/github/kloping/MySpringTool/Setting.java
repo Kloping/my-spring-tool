@@ -36,9 +36,6 @@ public abstract class Setting {
     protected TimeMethodManager timeMethodManager;
     protected HttpClientManager httpClientManager;
     protected FieldSourceManager fieldSourceManager;
-    public final List<Runnable> STARTED_RUNNABLE = new LinkedList<>();
-    public final List<Runnable> PRE_SCAN_RUNNABLE = new LinkedList<>();
-    public final List<Runnable> POST_SCAN_RUNNABLE = new LinkedList<>();
 
     protected Setting() {
     }
@@ -163,4 +160,6 @@ public abstract class Setting {
     public abstract List<Runnable> getPRE_SCAN_RUNNABLE();
 
     public abstract List<Runnable> getPOST_SCAN_RUNNABLE();
+
+
 }

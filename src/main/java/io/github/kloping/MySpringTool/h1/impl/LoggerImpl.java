@@ -5,8 +5,11 @@ import io.github.kloping.MySpringTool.interfaces.Logger;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+/**
+ * @author github-kloping
+ */
 public class LoggerImpl implements Logger {
-    private int Log_Level=0;
+    private int Log_Level = 0;
     private SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
     private final String prefix = "[github.kloping.ST]";
 
@@ -32,6 +35,7 @@ public class LoggerImpl implements Logger {
             case -1:
                 info = "[Error] " + info;
                 break;
+            default:
         }
         info = prefix + info;
         if (level == 0) {
