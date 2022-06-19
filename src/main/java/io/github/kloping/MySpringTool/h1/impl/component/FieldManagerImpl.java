@@ -1,5 +1,6 @@
 package io.github.kloping.MySpringTool.h1.impl.component;
 
+import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.annotations.AutoStand;
 import io.github.kloping.MySpringTool.annotations.CommentScan;
@@ -21,12 +22,12 @@ public class FieldManagerImpl implements FieldManager {
 
     private AutomaticWiringValue automaticWiringValue;
 
-    public FieldManagerImpl(AutomaticWiringValue automaticWiringValue, ClassManager classManager) {
+    public FieldManagerImpl(AutomaticWiringValue automaticWiringValue, ClassManager classManager, Setting setting) {
         this.automaticWiringValue = automaticWiringValue;
         classManager.registeredAnnotation(Entity.class, this);
         classManager.registeredAnnotation(Controller.class, this);
         classManager.registeredAnnotation(CommentScan.class, this);
-        StarterApplication.STARTED_RUNNABLE.add(() -> {
+        setting.getSTARTED_RUNNABLE().add(() -> {
             for (Class claz : setClass) {
                 for (Field declaredField : claz.getDeclaredFields()) {
                     declaredField.setAccessible(true);

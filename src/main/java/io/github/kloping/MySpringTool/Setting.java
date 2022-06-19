@@ -13,7 +13,6 @@ import io.github.kloping.MySpringTool.interfaces.QueueExecutor;
 import io.github.kloping.MySpringTool.interfaces.component.*;
 
 import java.lang.reflect.Field;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -72,7 +71,7 @@ public abstract class Setting {
         if (httpClientManager == null)
             httpClientManager = new HttpClientManagerImpl(this, classManager);
         if (fieldManager == null)
-            fieldManager = new FieldManagerImpl(automaticWiringValue, classManager);
+            fieldManager = new FieldManagerImpl(automaticWiringValue, classManager, this);
         if (fieldSourceManager == null)
             fieldSourceManager = new FieldSourceManagerImpl0(classManager);
 
@@ -160,6 +159,4 @@ public abstract class Setting {
     public abstract List<Runnable> getPRE_SCAN_RUNNABLE();
 
     public abstract List<Runnable> getPOST_SCAN_RUNNABLE();
-
-
 }
