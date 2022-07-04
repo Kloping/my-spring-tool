@@ -50,7 +50,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     private Setting setting;
 
-    public HttpClientManagerImpl(Setting setting,ClassManager classManager) {
+    public HttpClientManagerImpl(Setting setting, ClassManager classManager) {
         this.setting = setting;
         classManager.registeredAnnotation(HttpClient.class, this);
     }
