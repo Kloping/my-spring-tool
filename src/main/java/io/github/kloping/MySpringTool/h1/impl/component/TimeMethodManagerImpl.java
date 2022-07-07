@@ -2,12 +2,14 @@ package io.github.kloping.MySpringTool.h1.impl.component;
 
 import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.annotations.Controller;
+import io.github.kloping.MySpringTool.annotations.CronSchedule;
 import io.github.kloping.MySpringTool.annotations.Schedule;
 import io.github.kloping.MySpringTool.annotations.TimeEve;
 import io.github.kloping.MySpringTool.interfaces.AutomaticWiringParams;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.TimeMethodManager;
+import io.github.kloping.date.CronUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -18,6 +20,9 @@ import java.util.concurrent.Executors;
 
 import static io.github.kloping.MySpringTool.PartUtils.*;
 
+/**
+ * @author HRS-Computer
+ */
 public class TimeMethodManagerImpl implements TimeMethodManager {
 
     private AutomaticWiringParams automaticWiringParams;
@@ -128,6 +133,23 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
             timeMethods.put(cla, list);
             StarterApplication.logger.Log("new Schedule " + method.getName()
                     + " from " + method.getDeclaringClass().getSimpleName(), 0);
+        } else if (method.isAnnotationPresent(CronSchedule.class)) {
+            Object o = contextManager.getContextEntity(method.getDeclaringClass());
+            CronSchedule schedule = method.getAnnotation(CronSchedule.class);
+            String cron = schedule.value();
+            if (!cron.isEmpty()) {
+                method.setAccessible(true);
+                CronUtils.INSTANCE.addCronJob(cron, (c) -> {
+                    try {
+                        Object[] objects = automaticWiringParams.wiring(method, contextManager);
+                        method.invoke(o, objects);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    } catch (InvocationTargetException e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
         }
     }
 
