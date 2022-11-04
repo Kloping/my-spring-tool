@@ -32,13 +32,15 @@ import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
  * @author github-kloping
  */
 public class HttpClientManagerImpl implements HttpClientManager {
+    public static final String SPLIT = "/";
+    private Setting setting;
+    private Map<Method, M1> methodInks = new ConcurrentHashMap<>();
     private abstract class M1<T> {
         private String path;
 
         private M1(String path) {
             this.path = path;
         }
-
         /**
          * proxy method run
          *
@@ -46,16 +48,14 @@ public class HttpClientManagerImpl implements HttpClientManager {
          * @return
          */
         abstract T run(Object... objects);
-    }
 
-    private Setting setting;
+    }
 
     public HttpClientManagerImpl(Setting setting, ClassManager classManager) {
         this.setting = setting;
         classManager.registeredAnnotation(HttpClient.class, this);
     }
 
-    public static final String SPLIT = "/";
 
     @Override
     public void manager(Method method, ContextManager contextManager) throws IllegalAccessException, InvocationTargetException {
@@ -72,7 +72,18 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
     }
 
-    private Map<Method, M1> methodInks = new ConcurrentHashMap<>();
+    private String ali(String host, String path) {
+        if (!host.endsWith(SPLIT)) {
+            host += SPLIT;
+        }
+        if (path.startsWith(SPLIT)) {
+            path = path.substring(1, path.length());
+        }
+        if (path.endsWith(SPLIT)) {
+            path = path.substring(0, path.length() - 1);
+        }
+        return host + path;
+    }
 
     @Override
     public void manager(Class cla, ContextManager contextManager) throws IllegalAccessException, InvocationTargetException {
@@ -92,19 +103,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
         for (Method declaredMethod : cla.getDeclaredMethods()) {
             this.manager(declaredMethod, contextManager);
         }
-    }
-
-    private String ali(String host, String path) {
-        if (!host.endsWith(SPLIT)) {
-            host += SPLIT;
-        }
-        if (path.startsWith(SPLIT)) {
-            path = path.substring(1, path.length());
-        }
-        if (path.endsWith(SPLIT)) {
-            path = path.substring(0, path.length() - 1);
-        }
-        return host + path;
     }
 
     private void initMethod(Method method, String url, int type) {

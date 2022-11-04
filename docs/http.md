@@ -40,7 +40,7 @@ import io.github.kloping.MySpringTool.annotations.http.HttpClient;
 import io.github.kloping.MySpringTool.annotations.http.ParamBody;
 import io.github.kloping.MySpringTool.annotations.http.ParamName;
 
-@HttpClient("http://49.232.209.180:20041/")
+@HttpClient("http://kloping.top/")
 public interface H1 {
 
     /**
