@@ -21,9 +21,9 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
 import static io.github.kloping.MySpringTool.Starter.Log;
 import static io.github.kloping.MySpringTool.Starter.appendToObjMap;
-import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
 
 final class HttpClientStarter {
     private static abstract class M1<T> {
@@ -36,7 +36,7 @@ final class HttpClientStarter {
         abstract T run(Object... objects);
     }
 
-    static <T> void InitHttpClientInterface(Class<T> cla) {
+    static <T> void initHttpClientInterface(Class<T> cla) {
         appendToObjMap(UUID.randomUUID().toString(), Proxy.newProxyInstance(cla.getClassLoader(),
                 new Class[]{cla}, new InvocationHandler() {
                     @Override
@@ -52,11 +52,11 @@ final class HttpClientStarter {
             if (method.isAnnotationPresent(GetPath.class)) {
                 String path = method.getAnnotation(GetPath.class).value();
                 path = ali(host, path);
-                InitMethod(method, path, 0);
+                initMethod(method, path, Connection.Method.GET);
             } else if (method.isAnnotationPresent(PostPath.class)) {
                 String path = method.getAnnotation(PostPath.class).value();
                 path = ali(host, path);
-                InitMethod(method, path, 1);
+                initMethod(method, path, Connection.Method.POST);
             }
         }
     }
@@ -70,53 +70,28 @@ final class HttpClientStarter {
 
     private static Map<Method, M1> methodInks = new ConcurrentHashMap<>();
 
-    private static void InitMethod(Method method, String url, int type) {
-        if (type == 0) {
-            methodInks.put(method, new M1(url) {
-                @Override
-                Object run(Object... objects) {
-                    try {
-                        String trueUrl = getGetUrl(url, method, objects);
-                        Connection connection = getConnection(trueUrl);
-                        initCookie(connection, method, trueUrl);
-                        Class<?> cls = method.getReturnType();
-                        if (cls == String.class)
-                            return connection.get().toString();
-                        else if (cls == Document.class)
-                            return connection.get();
-                        if (cls == byte[].class)
-                            return connection.method(Connection.Method.GET).execute().bodyAsBytes();
-                        return Type(cls, connection.get().body().text());
-                    } catch (Exception e) {
-                        Log(getExceptionLine(e), -1);
-                    }
-                    return null;
+    private static void initMethod(Method method, String url, Connection.Method type) {
+        methodInks.put(method, new M1(url) {
+            @Override
+            Object run(Object... objects) {
+                try {
+                    String trueUrl = getGetUrl(url, method, objects);
+                    Connection connection = getConnection(trueUrl);
+                    initCookie(connection, method, trueUrl);
+                    Class<?> cls = method.getReturnType();
+                    if (cls == String.class)
+                        return connection.get().toString();
+                    else if (cls == Document.class)
+                        return connection.get();
+                    if (cls == byte[].class)
+                        return connection.method(Connection.Method.GET).execute().bodyAsBytes();
+                    return Type(cls, connection.get().body().text());
+                } catch (Exception e) {
+                    Log(getExceptionLine(e), -1);
                 }
-            });
-        } else if (type == 1) {
-            methodInks.put(method, new M1(url) {
-                @Override
-                Object run(Object... objects) {
-                    try {
-                        String trueUrl = getGetUrl(url, method, objects);
-                        String body = getPostBody(method, objects);
-                        Connection connection = getConnection(trueUrl).requestBody(body);
-                        initCookie(connection, method, trueUrl);
-                        Class<?> cls = method.getReturnType();
-                        if (cls == String.class)
-                            return connection.post().toString();
-                        else if (cls == Document.class)
-                            return connection.post();
-                        if (cls == byte[].class)
-                            return connection.method(Connection.Method.POST).execute().bodyAsBytes();
-                        return Type(cls, connection.post().body().text());
-                    } catch (Exception e) {
-                        Log(getExceptionLine(e), -1);
-                    }
-                    return null;
-                }
-            });
-        }
+                return null;
+            }
+        });
     }
 
 

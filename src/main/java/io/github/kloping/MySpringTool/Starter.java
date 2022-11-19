@@ -969,7 +969,7 @@ public final class Starter {
                 }
             } else if (cla.isAnnotationPresent(HttpClient.class)) {
                 if (cla.isInterface())
-                    HttpClientStarter.InitHttpClientInterface(cla);
+                    HttpClientStarter.initHttpClientInterface(cla);
                 else System.err.println("请将 HttpClient 注解 放在 interface 上");
             }
         } catch (Exception e) {

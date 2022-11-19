@@ -35,12 +35,14 @@ public class HttpClientManagerImpl implements HttpClientManager {
     public static final String SPLIT = "/";
     private Setting setting;
     private Map<Method, M1> methodInks = new ConcurrentHashMap<>();
+
     private abstract class M1<T> {
         private String path;
 
         private M1(String path) {
             this.path = path;
         }
+
         /**
          * proxy method run
          *
@@ -64,11 +66,16 @@ public class HttpClientManagerImpl implements HttpClientManager {
         if (method.isAnnotationPresent(GetPath.class)) {
             String path = method.getAnnotation(GetPath.class).value();
             path = ali(host, path);
-            initMethod(method, path, 0);
+            initMethod(method, path, Connection.Method.GET);
         } else if (method.isAnnotationPresent(PostPath.class)) {
             String path = method.getAnnotation(PostPath.class).value();
             path = ali(host, path);
-            initMethod(method, path, 1);
+            initMethod(method, path, Connection.Method.POST);
+        } else if (method.isAnnotationPresent(RequestPath.class)) {
+            RequestPath rp = method.getAnnotation(RequestPath.class);
+            String path = rp.value();
+            path = ali(host, path);
+            initMethod(method, path, rp.method());
         }
     }
 
@@ -105,71 +112,48 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
     }
 
-    private void initMethod(Method method, String url, int type) {
+    private void initMethod(Method method, String url, Connection.Method type) {
         Method[] methods = null;
         if (method.isAnnotationPresent(Callback.class)) {
             Callback callback = method.getDeclaredAnnotation(Callback.class);
             String[] ss = callback.value();
             methods = parseMethods(ss);
         }
-        if (type == 0) {
-            Method[] finalMethods1 = methods;
-            methodInks.put(method, new M1(url) {
-                @Override
-                Object run(Object... objects) {
-                    try {
-                        String trueUrl = getGetUrl(url, method, objects);
-                        Connection connection = getConnection(trueUrl, getHeaders(method, objects));
-                        initBody(connection, method, objects);
-                        initData(connection, method, objects);
-                        initCookie(connection, method, trueUrl, objects);
-                        Class<?> cls = method.getReturnType();
-                        if (cls == Document.class) {
-                            return connection.get();
-                        }
-                        if (cls == byte[].class) {
-                            return connection.method(Connection.Method.GET).execute().bodyAsBytes();
-                        }
-                        if (cls == CookieStore.class) {
-                            connection.get();
-                            return connection.cookieStore();
-                        }
-                        return toType(cls, connection.get(), finalMethods1);
-                    } catch (Exception e) {
-                        StarterApplication.logger.Log(getExceptionLine(e), -1);
+        Method[] finalMethods1 = methods;
+        methodInks.put(method, new M1(url) {
+            @Override
+            Object run(Object... objects) {
+                try {
+                    String trueUrl = getGetUrl(url, method, objects);
+                    Connection connection = getConnection(trueUrl, getHeaders(method, objects));
+                    connection.method(type);
+                    initConf(connection, method, objects);
+                    initBody(connection, method, objects);
+                    initData(connection, method, objects);
+                    initCookie(connection, method, trueUrl, objects);
+                    Class<?> cls = method.getReturnType();
+                    if (cls == Document.class) {
+                        return connection.execute().parse();
                     }
-                    return null;
-                }
-            });
-        } else if (type == 1) {
-            Method[] finalMethods = methods;
-            methodInks.put(method, new M1(url) {
-                @Override
-                Object run(Object... objects) {
-                    try {
-                        String trueUrl = getGetUrl(url, method, objects);
-                        Connection connection = getConnection(trueUrl, getHeaders(method, objects));
-                        initBody(connection, method, objects);
-                        initData(connection, method, objects);
-                        initCookie(connection, method, trueUrl, objects);
-                        Class<?> cls = method.getReturnType();
-                        if (cls == Document.class) {
-                            return connection.post();
-                        }
-                        if (cls == byte[].class) {
-                            return connection.method(Connection.Method.POST).execute().bodyAsBytes();
-                        }
-                        if (cls == CookieStore.class) {
-                            connection.post();
-                            return connection.cookieStore();
-                        }
-                        return toType(cls, connection.post(), finalMethods);
-                    } catch (Exception e) {
-                        StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
+                    if (cls == byte[].class) {
+                        return connection.execute().bodyAsBytes();
                     }
-                    return null;
+                    if (cls == CookieStore.class) {
+                        connection.execute().cookies();
+                        return connection.cookieStore();
+                    }
+                    return toType(cls, connection.execute().parse(), finalMethods1);
+                } catch (Exception e) {
+                    StarterApplication.logger.Log(getExceptionLine(e), -1);
                 }
-            });
+                return null;
+            }
+        });
+    }
+
+    private void initConf(Connection connection, Method method, Object[] objects) {
+        if (method.isAnnotationPresent(IgnoreHttpErrors.class)) {
+            connection.ignoreHttpErrors(true);
         }
     }
 
