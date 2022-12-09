@@ -17,11 +17,10 @@ public class AutomaticWiringValueImpl implements AutomaticWiringValue {
         if (field.isAnnotationPresent(AutoStand.class)) {
             AutoStand autoStand = field.getDeclaredAnnotation(AutoStand.class);
             Object o1 = null;
-            if (autoStand.id().equals("")) {
+            if ("".equals(autoStand.id())) {
                 o1 = contextManager.getContextEntity(field.getType());
             } else o1 = contextManager.getContextEntity(field.getType(), autoStand.id());
-            if (o1 != null)
-                field.set(o, o1);
+            if (o1 != null) field.set(o, o1);
             if (Modifier.isStatic(field.getModifiers()))
                 field.set(null, o1);
             return true;

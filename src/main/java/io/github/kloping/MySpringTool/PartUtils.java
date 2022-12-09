@@ -30,9 +30,9 @@ public final class PartUtils {
         URL url = loader.getResource(packagePath);
         if (url != null) {
             String protocol = url.getProtocol().trim();
-            if (protocol.equals("file")) {
+            if ("file".equals(protocol)) {
                 classNames = getClassNameFromDir(url.getPath(), packageName, isRecursion);
-            } else if (protocol.equals("jar")) {
+            } else if ("jar".equals(protocol)) {
                 JarFile jarFile = null;
                 try {
                     jarFile = ((JarURLConnection) url.openConnection()).getJarFile();
@@ -261,6 +261,9 @@ public final class PartUtils {
     }
 
     public static Class<?>[] getAllInterfaceOrSupers(final Class<?> cla) {
+        if (cla==CopyOnWriteArraySet.class){
+            System.out.println();
+        }
         Set<Class<?>> set = new CopyOnWriteArraySet<>();
         Class cNow;
         cNow = cla;
@@ -269,6 +272,7 @@ public final class PartUtils {
             if (c == Object.class) break;
             set.add(c);
             cNow = c;
+            addAllInterfaces(set, c);
         }
         addAllInterfaces(set, cla);
         return set.toArray(new Class[0]);
