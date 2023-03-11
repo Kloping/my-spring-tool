@@ -26,7 +26,7 @@ public final class StarterApplication {
     }
 
     public static Logger logger = new LoggerImpl();
-    public static ClassLoader SCAN_LOADER = ClassLoader.getSystemClassLoader();
+    public static ClassLoader SCAN_LOADER = StarterApplication.class.getClassLoader();
     private static int poolSize = 20;
     private static long waitTime = 12 * 1000L;
     private static Class<?> mainKey = Long.class;
@@ -183,7 +183,7 @@ public final class StarterApplication {
             getInstance().getContextManager().append(startClass);
             getInstance().getClassManager().add(main);
             preScan();
-            for (Class<?> aClass : getInstance().getPackageScanner().scan(SCAN_LOADER, scanPath)) {
+            for (Class<?> aClass : getInstance().getPackageScanner().scan(main, SCAN_LOADER, scanPath)) {
                 getInstance().getClassManager().add(aClass);
             }
             postScan();

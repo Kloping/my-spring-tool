@@ -187,7 +187,7 @@ public final class StarterObjectApplication {
             getInstance().getContextManager().append(startClass);
             getInstance().getClassManager().add(main);
             preScan();
-            for (Class<?> aClass : getInstance().getPackageScanner().scan(SCAN_LOADER, scanPath)) {
+            for (Class<?> aClass : getInstance().getPackageScanner().scan(main, SCAN_LOADER, scanPath)) {
                 getInstance().getClassManager().add(aClass);
             }
             postScan();
@@ -256,5 +256,13 @@ public final class StarterObjectApplication {
             }
         }
         return INSTANCE;
+    }
+
+    public boolean isInited() {
+        return inited;
+    }
+
+    public void setInited(boolean inited) {
+        this.inited = inited;
     }
 }

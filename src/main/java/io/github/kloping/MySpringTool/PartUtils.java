@@ -22,6 +22,9 @@ import java.util.jar.JarFile;
 
 import static io.github.kloping.MySpringTool.Starter.Log;
 
+/**
+ * @author HRS-Computer
+ */
 public final class PartUtils {
     public static Set<Class<?>> getClassName(String packageName, boolean isRecursion) {
         Set<String> classNames = null;
@@ -261,9 +264,6 @@ public final class PartUtils {
     }
 
     public static Class<?>[] getAllInterfaceOrSupers(final Class<?> cla) {
-        if (cla==CopyOnWriteArraySet.class){
-            System.out.println();
-        }
         Set<Class<?>> set = new CopyOnWriteArraySet<>();
         Class cNow;
         cNow = cla;
