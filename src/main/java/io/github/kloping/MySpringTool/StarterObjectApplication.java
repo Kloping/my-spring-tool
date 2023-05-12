@@ -25,7 +25,16 @@ public final class StarterObjectApplication {
     public Logger logger = new LoggerImpl();
     public Setting INSTANCE = null;
 
-    public ClassLoader SCAN_LOADER = ClassLoader.getSystemClassLoader();
+    private final ClassLoader SCAN_LOADER;
+
+    public StarterObjectApplication(ClassLoader SCAN_LOADER) {
+        this.SCAN_LOADER = SCAN_LOADER;
+    }
+
+    public StarterObjectApplication(Class cla) {
+        this(cla.getClassLoader());
+    }
+
     private int poolSize = 20;
     private long waitTime = 12 * 1000L;
     private String scanPath;
@@ -79,7 +88,7 @@ public final class StarterObjectApplication {
     }
 
     public static StarterObjectApplication run(Class<?> cla) {
-        return new StarterObjectApplication().run0(cla);
+        return new StarterObjectApplication(cla.getClassLoader()).run0(cla);
     }
 
     private void startAfter() {

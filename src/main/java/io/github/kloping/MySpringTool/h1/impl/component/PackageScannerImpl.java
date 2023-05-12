@@ -56,7 +56,6 @@ public class PackageScannerImpl implements PackageScanner {
                 }
             }
         }
-        System.out.println(classNames);
         Set<Class<?>> classes = new CopyOnWriteArraySet<>();
         for (String name : classNames) {
             Class<?> c0 = loader.loadClass(name);
