@@ -2,16 +2,16 @@ package io.github.kloping.MySpringTool.h1.impl.component;
 
 import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.StarterApplication;
-import io.github.kloping.MySpringTool.annotations.AutoStand;
-import io.github.kloping.MySpringTool.annotations.CommentScan;
-import io.github.kloping.MySpringTool.annotations.Controller;
-import io.github.kloping.MySpringTool.annotations.Entity;
+import io.github.kloping.MySpringTool.annotations.*;
+import io.github.kloping.MySpringTool.interfaces.AutomaticWiringParams;
 import io.github.kloping.MySpringTool.interfaces.AutomaticWiringValue;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.FieldManager;
+import io.github.kloping.MySpringTool.interfaces.component.MethodManager;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -33,12 +33,32 @@ public class FieldManagerImpl implements FieldManager {
                     declaredField.setAccessible(true);
                     try {
                         this.manager(declaredField, contextManager);
-                    } catch (IllegalAccessException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                 }
             }
         });
+        setting.getSTARTED_RUNNABLE().add(() -> {
+            MethodManager methodManager = contextManager.getContextEntity(MethodManager.class);
+            AutomaticWiringParams automaticWiringParams = contextManager.getContextEntity(AutomaticWiringParams.class);
+            for (Class claz : setClass) {
+                for (Method declaredMethod : claz.getDeclaredMethods()) {
+                    try {
+                        declaredMethod.setAccessible(true);
+                        if (declaredMethod.isAnnotationPresent(AutoStandAfter.class)) {
+                            Class cla = declaredMethod.getDeclaringClass();
+                            Object o = contextManager.getContextEntity(cla);
+                            Object[] objects = automaticWiringParams.wiring(declaredMethod, contextManager);
+                            declaredMethod.invoke(o, objects);
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
     }
 
     @Override

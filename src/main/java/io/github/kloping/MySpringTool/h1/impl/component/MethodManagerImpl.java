@@ -1,6 +1,7 @@
 package io.github.kloping.MySpringTool.h1.impl.component;
 
 import io.github.kloping.MySpringTool.StarterApplication;
+import io.github.kloping.MySpringTool.annotations.AutoStandAfter;
 import io.github.kloping.MySpringTool.annotations.Bean;
 import io.github.kloping.MySpringTool.annotations.CommentScan;
 import io.github.kloping.MySpringTool.annotations.Entity;
@@ -23,10 +24,10 @@ public class MethodManagerImpl implements MethodManager {
 
     @Override
     public void manager(Method method, ContextManager contextManager) throws IllegalAccessException, InvocationTargetException {
+        method.setAccessible(true);
         if (method.isAnnotationPresent(Bean.class)) {
             Class cla = method.getDeclaringClass();
             Object o = contextManager.getContextEntity(cla);
-            method.setAccessible(true);
             Object[] objects = automaticWiringParams.wiring(method, contextManager);
             Object ro = method.invoke(o, objects);
             String id = method.getDeclaredAnnotation(Bean.class).value();
