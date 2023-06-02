@@ -75,7 +75,7 @@ public class LoggerImpl implements Logger {
     private BufferedWriter writer = null;
 
     private BufferedWriter getWriter() {
-        if (writer == null) {
+        if (file != null && writer == null) {
             try {
                 writer = new BufferedWriter(new FileWriter(file, true));
             } catch (IOException e) {
