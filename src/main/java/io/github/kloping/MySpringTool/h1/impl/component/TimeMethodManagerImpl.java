@@ -6,6 +6,7 @@ import io.github.kloping.MySpringTool.annotations.CronSchedule;
 import io.github.kloping.MySpringTool.annotations.Schedule;
 import io.github.kloping.MySpringTool.annotations.TimeEve;
 import io.github.kloping.MySpringTool.interfaces.AutomaticWiringParams;
+import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.TimeMethodManager;
@@ -45,7 +46,8 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                 try {
                     Map.Entry<Long, Method> en = getNextTimeMethodDelay();
                     if (en == null) {
-                        StarterApplication.logger.Log("计时任务结束...", 2);
+                        Logger logger = contextManager.getContextEntity(Logger.class);
+                        if (logger != null) logger.Log("计时任务结束...", 2);
                         return;
                     }
                     long t1 = en.getKey();
@@ -65,7 +67,9 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                         run();
                     }
                 } catch (Exception e) {
-                    StarterApplication.logger.Log("计时任务异常(timeEve Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+                    Logger logger = contextManager.getContextEntity(Logger.class);
+                    if (logger != null)
+                        logger.Log("计时任务异常(timeEve Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
                 }
             }
         }).start();
@@ -115,12 +119,15 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                         method.invoke(o, objects);
                     } catch (Exception e) {
                         e.printStackTrace();
-                        StarterApplication.logger.Log("计时任务异常(timeEve Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+                        Logger logger = contextManager.getContextEntity(Logger.class);
+                        if (logger != null)
+                            logger.Log("计时任务异常(timeEve Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
                     }
                 }
             }, t, t);
-            StarterApplication.logger.Log("new timeEve  " + method.getName()
-                    + " from " + method.getDeclaringClass().getSimpleName(), 0);
+            Logger logger = contextManager.getContextEntity(Logger.class);
+            if (logger != null)
+                logger.Log("new timeEve  " + method.getName() + " from " + method.getDeclaringClass().getSimpleName(), 0);
         } else if (method.isAnnotationPresent(Schedule.class)) {
             Class cla = method.getDeclaringClass();
             List<Map.Entry<String, Method>> list = timeMethods.get(cla);
@@ -131,8 +138,9 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                 list.add(getEntry(s, method));
             }
             timeMethods.put(cla, list);
-            StarterApplication.logger.Log("new Schedule " + method.getName()
-                    + " from " + method.getDeclaringClass().getSimpleName(), 0);
+            Logger logger = contextManager.getContextEntity(Logger.class);
+            if (logger != null)
+                logger.Log("new Schedule " + method.getName() + " from " + method.getDeclaringClass().getSimpleName(), 0);
         } else if (method.isAnnotationPresent(CronSchedule.class)) {
             Object o = contextManager.getContextEntity(method.getDeclaringClass());
             CronSchedule schedule = method.getAnnotation(CronSchedule.class);

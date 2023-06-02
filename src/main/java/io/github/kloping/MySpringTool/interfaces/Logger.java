@@ -40,9 +40,17 @@ public interface Logger {
 
     /**
      * error log
+     *
      * @param mess
      */
     default void error(String mess) {
         Log(mess, -1);
     }
+
+    /**
+     * out file
+     *
+     * @param path
+     */
+    void setOutFile(String path);
 }

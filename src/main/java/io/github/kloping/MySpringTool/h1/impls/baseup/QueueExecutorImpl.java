@@ -4,6 +4,7 @@ import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
 import io.github.kloping.MySpringTool.interfaces.Executor;
+import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.QueueExecutor;
 import io.github.kloping.MySpringTool.interfaces.entitys.MatherResult;
 
@@ -12,7 +13,6 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static io.github.kloping.MySpringTool.StarterApplication.logger;
 import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
 
 /**
@@ -26,9 +26,11 @@ public class QueueExecutorImpl implements QueueExecutor {
     private Runner runner1;
     private Runner runner2;
     private Setting setting;
+    private Logger logger;
 
     public QueueExecutorImpl(Setting setting) {
         this.setting = setting;
+        logger = setting.getContextManager().getContextEntity(Logger.class);
     }
 
     @Override

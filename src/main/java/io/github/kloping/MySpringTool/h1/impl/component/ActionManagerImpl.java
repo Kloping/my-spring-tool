@@ -1,10 +1,11 @@
 package io.github.kloping.MySpringTool.h1.impl.component;
 
-import io.github.kloping.MySpringTool.StarterApplication;
+import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.annotations.Action;
 import io.github.kloping.MySpringTool.annotations.After;
 import io.github.kloping.MySpringTool.annotations.Before;
 import io.github.kloping.MySpringTool.annotations.Controller;
+import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.component.ActionManager;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
@@ -26,8 +27,9 @@ import static io.github.kloping.judge.Judge.isNotNull;
  */
 public class ActionManagerImpl implements ActionManager {
 
-    public ActionManagerImpl(ClassManager classManager) {
+    public ActionManagerImpl(ClassManager classManager, Setting setting) {
         classManager.registeredAnnotation(Controller.class, this);
+        logger = setting.getContextManager().getContextEntity(Logger.class);
     }
 
     public static final Pattern PATTERN0 = Pattern.compile("<.*>");
@@ -170,6 +172,8 @@ public class ActionManagerImpl implements ActionManager {
 
     private Set<Class<?>> classSet = new CopyOnWriteArraySet<>();
 
+    private Logger logger;
+
     @Override
     public void manager(Method method, ContextManager contextManager) throws IllegalAccessException, InvocationTargetException {
         this.manager(contextManager.getContextEntity(method.getDeclaringClass()));
@@ -187,13 +191,13 @@ public class ActionManagerImpl implements ActionManager {
             if (declaredMethod.isAnnotationPresent(Before.class)) {
                 declaredMethod.setAccessible(true);
                 before = declaredMethod;
-                StarterApplication.logger.Log("new before " + declaredMethod.getName() + " from "
-                        + declaredMethod.getDeclaringClass().getSimpleName(), 0);
+                if (logger != null)
+                    logger.Log("new before " + declaredMethod.getName() + " from " + declaredMethod.getDeclaringClass().getSimpleName(), 0);
             } else if (declaredMethod.isAnnotationPresent(After.class)) {
                 declaredMethod.setAccessible(true);
                 after = declaredMethod;
-                StarterApplication.logger.Log("new after  " + declaredMethod.getName() + " from "
-                        + declaredMethod.getDeclaringClass().getSimpleName(), 0);
+                if (logger != null)
+                    logger.Log("new after  " + declaredMethod.getName() + " from " + declaredMethod.getDeclaringClass().getSimpleName(), 0);
             }
         }
         for (Method declaredMethod : obj.getClass().getDeclaredMethods()) {
@@ -204,19 +208,15 @@ public class ActionManagerImpl implements ActionManager {
             if (!action.value().trim().isEmpty())
                 actionsStr.add(action.value());
             for (String ac : action.otherName())
-                if (!ac.trim().isEmpty())
-                    actionsStr.add(ac);
+                if (!ac.trim().isEmpty()) actionsStr.add(ac);
 
             for (String a : actionsStr) {
-                if (before != null)
-                    append(maps, a, before);
+                if (before != null) append(maps, a, before);
                 append(maps, a, declaredMethod);
-                if (after != null)
-                    append(maps, a, after);
+                if (after != null) append(maps, a, after);
             }
-
-            StarterApplication.logger.Log("new action  " + declaredMethod.getName() + " from "
-                    + declaredMethod.getDeclaringClass().getSimpleName(), 0);
+            if (logger != null)
+                logger.Log("new action  " + declaredMethod.getName() + " from " + declaredMethod.getDeclaringClass().getSimpleName(), 0);
         }
     }
 

@@ -152,6 +152,7 @@ public final class StarterObjectApplication {
         if (l != null) logger.setLogLevel(l.intValue());
         String format = getInstance().contextManager.getContextEntity(String.class, "out.format");
         if (format != null) logger.setFormat(format);
+        INSTANCE.getContextManager().append(logger);
     }
 
     private void loadConf() {

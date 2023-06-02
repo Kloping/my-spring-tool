@@ -137,6 +137,7 @@ public final class StarterApplication {
         if (l != null) logger.setLogLevel(l.intValue());
         String format = getInstance().contextManager.getContextEntity(String.class, "out.format");
         if (format != null) logger.setFormat(format);
+        getInstance().getContextManager().append(logger);
     }
 
     private static Set<String> fileSet = new CopyOnWriteArraySet<>();

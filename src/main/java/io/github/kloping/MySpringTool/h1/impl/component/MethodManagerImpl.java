@@ -1,11 +1,10 @@
 package io.github.kloping.MySpringTool.h1.impl.component;
 
-import io.github.kloping.MySpringTool.StarterApplication;
-import io.github.kloping.MySpringTool.annotations.AutoStandAfter;
 import io.github.kloping.MySpringTool.annotations.Bean;
 import io.github.kloping.MySpringTool.annotations.CommentScan;
 import io.github.kloping.MySpringTool.annotations.Entity;
 import io.github.kloping.MySpringTool.interfaces.AutomaticWiringParams;
+import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.MethodManager;
@@ -32,7 +31,9 @@ public class MethodManagerImpl implements MethodManager {
             Object ro = method.invoke(o, objects);
             String id = method.getDeclaredAnnotation(Bean.class).value();
             contextManager.append(ro, id);
-            StarterApplication.logger.Log("new bean  " + method.getName() + " from " + method.getDeclaringClass().getSimpleName(), 0);
+            Logger logger = contextManager.getContextEntity(Logger.class);
+            if (logger != null)
+                logger.Log("new bean  " + method.getName() + " from " + method.getDeclaringClass().getSimpleName(), 0);
         }
     }
 

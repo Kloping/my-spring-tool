@@ -6,6 +6,7 @@ import io.github.kloping.MySpringTool.entity.impls.RunnerEve;
 import io.github.kloping.MySpringTool.entity.interfaces.Runner;
 import io.github.kloping.MySpringTool.exceptions.NoRunException;
 import io.github.kloping.MySpringTool.interfaces.Executor;
+import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.QueueExecutor;
 import io.github.kloping.MySpringTool.interfaces.entitys.MatherResult;
 
@@ -14,7 +15,6 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static io.github.kloping.MySpringTool.StarterApplication.logger;
 import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
 
 /**
@@ -28,6 +28,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     private RunnerEve runner1;
     private RunnerEve runner2;
     private Setting setting;
+    private Logger logger;
 
     @Override
     public <T extends Runner> void setBefore(T runner) {
@@ -58,6 +59,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     protected void init() {
         threads = new ThreadPoolExecutor(poolSize, poolSize, waitTime, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(poolSize));
         runThreads = Executors.newFixedThreadPool(poolSize);
+        logger = setting.getContextManager().getContextEntity(Logger.class);
     }
 
     protected QueueExecutorWithReturnsImpl(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {

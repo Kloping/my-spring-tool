@@ -8,6 +8,7 @@ import io.github.kloping.MySpringTool.annotations.PathValue;
 import io.github.kloping.MySpringTool.annotations.http.*;
 import io.github.kloping.MySpringTool.entity.Params;
 import io.github.kloping.MySpringTool.h1.impl.AutomaticWiringParamsImpl;
+import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.HttpClientManager;
@@ -53,9 +54,12 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     }
 
+    private Logger logger;
+
     public HttpClientManagerImpl(Setting setting, ClassManager classManager) {
         this.setting = setting;
         classManager.registeredAnnotation(HttpClient.class, this);
+        logger = setting.getContextManager().getContextEntity(Logger.class);
     }
 
 
@@ -144,7 +148,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     }
                     return toType(cls, connection.execute().parse(), finalMethods1);
                 } catch (Exception e) {
-                    StarterApplication.logger.Log(getExceptionLine(e), -1);
+                    logger.Log(getExceptionLine(e), -1);
                 }
                 return null;
             }
@@ -251,7 +255,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 method.setAccessible(true);
                 methods[i] = method;
             } catch (Exception e) {
-                StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
+
+
+                logger.Log(e.getMessage() + getExceptionLine(e), -1);
             }
             i++;
         }
@@ -320,7 +326,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     Object[] os = AWP.wiring(method, doc, text);
                     text = method.invoke(null, os).toString();
                 } catch (Exception e) {
-                    StarterApplication.logger.Log(e.getMessage() + getExceptionLine(e), -1);
+
+
+                    logger.Log(e.getMessage() + getExceptionLine(e), -1);
                 }
             }
         }
@@ -333,7 +341,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 return JSON.parseObject(text == null ? finalText : text).toJavaObject(cls);
             }
         } catch (Exception e) {
-            StarterApplication.logger.Log(e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e), -1);
+
+
+            logger.Log(e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e), -1);
             return null;
         }
     }
@@ -363,7 +373,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     }
                 }
             } catch (Exception e) {
-                StarterApplication.logger.Log("get Cookie Failed From: " + u1, 2);
+
+
+                logger.Log("get Cookie Failed From: " + u1, 2);
                 continue;
             }
         }
@@ -453,7 +465,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         }
                     }
                 } catch (Exception e) {
-                    StarterApplication.logger.Log("The Parameter Type not is Map<String,String>", 2);
+
+
+                    logger.Log("The Parameter Type not is Map<String,String>", 2);
                 }
             }
             i++;
@@ -471,7 +485,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     }
                 } catch (Throwable e) {
                     e.printStackTrace();
-                    StarterApplication.logger.error("parse error at " + cn0 + " Annotation @Headers");
+
+
+                    logger.error("parse error at " + cn0 + " Annotation @Headers");
                 }
             }
         }

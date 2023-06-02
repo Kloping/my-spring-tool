@@ -1,10 +1,10 @@
 package io.github.kloping.MySpringTool.h1.impl.component;
 
 import io.github.kloping.MySpringTool.Setting;
-import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.annotations.*;
 import io.github.kloping.MySpringTool.interfaces.AutomaticWiringParams;
 import io.github.kloping.MySpringTool.interfaces.AutomaticWiringValue;
+import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.FieldManager;
@@ -66,7 +66,9 @@ public class FieldManagerImpl implements FieldManager {
         Object obj = contextManager.getContextEntity(field.getDeclaringClass());
         if (field.isAnnotationPresent(AutoStand.class)) {
             automaticWiringValue.wiring(obj, field, contextManager);
-            StarterApplication.logger.Log("autoStand " + field.getName() + " in " + field.getDeclaringClass().getSimpleName(), 0);
+            Logger logger = contextManager.getContextEntity(Logger.class);
+            if (logger != null)
+                logger.Log("autoStand " + field.getName() + " in " + field.getDeclaringClass().getSimpleName(), 0);
         }
     }
 

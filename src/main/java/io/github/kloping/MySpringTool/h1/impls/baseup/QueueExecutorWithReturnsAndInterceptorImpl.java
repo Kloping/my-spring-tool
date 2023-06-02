@@ -3,6 +3,7 @@ package io.github.kloping.MySpringTool.h1.impls.baseup;
 
 import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.interfaces.Executor;
+import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.component.Callback;
 import io.github.kloping.MySpringTool.interfaces.component.Filter;
 import io.github.kloping.MySpringTool.interfaces.component.Interceptor;
@@ -11,8 +12,6 @@ import io.github.kloping.MySpringTool.interfaces.component.InterceptorCallback;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static io.github.kloping.MySpringTool.StarterApplication.logger;
-
 /**
  * @author github-kloping
  */
@@ -20,12 +19,15 @@ public class QueueExecutorWithReturnsAndInterceptorImpl
         extends QueueExecutorWithReturnsImpl
         implements Interceptor, InterceptorCallback {
 
+    private Logger logger;
+
     public QueueExecutorWithReturnsAndInterceptorImpl(Class<?> cla, Executor executor, Setting setting) {
         super(cla, executor, setting);
     }
 
     protected QueueExecutorWithReturnsAndInterceptorImpl(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
         super(cla, poolSize, waitTime, executor, setting);
+        logger = setting.getContextManager().getContextEntity(Logger.class);
     }
 
     public static QueueExecutorWithReturnsAndInterceptorImpl create(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {

@@ -65,7 +65,7 @@ public abstract class Setting {
         if (methodManager == null)
             methodManager = new MethodManagerImpl(automaticWiringParams, classManager);
         if (actionManager == null)
-            actionManager = new ActionManagerImpl(classManager);
+            actionManager = new ActionManagerImpl(classManager,Setting.this);
         if (timeMethodManager == null)
             timeMethodManager = new TimeMethodManagerImpl(classManager, automaticWiringParams);
         if (httpClientManager == null)

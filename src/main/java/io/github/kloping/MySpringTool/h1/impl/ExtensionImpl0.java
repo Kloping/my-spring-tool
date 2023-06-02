@@ -1,8 +1,8 @@
 package io.github.kloping.MySpringTool.h1.impl;
 
 import io.github.kloping.MySpringTool.Setting;
-import io.github.kloping.MySpringTool.StarterApplication;
 import io.github.kloping.MySpringTool.interfaces.Extension;
+import io.github.kloping.MySpringTool.interfaces.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +28,7 @@ public class ExtensionImpl0 implements Extension {
     }
 
     private void load() {
+        Logger logger = setting.getContextManager().getContextEntity(Logger.class);
         for (String extension : getExtensions()) {
             ExtensionRunnable runnable = null;
             try {
@@ -37,12 +38,14 @@ public class ExtensionImpl0 implements Extension {
                 runnable = (ExtensionRunnable) o;
                 runnable.setSetting(setting);
                 runnable.run();
-                StarterApplication.logger.info(runnable.getName() + " extension load");
+                if (logger != null)
+                    logger.info(runnable.getName() + " extension load");
             } catch (ClassNotFoundException e) {
 
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
-                StarterApplication.logger.info(extension + " extension load failed");
+                if (logger != null)
+                    logger.info(extension + " extension load failed");
             }
         }
     }
