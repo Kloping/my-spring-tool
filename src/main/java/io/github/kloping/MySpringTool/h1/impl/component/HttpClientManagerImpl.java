@@ -14,6 +14,7 @@ import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.HttpClientManager;
 import io.github.kloping.object.ObjectUtils;
 import org.jsoup.Connection;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
@@ -138,17 +139,30 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     initData(connection, method, objects);
                     initCookie(connection, method, trueUrl, objects);
                     Class<?> cls = method.getReturnType();
-                    if (cls == Document.class) {
-                        return connection.execute().parse();
+                    Object o = null;
+                    Connection.Response response = null;
+                    if (cls != void.class) {
+                        if (cls == Document.class) {
+                            return connection.execute().parse();
+                        }
+                        if (cls == byte[].class) {
+                            return connection.execute().bodyAsBytes();
+                        }
+                        if (cls == CookieStore.class) {
+                            connection.execute().cookies();
+                            return connection.cookieStore();
+                        }
+                        response = connection.execute();
+                        Document doc = response.parse();
+                        o = toType(cls, doc, finalMethods1);
+                    } else {
+                        response = connection.execute();
                     }
-                    if (cls == byte[].class) {
-                        return connection.execute().bodyAsBytes();
+                    int status = response.statusCode();
+                    if (status < 200 || status >= 400) {
+                        logger.error(new HttpStatusException("HTTP error fetching URL", status, connection.request().url().toString()).getMessage());
                     }
-                    if (cls == CookieStore.class) {
-                        connection.execute().cookies();
-                        return connection.cookieStore();
-                    }
-                    return toType(cls, connection.execute().parse(), finalMethods1);
+                    return o;
                 } catch (Exception e) {
                     logger.Log(getExceptionLine(e), -1);
                 }
@@ -257,8 +271,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 method.setAccessible(true);
                 methods[i] = method;
             } catch (Exception e) {
-
-
                 logger.Log(e.getMessage() + getExceptionLine(e), -1);
             }
             i++;
@@ -285,7 +297,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
             trueUrl = trueUrl.substring(1);
         }
         Connection connection = null;
-        connection = Jsoup.connect(trueUrl).ignoreContentType(true)
+        connection = Jsoup.connect(trueUrl)
+                .ignoreHttpErrors(true)
+                .ignoreContentType(true)
                 .userAgent(userAgent);
         if (headers != null) {
             connection = connection.headers(headers);
@@ -341,9 +355,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 return JSON.parseObject(text == null ? finalText : text).toJavaObject(cls);
             }
         } catch (Exception e) {
-
-
-            logger.Log(e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e), -1);
+            logger.Log(e.getMessage() == null ? "" : e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e), -1);
             return null;
         }
     }
