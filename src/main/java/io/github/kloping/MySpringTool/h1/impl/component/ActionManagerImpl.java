@@ -29,7 +29,9 @@ public class ActionManagerImpl implements ActionManager {
 
     public ActionManagerImpl(ClassManager classManager, Setting setting) {
         classManager.registeredAnnotation(Controller.class, this);
-        logger = setting.getContextManager().getContextEntity(Logger.class);
+        setting.getSTARTED_RUNNABLE().add(() -> {
+            logger = setting.getContextManager().getContextEntity(Logger.class);
+        });
     }
 
     public static final Pattern PATTERN0 = Pattern.compile("<.*>");

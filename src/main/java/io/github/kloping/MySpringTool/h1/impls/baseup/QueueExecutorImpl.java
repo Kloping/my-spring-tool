@@ -30,7 +30,9 @@ public class QueueExecutorImpl implements QueueExecutor {
 
     public QueueExecutorImpl(Setting setting) {
         this.setting = setting;
-        logger = setting.getContextManager().getContextEntity(Logger.class);
+        setting.getSTARTED_RUNNABLE().add(() -> {
+            logger = setting.getContextManager().getContextEntity(Logger.class);
+        });
     }
 
     @Override

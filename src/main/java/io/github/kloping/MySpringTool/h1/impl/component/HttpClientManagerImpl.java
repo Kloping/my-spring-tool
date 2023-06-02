@@ -59,7 +59,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
     public HttpClientManagerImpl(Setting setting, ClassManager classManager) {
         this.setting = setting;
         classManager.registeredAnnotation(HttpClient.class, this);
-        logger = setting.getContextManager().getContextEntity(Logger.class);
+        setting.getSTARTED_RUNNABLE().add(() -> {
+            logger = setting.getContextManager().getContextEntity(Logger.class);
+        });
     }
 
 
@@ -326,8 +328,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     Object[] os = AWP.wiring(method, doc, text);
                     text = method.invoke(null, os).toString();
                 } catch (Exception e) {
-
-
                     logger.Log(e.getMessage() + getExceptionLine(e), -1);
                 }
             }
@@ -373,8 +373,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     }
                 }
             } catch (Exception e) {
-
-
                 logger.Log("get Cookie Failed From: " + u1, 2);
                 continue;
             }
