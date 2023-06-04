@@ -4,8 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.StarterApplication;
-import io.github.kloping.MySpringTool.annotations.PathValue;
 import io.github.kloping.MySpringTool.annotations.http.*;
+import io.github.kloping.MySpringTool.entity.KeyVals;
 import io.github.kloping.MySpringTool.entity.Params;
 import io.github.kloping.MySpringTool.h1.impl.AutomaticWiringParamsImpl;
 import io.github.kloping.MySpringTool.interfaces.Logger;
@@ -16,8 +16,10 @@ import io.github.kloping.object.ObjectUtils;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
+import org.jsoup.helper.HttpConnection;
 import org.jsoup.nodes.Document;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.net.CookieStore;
@@ -160,7 +162,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     }
                     int status = response.statusCode();
                     if (status < 200 || status >= 400) {
-                        logger.error(new HttpStatusException("HTTP error fetching URL", status, connection.request().url().toString()).getMessage());
+                        logger.error(response.body() + " with " + new HttpStatusException("HTTP error fetching URL", status, connection.request().url().toString()).getMessage());
                     }
                     return o;
                 } catch (Exception e) {
@@ -201,6 +203,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
     private void initData(Connection connection, Method method, Object[] objects) {
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
+            if (objects[i] == null) continue;
             Parameter parameter = parameters[i];
             Class cla = parameter.getType();
             if (parameter.isAnnotationPresent(RequestData.class)) {
@@ -209,11 +212,22 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     connection.data(entry.getKey().toString(), entry.getValue().toString());
                 } else if (cla == String.class) {
                     connection.data(objects[i].toString());
-                } else if (objects[i] instanceof io.github.kloping.MySpringTool.entity.RequestData) {
-                    io.github.kloping.MySpringTool.entity.RequestData data = (io.github.kloping.MySpringTool.entity.RequestData) objects[i];
-                    for (Entry<String, String> entry : data.getEntrySet()) {
-                        connection.data(entry.getKey(), entry.getValue());
+                } else if (objects[i] instanceof KeyVals) {
+                    KeyVals data = (KeyVals) objects[i];
+                    for (HttpConnection.KeyVal value : data.values()) {
+                        connection.data(value.key(), value.value(), value.inputStream(), value.contentType());
                     }
+                }
+            } else if (parameter.isAnnotationPresent(FileParm.class)) {
+                if (cla == byte[].class) {
+                    byte[] bytes = (byte[]) objects[i];
+                    FileParm fileParm = parameter.getDeclaredAnnotation(FileParm.class);
+                    if (!fileParm.type().isEmpty())
+                        connection.data(fileParm.value(), fileParm.name(), new ByteArrayInputStream(bytes), fileParm.type());
+                    else connection.data(fileParm.value(), fileParm.name(), new ByteArrayInputStream(bytes));
+                } else if (cla == HttpConnection.KeyVal.class) {
+                    HttpConnection.KeyVal keyVal = (HttpConnection.KeyVal) objects[i];
+                    connection.data(keyVal.key(), keyVal.value(), keyVal.inputStream(), keyVal.contentType());
                 }
             }
         }
@@ -475,8 +489,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         }
                     }
                 } catch (Exception e) {
-
-
                     logger.Log("The Parameter Type not is Map<String,String>", 2);
                 }
             }
@@ -495,8 +507,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     }
                 } catch (Throwable e) {
                     e.printStackTrace();
-
-
                     logger.error("parse error at " + cn0 + " Annotation @Headers");
                 }
             }
