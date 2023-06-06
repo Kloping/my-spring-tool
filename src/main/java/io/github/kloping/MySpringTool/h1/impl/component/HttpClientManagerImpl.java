@@ -12,6 +12,7 @@ import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.HttpClientManager;
+import io.github.kloping.common.Public;
 import io.github.kloping.object.ObjectUtils;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
@@ -38,13 +39,20 @@ import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
 public class HttpClientManagerImpl implements HttpClientManager {
     public static final String SPLIT = "/";
     private Setting setting;
-    private Map<Method, M1> methodInks = new ConcurrentHashMap<>();
+    private Map<Method, Invoker> methodInks = new ConcurrentHashMap<>();
 
-    private abstract class M1<T> {
-        private String path;
+    private class Invoker {
+        private String url;
+        private Method method;
 
-        private M1(String path) {
-            this.path = path;
+        private Connection.Method type;
+        private Method[] methods;
+
+        public Invoker(String url, Method method, Connection.Method type, Method[] methods) {
+            this.url = url;
+            this.method = method;
+            this.type = type;
+            this.methods = methods;
         }
 
         /**
@@ -53,8 +61,46 @@ public class HttpClientManagerImpl implements HttpClientManager {
          * @param objects
          * @return
          */
-        abstract T run(Object... objects);
-
+        private Object run(Object... objects) {
+            Class<?> rtype = method.getReturnType();
+            Class dType = method.getDeclaringClass();
+            try {
+                String finalUrl = getGetUrl(url, method, objects);
+                Connection connection = null;
+                connection = getConnection(finalUrl, getHeaders(method, objects));
+                connection.method(type);
+                loadConf(connection, method, objects);
+                loadBody(connection, method, objects);
+                loadData(connection, method, objects);
+                loadCookie(connection, method, finalUrl, objects);
+                Connection.Response response = connection.execute();
+                Document doc = response.parse();
+                int status = response.statusCode();
+                if (status < 200 || status >= 400) {
+                    logger.error(response.body() + " with " + new HttpStatusException("HTTP error fetching URL",
+                            status, connection.request().url().toString()).getMessage());
+                }
+                Object o = null;
+                if (rtype == void.class) o = null;
+                else if (rtype == Document.class) o = response.parse();
+                else if (rtype == byte[].class) o = response.bodyAsBytes();
+                else if (rtype == CookieStore.class) o = connection.cookieStore();
+                else o = toType(rtype, doc, methods);
+                Object finalO = o;
+                Public.EXECUTOR_SERVICE.submit(() -> {
+                    for (HttpStatusReceiver receiver : receivers)
+                        receiver.receive(finalUrl, status, dType, method, type, rtype, finalO, doc);
+                });
+                return o;
+            } catch (Exception e) {
+                logger.error(e.getLocalizedMessage() + "\n" + getExceptionLine(e));
+                Public.EXECUTOR_SERVICE.submit(() -> {
+                    for (HttpStatusReceiver receiver : receivers)
+                        receiver.receive(url, null, dType, method, type, rtype, null, null);
+                });
+            }
+            return null;
+        }
     }
 
     private Logger logger;
@@ -67,25 +113,32 @@ public class HttpClientManagerImpl implements HttpClientManager {
         });
     }
 
+    private List<HttpStatusReceiver> receivers = new LinkedList<>();
+
+    @Override
+    public void addHttpStatusReceiver(HttpStatusReceiver receiver) {
+        receivers.add(receiver);
+    }
 
     @Override
     public void manager(Method method, ContextManager contextManager) throws IllegalAccessException, InvocationTargetException {
         method.setAccessible(true);
         String host = method.getDeclaringClass().getDeclaredAnnotation(HttpClient.class).value();
+        Connection.Method mt = null;
+        String path = null;
         if (method.isAnnotationPresent(GetPath.class)) {
-            String path = method.getAnnotation(GetPath.class).value();
-            path = ali(host, path);
-            initMethod(method, path, Connection.Method.GET);
+            path = method.getAnnotation(GetPath.class).value();
+            mt = Connection.Method.GET;
         } else if (method.isAnnotationPresent(PostPath.class)) {
-            String path = method.getAnnotation(PostPath.class).value();
-            path = ali(host, path);
-            initMethod(method, path, Connection.Method.POST);
+            path = method.getAnnotation(PostPath.class).value();
+            mt = Connection.Method.POST;
         } else if (method.isAnnotationPresent(RequestPath.class)) {
             RequestPath rp = method.getAnnotation(RequestPath.class);
-            String path = rp.value();
-            path = ali(host, path);
-            initMethod(method, path, rp.method());
+            path = rp.value();
+            mt = rp.method();
         }
+        path = ali(host, path);
+        loadMethod(method, path, mt);
     }
 
     private String ali(String host, String path) {
@@ -102,84 +155,39 @@ public class HttpClientManagerImpl implements HttpClientManager {
     }
 
     @Override
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        Object o = null;
+        if (methodInks.containsKey(method)) o = methodInks.get(method).run(args);
+        return o;
+    }
+
+    @Override
     public void manager(Class cla, ContextManager contextManager) throws IllegalAccessException, InvocationTargetException {
-        if (!cla.isInterface()) {
-            return;
-        }
-        contextManager.append(cla, Proxy.newProxyInstance(cla.getClassLoader(),
-                new Class[]{cla}, new InvocationHandler() {
-                    @Override
-                    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                        if (methodInks.containsKey(method)) {
-                            return methodInks.get(method).run(args);
-                        }
-                        return null;
-                    }
-                }), UUID.randomUUID().toString());
+        if (!cla.isInterface()) return;
+        contextManager.append(cla, Proxy.newProxyInstance(cla.getClassLoader(), new Class[]{cla}, this), UUID.randomUUID().toString());
         for (Method declaredMethod : cla.getDeclaredMethods()) {
             this.manager(declaredMethod, contextManager);
         }
     }
 
-    private void initMethod(Method method, String url, Connection.Method type) {
+    private void loadMethod(Method method, String url, Connection.Method type) {
         Method[] methods = null;
         if (method.isAnnotationPresent(Callback.class)) {
             Callback callback = method.getDeclaredAnnotation(Callback.class);
             String[] ss = callback.value();
-            methods = parseMethods(ss);
+            methods = loadMethods(ss);
         }
-        Method[] finalMethods1 = methods;
-        methodInks.put(method, new M1(url) {
-            @Override
-            Object run(Object... objects) {
-                try {
-                    String trueUrl = getGetUrl(url, method, objects);
-                    Connection connection = getConnection(trueUrl, getHeaders(method, objects));
-                    connection.method(type);
-                    initConf(connection, method, objects);
-                    initBody(connection, method, objects);
-                    initData(connection, method, objects);
-                    initCookie(connection, method, trueUrl, objects);
-                    Class<?> cls = method.getReturnType();
-                    Object o = null;
-                    Connection.Response response = null;
-                    if (cls != void.class) {
-                        if (cls == Document.class) {
-                            return connection.execute().parse();
-                        }
-                        if (cls == byte[].class) {
-                            return connection.execute().bodyAsBytes();
-                        }
-                        if (cls == CookieStore.class) {
-                            connection.execute().cookies();
-                            return connection.cookieStore();
-                        }
-                        response = connection.execute();
-                        Document doc = response.parse();
-                        o = toType(cls, doc, finalMethods1);
-                    } else {
-                        response = connection.execute();
-                    }
-                    int status = response.statusCode();
-                    if (status < 200 || status >= 400) {
-                        logger.error(response.body() + " with " + new HttpStatusException("HTTP error fetching URL", status, connection.request().url().toString()).getMessage());
-                    }
-                    return o;
-                } catch (Exception e) {
-                    logger.Log(getExceptionLine(e), -1);
-                }
-                return null;
-            }
-        });
+        Method[] finalMethods = methods;
+        methodInks.put(method, new Invoker(url, method, type, methods));
     }
 
-    private void initConf(Connection connection, Method method, Object[] objects) {
+    private void loadConf(Connection connection, Method method, Object[] objects) {
         if (method.isAnnotationPresent(IgnoreHttpErrors.class)) {
             connection.ignoreHttpErrors(true);
         }
     }
 
-    private void initBody(Connection connection, Method method, Object[] objects) {
+    private void loadBody(Connection connection, Method method, Object[] objects) {
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
@@ -200,7 +208,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
     }
 
-    private void initData(Connection connection, Method method, Object[] objects) {
+    private void loadData(Connection connection, Method method, Object[] objects) {
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
             if (objects[i] == null) continue;
@@ -233,7 +241,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
     }
 
-    private void initCookie(Connection connection, Method method, String trueUrl, Object[] objects) throws Exception {
+    private void loadCookie(Connection connection, Method method, String trueUrl, Object[] objects) throws Exception {
         CookieStore cookieStore = connection.cookieStore();
         if (method.isAnnotationPresent(CookieFrom.class)) {
             CookieFrom cf = method.getAnnotation(CookieFrom.class);
@@ -263,7 +271,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
     }
 
-    private Method[] parseMethods(String[] ss) {
+    private Method[] loadMethods(String[] ss) {
         int i = 0;
         Method[] methods = new Method[ss.length];
         for (String s : ss) {
@@ -321,7 +329,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         return connection;
     }
 
-    private String getPostBody(Method method, Object[] objects) throws Exception {
+    private String loadPostBody(Method method, Object[] objects) throws Exception {
         Parameter[] parameters = method.getParameters();
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < parameters.length; i++) {
@@ -344,19 +352,31 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     private static final AutomaticWiringParamsImpl AWP = new AutomaticWiringParamsImpl();
 
+    /**
+     * 将数据转为最终类型
+     *
+     * @param cls     最终类型
+     * @param doc     数据源
+     * @param methods 代理方法 Callback
+     * @param <T>
+     * @return
+     */
     private <T> T toType(Class<T> cls, final Document doc, Method[] methods) {
         String finalText = doc.body().text();
         String text = finalText;
         if (methods != null) {
             for (Method method : methods) {
-                if (method == null) {
-                    continue;
-                }
+                if (method == null) continue;
                 try {
                     Object[] os = AWP.wiring(method, doc, text);
-                    text = method.invoke(null, os).toString();
+                    Object out = method.invoke(null, os);
+                    if (out.getClass() == String.class) {
+                        text = out.toString();
+                    } else if (out.getClass() == cls) {
+                        return (T) out;
+                    }
                 } catch (Exception e) {
-                    logger.Log(e.getMessage() + getExceptionLine(e), -1);
+                    logger.error(e.getMessage() + getExceptionLine(e));
                 }
             }
         }
@@ -369,7 +389,8 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 return JSON.parseObject(text == null ? finalText : text).toJavaObject(cls);
             }
         } catch (Exception e) {
-            logger.Log(e.getMessage() == null ? "" : e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e), -1);
+            logger.error(e.getMessage() == null ? "" :
+                    e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e));
             return null;
         }
     }
