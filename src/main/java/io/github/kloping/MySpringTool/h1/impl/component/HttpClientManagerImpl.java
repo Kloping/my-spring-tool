@@ -77,8 +77,8 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 Document doc = response.parse();
                 int status = response.statusCode();
                 if (status < 200 || status >= 400) {
-                    logger.error(response.body() + " with " + new HttpStatusException("HTTP error fetching URL",
-                            status, connection.request().url().toString()).getMessage());
+                    logger.error(new HttpStatusException("HTTP error fetching URL", status,
+                            connection.request().url().toString()).getMessage());
                 }
                 Object o = null;
                 if (rtype == void.class) o = null;
