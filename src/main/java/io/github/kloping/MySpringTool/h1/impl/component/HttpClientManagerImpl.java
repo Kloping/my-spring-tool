@@ -12,7 +12,6 @@ import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.HttpClientManager;
-import io.github.kloping.common.Public;
 import io.github.kloping.object.ObjectUtils;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
@@ -87,17 +86,13 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 else if (rtype == CookieStore.class) o = connection.cookieStore();
                 else o = toType(rtype, doc, methods);
                 Object finalO = o;
-                Public.EXECUTOR_SERVICE.submit(() -> {
-                    for (HttpStatusReceiver receiver : receivers)
-                        receiver.receive(finalUrl, status, dType, method, type, rtype, finalO, doc);
-                });
+                for (HttpStatusReceiver receiver : receivers)
+                    receiver.receive(finalUrl, status, dType, method, type, rtype, finalO, doc);
                 return o;
             } catch (Exception e) {
                 logger.error(e.getLocalizedMessage() + "\n" + getExceptionLine(e));
-                Public.EXECUTOR_SERVICE.submit(() -> {
-                    for (HttpStatusReceiver receiver : receivers)
-                        receiver.receive(url, null, dType, method, type, rtype, null, null);
-                });
+                for (HttpStatusReceiver receiver : receivers)
+                    receiver.receive(url, null, dType, method, type, rtype, null, null);
             }
             return null;
         }
