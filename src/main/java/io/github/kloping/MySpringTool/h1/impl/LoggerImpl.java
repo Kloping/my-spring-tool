@@ -1,7 +1,9 @@
 package io.github.kloping.MySpringTool.h1.impl;
 
 import io.github.kloping.MySpringTool.interfaces.Logger;
+import org.fusesource.jansi.Ansi;
 
+import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -13,6 +15,11 @@ import java.util.Date;
  * @author github-kloping
  */
 public class LoggerImpl implements Logger {
+    public static final Color NORMAL_COLOR = new Color(202, 206, 199);
+    public static final Color INFO_COLOR = new Color(24, 220, 85);
+    public static final Color DEBUG_COLOR = new Color(197, 178, 81);
+    public static final Color ERROR_COLOR = new Color(171, 2, 76);
+
     private int logLevel = 0;
     private SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
     private final String prefix = "[github.kloping.ST]";
@@ -32,41 +39,41 @@ public class LoggerImpl implements Logger {
     @Override
     public void Log(String mess, Integer level) {
         if (level != -1 && level < logLevel) return;
-        String info = "[" + df.format(new Date()) + "]" + "=>" + mess;
+        String log = "[" + df.format(new Date()) + "]" + "=>" + mess;
         switch (level) {
             case 0:
-                info = "[Normal]" + info;
+                log = "[Normal]" + log;
                 break;
             case 1:
-                info = "[Info]  " + info;
+                log = "[Info]  " + log;
                 break;
             case 2:
-                info = "[Debug] " + info;
+                log = "[Debug] " + log;
                 break;
             case -1:
-                info = "[Error] " + info;
+                log = "[Error] " + log;
                 break;
             default:
         }
-        info = prefix + info;
+        log = prefix + log;
+        String out = null;
         if (level == 0) {
+            out = Ansi.ansi().fgRgb(NORMAL_COLOR.getRGB()).a(log).reset().toString();
         } else if (level == 1) {
-            info = ("\033[32m" + info + "\033[m");
+            out = Ansi.ansi().fgRgb(INFO_COLOR.getRGB()).a(log).reset().toString();
         } else if (level == 2) {
-            info = "\033[33m" + info + "\033[m";
+            out = Ansi.ansi().fgRgb(DEBUG_COLOR.getRGB()).a(log).reset().toString();
+        } else if (level == -1) {
+            out = Ansi.ansi().fgRgb(ERROR_COLOR.getRGB()).a(log).reset().toString();
         }
-
-        if (level == -1) {
-            System.err.println(info);
-        } else {
-            System.out.println(info);
-        }
+        System.out.println(out);
         try {
             BufferedWriter writer = getWriter();
-            if (writer == null) return;
-            writer.write(info);
-            writer.newLine();
-            writer.flush();
+            if (writer != null) {
+                writer.write(log);
+                writer.newLine();
+                writer.flush();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

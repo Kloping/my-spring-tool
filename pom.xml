@@ -6,7 +6,7 @@
 
     <groupId>io.github.Kloping</groupId>
     <artifactId>SpringTool</artifactId>
-    <version>0.6.0</version>
+    <version>0.6.1-M1</version>
 
     <packaging>jar</packaging>
     <name>SpringTool</name>
@@ -40,6 +40,11 @@
     </developers>
     <dependencies>
         <dependency>
+            <groupId>org.fusesource.jansi</groupId>
+            <artifactId>jansi</artifactId>
+            <version>2.4.0</version>
+        </dependency>
+        <dependency>
             <groupId>io.github.Kloping</groupId>
             <artifactId>JvUtils</artifactId>
             <version>0.4.9-M2</version>
@@ -54,18 +59,12 @@
             <artifactId>jsoup</artifactId>
             <version>1.15.4</version>
         </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.2</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <properties>
+        <java.version>8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>8</java.version>
     </properties>
     <distributionManagement>
         <snapshotRepository>
@@ -130,5 +129,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
