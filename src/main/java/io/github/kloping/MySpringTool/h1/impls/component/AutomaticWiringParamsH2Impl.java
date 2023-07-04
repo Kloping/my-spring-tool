@@ -61,7 +61,18 @@ public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
         Object[] objects = (Object[]) objs[2];
         Parameter[] parameters = method.getParameters();
         Object[] ros = new Object[parameters.length];
-        List<Object> list = new ArrayList<>();
+        List<Object> usedList = new ArrayList<>();
+
+        List<Object> all = new ArrayList<>();
+        for (Object object : objects) {
+            all.add(object);
+        }
+        for (Object obj : objs) {
+            all.add(obj);
+        }
+        for (Object o : results) {
+            all.add(o);
+        }
         for (int i = 0; i < parameters.length; i++) {
             Class<?> cla = parameters[i].getType();
             if (parameters[i].isAnnotationPresent(Param.class)) {
@@ -93,7 +104,7 @@ public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
             } else if (parameters[i].getType() == Class2OMap.class) {
                 ros[i] = io.github.kloping.arr.Class2OMap.create(objects);
             } else {
-                m0(objects, parameters[i], ros, list, i);
+                m0(all.toArray(), parameters[i], ros, usedList, i);
             }
         }
         return ros;
