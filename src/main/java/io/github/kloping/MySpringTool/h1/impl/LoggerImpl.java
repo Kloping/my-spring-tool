@@ -17,12 +17,12 @@ import java.util.Date;
 public class LoggerImpl implements Logger {
     public static final Color NORMAL_COLOR = new Color(202, 206, 199);
     public static final Color INFO_COLOR = new Color(24, 220, 85);
-    public static final Color DEBUG_COLOR = new Color(197, 178, 81);
-    public static final Color ERROR_COLOR = new Color(171, 2, 76);
+    public static final Color DEBUG_COLOR = new Color(234, 213, 103);
+    public static final Color ERROR_COLOR = new Color(224, 17, 106);
 
     private int logLevel = 0;
     private SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
-    private final String prefix = "[github.kloping.ST]";
+    private String prefix = "[github.kloping.ST]";
 
     private File file;
 
@@ -32,8 +32,8 @@ public class LoggerImpl implements Logger {
     }
 
     @Override
-    public void setFormat(String format) {
-        df = new SimpleDateFormat(format);
+    public void setFormat(SimpleDateFormat format) {
+        df = format;
     }
 
     @Override
@@ -95,5 +95,10 @@ public class LoggerImpl implements Logger {
     @Override
     public int setLogLevel(int level) {
         return logLevel = level;
+    }
+
+    @Override
+    public void setPrefix(String prefix) {
+        this.prefix = prefix;
     }
 }

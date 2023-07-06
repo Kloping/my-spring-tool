@@ -8,6 +8,7 @@ import io.github.kloping.MySpringTool.h1.impl.LoggerImpl;
 import io.github.kloping.MySpringTool.interfaces.Logger;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -151,7 +152,7 @@ public final class StarterObjectApplication {
         Integer l = getInstance().contextManager.getContextEntity(Integer.class, "log.level");
         if (l != null) logger.setLogLevel(l.intValue());
         String format = getInstance().contextManager.getContextEntity(String.class, "out.format");
-        if (format != null) logger.setFormat(format);
+        if (format != null) logger.setFormat(new SimpleDateFormat(format));
         INSTANCE.getContextManager().append(logger);
     }
 

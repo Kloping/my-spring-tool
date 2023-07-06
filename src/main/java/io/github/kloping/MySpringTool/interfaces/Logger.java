@@ -1,12 +1,14 @@
 package io.github.kloping.MySpringTool.interfaces;
 
+import java.text.SimpleDateFormat;
+
 /**
  * 日志输出接口
  */
 public interface Logger {
     void Log(String mess, Integer level);
 
-    default void setFormat(String format) {
+    default void setFormat(SimpleDateFormat format) {
     }
 
     default void setPrefix(String Prefix) {
