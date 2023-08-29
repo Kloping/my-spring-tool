@@ -28,37 +28,44 @@ public class FieldManagerImpl implements FieldManager {
         classManager.registeredAnnotation(Controller.class, this);
         classManager.registeredAnnotation(CommentScan.class, this);
         setting.getSTARTED_RUNNABLE().add(() -> {
-            for (Class claz : setClass) {
-                for (Field declaredField : claz.getDeclaredFields()) {
-                    declaredField.setAccessible(true);
-                    try {
-                        this.manager(declaredField, contextManager);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+            workStand();
         });
         setting.getSTARTED_RUNNABLE().add(() -> {
-            MethodManager methodManager = contextManager.getContextEntity(MethodManager.class);
-            AutomaticWiringParams automaticWiringParams = contextManager.getContextEntity(AutomaticWiringParams.class);
-            for (Class claz : setClass) {
-                for (Method declaredMethod : claz.getDeclaredMethods()) {
-                    try {
-                        declaredMethod.setAccessible(true);
-                        if (declaredMethod.isAnnotationPresent(AutoStandAfter.class)) {
-                            Class cla = declaredMethod.getDeclaringClass();
-                            Object o = contextManager.getContextEntity(cla);
-                            Object[] objects = automaticWiringParams.wiring(declaredMethod, contextManager);
-                            declaredMethod.invoke(o, objects);
-                        }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+            workStandAfter();
+        });
+    }
+
+    public void workStandAfter() {
+        MethodManager methodManager = contextManager.getContextEntity(MethodManager.class);
+        AutomaticWiringParams automaticWiringParams = contextManager.getContextEntity(AutomaticWiringParams.class);
+        for (Class claz : setClass) {
+            for (Method declaredMethod : claz.getDeclaredMethods()) {
+                try {
+                    declaredMethod.setAccessible(true);
+                    if (declaredMethod.isAnnotationPresent(AutoStandAfter.class)) {
+                        Class cla = declaredMethod.getDeclaringClass();
+                        Object o = contextManager.getContextEntity(cla);
+                        Object[] objects = automaticWiringParams.wiring(declaredMethod, contextManager);
+                        declaredMethod.invoke(o, objects);
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
-        });
+        }
+    }
 
+    public void workStand() {
+        for (Class claz : setClass) {
+            for (Field declaredField : claz.getDeclaredFields()) {
+                declaredField.setAccessible(true);
+                try {
+                    this.manager(declaredField, contextManager);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     @Override
