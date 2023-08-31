@@ -106,21 +106,22 @@ public class QueueExecutorImpl implements QueueExecutor {
                                 try {
                                     MatherResult result = setting.getActionManager().mather(objects[1].toString());
                                     if (result != null) {
-                                        if (runner1 != null) runner1.run(t, objects);
                                         Method[] methods = result.getMethods();
                                         Class cla = methods[0].getDeclaringClass();
+                                        if (runner1 != null) runner1.run(methods[0], t, objects);
                                         Object o = setting.getContextManager().getContextEntity(cla);
                                         Object reo = null;
                                         List<Object> results = new ArrayList<>();
                                         for (Method m : methods) {
-                                            Object[] parObjs = setting.getAutomaticWiringParams().wiring(m, result, results, (Object) parts);
+                                            Object[] parObjs = setting.getAutomaticWiringParams()
+                                                    .wiring(m, result, results, (Object) parts);
                                             Object to = executor.execute(o, m, parObjs);
                                             if (to != null) {
                                                 results.add(to);
                                                 reo = to;
                                             }
                                         }
-                                        if (runner2 != null) runner2.run(reo, objects);
+                                        if (runner2 != null) runner2.run(methods[0], reo, objects);
                                         logger.Log("lost time "
                                                 + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
                                     } else logger.Log("No match for " + objects[1].toString(), 2);

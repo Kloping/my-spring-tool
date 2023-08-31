@@ -51,10 +51,10 @@ public class ExecutorImpl implements Executor {
         threads.submit(() -> {
             try {
                 if (runner1 != null)
-                    runner1.run(this_, objects);
+                    runner1.run(method, this_, objects);
                 Object o = method.invoke(this_, objects);
                 if (runner2 != null)
-                    runner2.run(this_, objects);
+                    runner2.run(method, this_, objects);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             } catch (InvocationTargetException e) {
