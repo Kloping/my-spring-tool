@@ -1,10 +1,7 @@
 package io.github.kloping.MySpringTool.h1.impl.component;
 
 import io.github.kloping.MySpringTool.Setting;
-import io.github.kloping.MySpringTool.annotations.Action;
-import io.github.kloping.MySpringTool.annotations.After;
-import io.github.kloping.MySpringTool.annotations.Before;
-import io.github.kloping.MySpringTool.annotations.Controller;
+import io.github.kloping.MySpringTool.annotations.*;
 import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.component.ActionManager;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
@@ -37,13 +34,27 @@ public class ActionManagerImpl implements ActionManager {
     public static final Pattern PATTERN0 = Pattern.compile("<.*>");
     public static final Pattern PATTERN1 = Pattern.compile("<.+=>.+>");
     public Map<String, String> histIndexes = new HashMap<>();
+    private Map<Character, List<String>> indexMap = new HashMap<>();
+
+    private List<Character> csO = Arrays.asList('<', '>', '.', '?', '=', '+', '*');
+
+    public void makeIndex() {
+        indexMap.clear();
+        for (String k : action2methods.keySet()) {
+            for (Character c : k.toCharArray()) {
+                if (csO.contains(c)) continue;
+                MapUtils.append(indexMap, c, k);
+            }
+        }
+    }
+
 
     @Override
     public synchronized MatherResult mather(String regx) {
         if (regx == null || regx.trim().isEmpty()) return null;
         if (indexMap.isEmpty()) makeIndex();
-        if (maps.containsKey(regx)) {
-            Set<Method> set = maps.get(regx);
+        if (action2methods.containsKey(regx)) {
+            Set<Method> set = action2methods.get(regx);
             MatherResult mr = new MatherResult(regx, regx, set.toArray(new Method[0]));
             return mr;
         } else {
@@ -56,7 +67,6 @@ public class ActionManagerImpl implements ActionManager {
                     e.printStackTrace();
                 }
             }
-
             for (char c : getShortestSortedChars(regx)) {
                 if (indexMap.containsKey(c)) {
                     for (String s : indexMap.get(c)) {
@@ -73,9 +83,8 @@ public class ActionManagerImpl implements ActionManager {
                     }
                 }
             }
-
         }
-        return null;
+        return new MatherResult(null, null, defActionMethods.toArray(new Method[0]));
     }
 
     private List<Character> getShortestSortedChars(String s0) {
@@ -102,7 +111,7 @@ public class ActionManagerImpl implements ActionManager {
 
     private MatherResult mr(String regx, String s) throws Exception {
         if (regx.matches(s)) {
-            Set<Method> set = maps.get(s);
+            Set<Method> set = action2methods.get(s);
             MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
             return mr;
         } else {
@@ -112,7 +121,7 @@ public class ActionManagerImpl implements ActionManager {
                 String s2 = s1.substring(1, s1.length() - 1);
                 String regxNow = s.replace(s1, s2);
                 if (regx.matches(regxNow)) {
-                    Set<Method> set = maps.get(s);
+                    Set<Method> set = action2methods.get(s);
                     MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
                     return mr;
                 }
@@ -124,12 +133,12 @@ public class ActionManagerImpl implements ActionManager {
                 String[] ss = s2.split("=>");
                 String regxNow = s.replace(s1, ss[0]);
                 if (regx.matches(regxNow)) {
-                    String s4 = m1(ss[0]);
+                    String s4 = filterM1(ss[0]);
                     String[] ss2 = regxNow.split(s4);
                     String nowRegx = regx;
                     String m1 = regxNow.replace(ss[0], "");
                     nowRegx = nowRegx.replaceFirst(m1, "");
-                    Set<Method> set = maps.get(s);
+                    Set<Method> set = action2methods.get(s);
                     MatherResult mr = new MatherResult(s, regx, set.toArray(new Method[0]));
                     if (nowRegx.matches(ss[0])) {
                         mr.getParams().put(ss[1], nowRegx);
@@ -146,35 +155,10 @@ public class ActionManagerImpl implements ActionManager {
         return classSet.toArray(new Class[0]);
     }
 
-    private List<Character> csO = new LinkedList<>();
-
-    {
-        csO.add('<');
-        csO.add('>');
-        csO.add('.');
-        csO.add('?');
-        csO.add('=');
-        csO.add('+');
-        csO.add('*');
-    }
-
-    public void makeIndex() {
-        indexMap.clear();
-        for (String k : maps.keySet()) {
-            for (Character c : k.toCharArray()) {
-                if (csO.contains(c)) continue;
-                MapUtils.append(indexMap, c, k);
-            }
-        }
-    }
-
-    private Map<Character, List<String>> indexMap = new HashMap<>();
-
-    private Map<String, Set<Method>> maps = new ConcurrentHashMap<>();
-
-    private Set<Class<?>> classSet = new CopyOnWriteArraySet<>();
-
     private Logger logger;
+    private Map<String, Set<Method>> action2methods = new ConcurrentHashMap<>();
+    private Set<Class<?>> classSet = new CopyOnWriteArraySet<>();
+    private List<Method> defActionMethods = new ArrayList<>();
 
     @Override
     public void manager(Method method, ContextManager contextManager) throws IllegalAccessException, InvocationTargetException {
@@ -203,22 +187,26 @@ public class ActionManagerImpl implements ActionManager {
             }
         }
         for (Method declaredMethod : obj.getClass().getDeclaredMethods()) {
-            if (!declaredMethod.isAnnotationPresent(Action.class)) continue;
-            declaredMethod.setAccessible(true);
-            Action action = declaredMethod.getDeclaredAnnotation(Action.class);
-            Set<String> actionsStr = new LinkedHashSet<>();
-            if (!action.value().trim().isEmpty())
-                actionsStr.add(action.value());
-            for (String ac : action.otherName())
-                if (!ac.trim().isEmpty()) actionsStr.add(ac);
+            if (declaredMethod.isAnnotationPresent(Action.class)) {
+                declaredMethod.setAccessible(true);
+                Action action = declaredMethod.getDeclaredAnnotation(Action.class);
+                Set<String> actionsStr = new LinkedHashSet<>();
+                if (!action.value().trim().isEmpty()) actionsStr.add(action.value());
+                for (String ac : action.otherName())
+                    if (!ac.trim().isEmpty()) actionsStr.add(ac);
 
-            for (String a : actionsStr) {
-                if (before != null) append(maps, a, before);
-                append(maps, a, declaredMethod);
-                if (after != null) append(maps, a, after);
+                for (String actionV : actionsStr) {
+                    if (before != null) append(action2methods, actionV, before);
+                    append(action2methods, actionV, declaredMethod);
+                    if (after != null) append(action2methods, actionV, after);
+                }
+                if (logger != null)
+                    logger.Log("new action  " + declaredMethod.getName() + " from " + declaredMethod.getDeclaringClass().getSimpleName(), 0);
+            } else if (declaredMethod.isAnnotationPresent(DefAction.class)) {
+                if (before != null) defActionMethods.add(before);
+                defActionMethods.add(declaredMethod);
+                if (after != null) defActionMethods.add(after);
             }
-            if (logger != null)
-                logger.Log("new action  " + declaredMethod.getName() + " from " + declaredMethod.getDeclaringClass().getSimpleName(), 0);
         }
     }
 
@@ -244,7 +232,7 @@ public class ActionManagerImpl implements ActionManager {
         need1.add('{');
     }
 
-    public static String m1(String m1) {
+    public static String filterM1(String m1) {
         StringBuilder sb = new StringBuilder();
         for (char c : m1.toCharArray()) {
             if (need1.contains(c))
@@ -256,10 +244,10 @@ public class ActionManagerImpl implements ActionManager {
 
     @Override
     public synchronized void replaceAction(String oStr, String nowStr) {
-        if (maps.containsKey(oStr)) {
-            Set<Method> set = maps.get(oStr);
-            maps.put(nowStr, set);
-            maps.remove(oStr);
+        if (action2methods.containsKey(oStr)) {
+            Set<Method> set = action2methods.get(oStr);
+            action2methods.put(nowStr, set);
+            action2methods.remove(oStr);
             for (char c : oStr.toCharArray()) {
                 indexMap.remove(c);
             }
