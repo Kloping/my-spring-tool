@@ -203,6 +203,7 @@ public class ActionManagerImpl implements ActionManager {
                 if (logger != null)
                     logger.Log("new action  " + declaredMethod.getName() + " from " + declaredMethod.getDeclaringClass().getSimpleName(), 0);
             } else if (declaredMethod.isAnnotationPresent(DefAction.class)) {
+                declaredMethod.setAccessible(true);
                 if (before != null) defActionMethods.add(before);
                 defActionMethods.add(declaredMethod);
                 if (after != null) defActionMethods.add(after);
