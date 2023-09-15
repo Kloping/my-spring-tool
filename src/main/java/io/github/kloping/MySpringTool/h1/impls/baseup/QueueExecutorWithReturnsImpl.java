@@ -121,7 +121,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
                         logger.Log("Can't Access types for " + Arrays.toString(objects), 2);
                     }
                 } catch (NoRunException e) {
-                    logger.Log("抛出 不运行异常(throw NuRunException): " + e.getMessage() + " At " + getExceptionLine(e), 2);
+                    logger.Log("抛出 不运行异常(throw NuRunException): " + e.getMessage() , 2);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -157,7 +157,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
             } else logger.Log("No match for " + objects[1].toString(), 2);
         } catch (NoRunException e) {
             logger.Log("抛出 不运行异常(throw NuRunException): "
-                    + e.getMessage() + " At " + getExceptionLine(e), 2);
+                    + e.getMessage() , 2);
         } catch (InvocationTargetException e) {
             InvocationTargetException ite = e;
             if (ite.getTargetException().getClass() == NoRunException.class) {

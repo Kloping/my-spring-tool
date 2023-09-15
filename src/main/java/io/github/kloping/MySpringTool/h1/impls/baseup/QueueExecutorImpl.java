@@ -126,7 +126,7 @@ public class QueueExecutorImpl implements QueueExecutor {
                                                 + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
                                     } else logger.Log("No match for " + objects[1].toString(), 2);
                                 } catch (NoRunException e) {
-                                    logger.Log("抛出 不运行异常(throw NuRunException): " + e.getMessage() + " At " + getExceptionLine(e), 2);
+                                    logger.Log("抛出 不运行异常(throw NuRunException): " + e.getMessage(), 2);
                                 } catch (InvocationTargetException e) {
                                     InvocationTargetException ite = e;
                                     if (ite.getTargetException().getClass() == NoRunException.class) {
