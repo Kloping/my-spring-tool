@@ -78,8 +78,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 Document doc = response.parse();
                 int status = response.statusCode();
 
-                logger.log(String.format("resp data length [%s]", doc.body().text().length()));
-
                 String statusTips = null;
                 if (status < 200 || status >= 400) {
                     statusTips = Ansi.ansi().fgRgb(LoggerImpl.ERROR_COLOR.getRGB()).a(status).reset().toString();
