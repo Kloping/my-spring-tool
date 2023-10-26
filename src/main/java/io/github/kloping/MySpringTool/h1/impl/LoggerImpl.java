@@ -15,10 +15,11 @@ import java.util.Date;
  * @author github-kloping
  */
 public class LoggerImpl implements Logger {
-    public static final Color NORMAL_COLOR = new Color(202, 206, 199);
-    public static final Color INFO_COLOR = new Color(24, 220, 85);
-    public static final Color DEBUG_COLOR = new Color(234, 213, 103);
-    public static final Color ERROR_COLOR = new Color(224, 17, 106);
+    public static final Color NORMAL_LOW_COLOR = new Color(116, 117, 116, 224);
+    public static final Color NORMAL_COLOR = new Color(202, 206, 199, 247);
+    public static final Color INFO_COLOR = new Color(24, 220, 85, 247);
+    public static final Color DEBUG_COLOR = new Color(234, 213, 103, 247);
+    public static final Color ERROR_COLOR = new Color(224, 17, 106, 247);
 
     private int logLevel = 0;
     private SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
@@ -38,35 +39,40 @@ public class LoggerImpl implements Logger {
 
     @Override
     public void Log(String mess, Integer level) {
-        if (level != -1 && level < logLevel) return;
-        String log = "[" + df.format(new Date()) + "]" + "=>" + mess;
-        switch (level) {
-            case 0:
-                log = "[Normal]" + log;
-                break;
-            case 1:
-                log = "[Info]  " + log;
-                break;
-            case 2:
-                log = "[Debug] " + log;
-                break;
-            case -1:
-                log = "[Error] " + log;
-                break;
-            default:
-        }
-        log = prefix + log;
+        String log = null;
         String out = null;
-        if (level == 0) {
-            out = Ansi.ansi().fgRgb(NORMAL_COLOR.getRGB()).a(log).reset().toString();
-        } else if (level == 1) {
-            out = Ansi.ansi().fgRgb(INFO_COLOR.getRGB()).a(log).reset().toString();
-        } else if (level == 2) {
-            out = Ansi.ansi().fgRgb(DEBUG_COLOR.getRGB()).a(log).reset().toString();
-        } else if (level == -1) {
-            out = Ansi.ansi().fgRgb(ERROR_COLOR.getRGB()).a(log).reset().toString();
+        try {
+            log = "[" + df.format(new Date()) + "]" + "=>" + mess;
+            switch (level) {
+                case 0:
+                    log = "[Normal]" + log;
+                    break;
+                case 1:
+                    log = "[Info]  " + log;
+                    break;
+                case 2:
+                    log = "[Debug] " + log;
+                    break;
+                case -1:
+                    log = "[Error] " + log;
+                    break;
+                default:
+            }
+            log = prefix + log;
+            out = null;
+            if (level == 0) {
+                out = Ansi.ansi().fgRgb(NORMAL_COLOR.getRGB()).a(log).reset().toString();
+            } else if (level == 1) {
+                out = Ansi.ansi().fgRgb(INFO_COLOR.getRGB()).a(log).reset().toString();
+            } else if (level == 2) {
+                out = Ansi.ansi().fgRgb(DEBUG_COLOR.getRGB()).a(log).reset().toString();
+            } else if (level == -1) {
+                out = Ansi.ansi().fgRgb(ERROR_COLOR.getRGB()).a(log).reset().toString();
+            }
+        } catch (Exception e) {
+            if (level != -1 && level < logLevel) {
+            } else e.printStackTrace();
         }
-        System.out.println(out);
         try {
             BufferedWriter writer = getWriter();
             if (writer != null) {
@@ -77,6 +83,8 @@ public class LoggerImpl implements Logger {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        if (level != -1 && level < logLevel) return;
+        System.out.println(out);
     }
 
     private BufferedWriter writer = null;

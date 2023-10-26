@@ -8,11 +8,13 @@ import io.github.kloping.MySpringTool.annotations.http.*;
 import io.github.kloping.MySpringTool.entity.KeyVals;
 import io.github.kloping.MySpringTool.entity.Params;
 import io.github.kloping.MySpringTool.h1.impl.AutomaticWiringParamsImpl;
+import io.github.kloping.MySpringTool.h1.impl.LoggerImpl;
 import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.component.ClassManager;
 import io.github.kloping.MySpringTool.interfaces.component.ContextManager;
 import io.github.kloping.MySpringTool.interfaces.component.HttpClientManager;
 import io.github.kloping.object.ObjectUtils;
+import org.fusesource.jansi.Ansi;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -75,10 +77,20 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 Connection.Response response = connection.execute();
                 Document doc = response.parse();
                 int status = response.statusCode();
+
+                logger.log(String.format("resp data length [%s]", doc.body().text().length()));
+
+                String statusTips = null;
                 if (status < 200 || status >= 400) {
+                    statusTips = Ansi.ansi().fgRgb(LoggerImpl.ERROR_COLOR.getRGB()).a(status).reset().toString();
                     logger.error(new HttpStatusException("HTTP error fetching URL", status,
                             connection.request().url().toString()).getMessage());
-                }
+                } else if (status >= 500) {
+                    statusTips = Ansi.ansi().fgRgb(LoggerImpl.DEBUG_COLOR.getRGB()).a(status).reset().toString();
+                } else statusTips = Ansi.ansi().fgRgb(LoggerImpl.INFO_COLOR.getRGB()).a(status).reset().toString();
+
+                logger.log(String.format("resp status code %s from the [%s]", statusTips, doc.location()));
+
                 Object o = null;
                 if (rtype == void.class) o = null;
                 else if (rtype == Document.class) o = response.parse();
@@ -376,12 +388,14 @@ public class HttpClientManagerImpl implements HttpClientManager {
             }
         }
         try {
+            String data = (text == null ? finalText : text);
+            logger.log(String.format("Get the data [%s] from the [%s]", Ansi.ansi().fgRgb(LoggerImpl.NORMAL_LOW_COLOR.getRGB()).a(data).reset().toString(), doc.location()));
             if (cls == String.class) {
-                return (T) (text == null ? finalText : text);
+                return (T) data;
             } else if (cls.isArray()) {
-                return JSON.parseArray(text == null ? finalText : text).toJavaObject(cls);
+                return JSON.parseArray(data).toJavaObject(cls);
             } else {
-                return JSON.parseObject(text == null ? finalText : text).toJavaObject(cls);
+                return JSON.parseObject(data).toJavaObject(cls);
             }
         } catch (Exception e) {
             logger.error(e.getMessage() == null ? "" :
