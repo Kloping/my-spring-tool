@@ -76,6 +76,10 @@ public class LoggerImpl implements Logger {
         try {
             BufferedWriter writer = getWriter();
             if (writer != null) {
+                try {
+                    log = log.replaceAll("\\\u001B\\[38\\;2\\;[0-9]+\\;[0-9]+\\;[0-9]+m","")
+                            .replaceAll("\\\u001B\\[m","");
+                } catch (Exception e) {}
                 writer.write(log);
                 writer.newLine();
                 writer.flush();

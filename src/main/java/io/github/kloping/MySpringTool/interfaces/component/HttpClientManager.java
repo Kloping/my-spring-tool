@@ -13,4 +13,10 @@ public interface HttpClientManager extends MethodManager, InvocationHandler {
      * @param receiver
      */
     void addHttpStatusReceiver(HttpStatusReceiver receiver);
+
+    /**
+     * 是否打印非错误信息
+     * @param k
+     */
+    void setPrint(boolean k);
 }

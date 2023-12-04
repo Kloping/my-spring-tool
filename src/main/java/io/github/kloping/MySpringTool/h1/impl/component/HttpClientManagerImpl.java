@@ -81,29 +81,78 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 String statusTips = null;
                 if (status < 200 || status >= 400) {
                     statusTips = Ansi.ansi().fgRgb(LoggerImpl.ERROR_COLOR.getRGB()).a(status).reset().toString();
-                    logger.error(new HttpStatusException("HTTP error fetching URL", status,
-                            connection.request().url().toString()).getMessage());
-                } else if (status >= 500) {
-                    statusTips = Ansi.ansi().fgRgb(LoggerImpl.DEBUG_COLOR.getRGB()).a(status).reset().toString();
+                    logger.error(new HttpStatusException("HTTP error fetching URL", status, connection.request().url().toString()).getMessage());
                 } else statusTips = Ansi.ansi().fgRgb(LoggerImpl.INFO_COLOR.getRGB()).a(status).reset().toString();
-
-                logger.log(String.format("resp status code %s from the [%s]", statusTips, doc.location()));
+                if (print) logger.log(String.format("resp status code %s from the [%s]", statusTips, doc.location()));
 
                 Object o = null;
                 if (rtype == void.class) o = null;
                 else if (rtype == Document.class) o = response.parse();
                 else if (rtype == byte[].class) o = response.bodyAsBytes();
                 else if (rtype == CookieStore.class) o = connection.cookieStore();
-                else o = toType(rtype, doc, methods);
+                else o = toType(rtype, doc, response, methods);
                 Object finalO = o;
                 for (HttpStatusReceiver receiver : receivers)
-                    receiver.receive(finalUrl, status, dType, method, type, rtype, finalO, doc);
+                    receiver.receive(HttpClientManagerImpl.this, finalUrl, status, dType, method, type, rtype, finalO, doc);
                 return o;
             } catch (Exception e) {
                 logger.error(e.getLocalizedMessage() + "\n" + getExceptionLine(e));
                 for (HttpStatusReceiver receiver : receivers)
-                    receiver.receive(url, null, dType, method, type, rtype, null, null);
+                    receiver.receive(HttpClientManagerImpl.this, url, null, dType, method, type, rtype, null, null);
             }
+            return null;
+        }
+    }
+
+    private boolean print = true;
+
+    @Override
+    public void setPrint(boolean k) {
+        print = k;
+    }
+
+    /**
+     * 将数据转为最终类型
+     *
+     * @param cls     最终类型
+     * @param doc     数据源
+     * @param methods 代理方法 Callback
+     * @param <T>
+     * @return
+     */
+    private <T> T toType(Class<T> cls, final Document doc, Connection.Response resp, Method[] methods) {
+        String finalText = doc.body().text();
+        String text = finalText;
+        if (methods != null) {
+            for (Method method : methods) {
+                if (method == null) continue;
+                try {
+                    Object[] os = AWP.wiring(method, doc, text);
+                    Object out = method.invoke(null, os);
+                    if (out.getClass() == String.class) {
+                        text = out.toString();
+                    } else if (out.getClass() == cls) {
+                        return (T) out;
+                    }
+                } catch (Exception e) {
+                    logger.error(e.getMessage() + getExceptionLine(e));
+                }
+            }
+        }
+        try {
+            String data = (text == null ? finalText : text);
+            if (print)
+                logger.log(String.format("Get the data [%s] from the [%s]", Ansi.ansi().fgRgb(LoggerImpl.NORMAL_LOW_COLOR.getRGB()).a(data).reset().toString(), doc.location()));
+            if (cls == String.class) {
+                return (T) data;
+            } else if (cls.isArray()) {
+                return JSON.parseArray(data).toJavaObject(cls);
+            } else {
+                return JSON.parseObject(data).toJavaObject(cls);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage() == null ? "" :
+                    e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e));
             return null;
         }
     }
@@ -298,7 +347,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 method.setAccessible(true);
                 methods[i] = method;
             } catch (Exception e) {
-                logger.Log(e.getMessage() + getExceptionLine(e), -1);
+                logger.error(e.getMessage() + getExceptionLine(e));
             }
             i++;
         }
@@ -357,51 +406,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     private static final AutomaticWiringParamsImpl AWP = new AutomaticWiringParamsImpl();
 
-    /**
-     * 将数据转为最终类型
-     *
-     * @param cls     最终类型
-     * @param doc     数据源
-     * @param methods 代理方法 Callback
-     * @param <T>
-     * @return
-     */
-    private <T> T toType(Class<T> cls, final Document doc, Method[] methods) {
-        String finalText = doc.body().text();
-        String text = finalText;
-        if (methods != null) {
-            for (Method method : methods) {
-                if (method == null) continue;
-                try {
-                    Object[] os = AWP.wiring(method, doc, text);
-                    Object out = method.invoke(null, os);
-                    if (out.getClass() == String.class) {
-                        text = out.toString();
-                    } else if (out.getClass() == cls) {
-                        return (T) out;
-                    }
-                } catch (Exception e) {
-                    logger.error(e.getMessage() + getExceptionLine(e));
-                }
-            }
-        }
-        try {
-            String data = (text == null ? finalText : text);
-            logger.log(String.format("Get the data [%s] from the [%s]", Ansi.ansi().fgRgb(LoggerImpl.NORMAL_LOW_COLOR.getRGB()).a(data).reset().toString(), doc.location()));
-            if (cls == String.class) {
-                return (T) data;
-            } else if (cls.isArray()) {
-                return JSON.parseArray(data).toJavaObject(cls);
-            } else {
-                return JSON.parseObject(data).toJavaObject(cls);
-            }
-        } catch (Exception e) {
-            logger.error(e.getMessage() == null ? "" :
-                    e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e));
-            return null;
-        }
-    }
-
     private CookieStore getCookieStore(String[] urls, Connection.Method method, String url, Method m0, Object... objects) throws IOException, URISyntaxException {
         CookieStore store = null;
         for (String u1 : urls) {
@@ -427,7 +431,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     }
                 }
             } catch (Exception e) {
-                logger.Log("get Cookie Failed From: " + u1, 2);
+                logger.error("get Cookie Failed From: " + u1);
                 continue;
             }
         }
@@ -517,7 +521,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         }
                     }
                 } catch (Exception e) {
-                    logger.Log("The Parameter Type not is Map<String,String>", 2);
+                    logger.error("The Parameter Type not is Map<String,String>");
                 }
             }
             i++;
