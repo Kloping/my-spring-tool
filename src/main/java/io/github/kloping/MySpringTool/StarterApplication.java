@@ -191,7 +191,7 @@ public final class StarterApplication {
             postScan();
             logger.info("start sptool success");
         } catch (Throwable e) {
-            logger.error("There is an exception=>" + e + " at " + getExceptionLine(e));
+            logger.error(getExceptionLine(e));
             e.printStackTrace();
         }
     }
@@ -224,7 +224,7 @@ public final class StarterApplication {
             try {
                 runnable.run();
             } catch (Exception e) {
-                logger.error("There is an exception=>" + e + " at " + getExceptionLine(e));
+                logger.error(getExceptionLine(e));
             }
         }
     }

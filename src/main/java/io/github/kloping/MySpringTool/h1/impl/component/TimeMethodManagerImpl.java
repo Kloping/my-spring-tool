@@ -19,7 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static io.github.kloping.MySpringTool.PartUtils.*;
+import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
+import static io.github.kloping.MySpringTool.PartUtils.getTimeFromNowTo;
 
 /**
  * @author HRS-Computer
@@ -69,7 +70,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                 } catch (Exception e) {
                     Logger logger = contextManager.getContextEntity(Logger.class);
                     if (logger != null)
-                        logger.Log("计时任务异常(timeEve Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+                        logger.Log("timeEve Exception\n"+ getExceptionLine(e), -1);
                 }
             }
         }).start();
@@ -91,10 +92,10 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                     long t = getTimeFromNowTo(n1, n2, n3);
                     t = t > 0 ? t : t + (1000 * 60 * 60 * 24);
                     if (entry == null) {
-                        entry = getEntry(t, e.getValue());
+                        entry = new AbstractMap.SimpleEntry<>(t, e.getValue());
                     } else {
                         if (t > entry.getKey()) continue;
-                        else entry = getEntry(t, e.getValue());
+                        else entry = new AbstractMap.SimpleEntry<>(t, e.getValue());
                     }
                 }
             }
@@ -121,7 +122,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                         e.printStackTrace();
                         Logger logger = contextManager.getContextEntity(Logger.class);
                         if (logger != null)
-                            logger.Log("计时任务异常(timeEve Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+                            logger.Log("timeEve Exception\n"+ getExceptionLine(e), -1);
                     }
                 }
             }, t, t);
@@ -135,7 +136,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
             Schedule sch = method.getAnnotation(Schedule.class);
             String[] ss = sch.value().split(",");
             for (String s : ss) {
-                list.add(getEntry(s, method));
+                list.add(new AbstractMap.SimpleEntry<>(s, method));
             }
             timeMethods.put(cla, list);
             Logger logger = contextManager.getContextEntity(Logger.class);

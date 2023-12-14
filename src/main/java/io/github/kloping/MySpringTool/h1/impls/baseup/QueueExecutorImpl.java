@@ -78,9 +78,9 @@ public class QueueExecutorImpl implements QueueExecutor {
             InvocationTargetException ite = e;
             if (ite.getTargetException().getClass() == NoRunException.class) {
                 NoRunException exception = (NoRunException) ite.getTargetException();
-                logger.Log("抛出 不运行异常(throw NuRunException): " + exception.getMessage(), 2);
+                logger.Log("throw NuRunException:" + exception.getMessage(), 2);
             } else {
-                logger.Log("存在映射一个异常(Has a Invoke Exception)=>" + ite.getTargetException() + " at " + getExceptionLine(ite.getTargetException()), -1);
+                logger.Log("Has a Invoke Exception\n" + getExceptionLine(ite.getTargetException()), -1);
             }
         }
         return o;
@@ -126,24 +126,24 @@ public class QueueExecutorImpl implements QueueExecutor {
                                                 + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
                                     } else logger.Log("No match for " + objects[1].toString(), 2);
                                 } catch (NoRunException e) {
-                                    logger.Log("抛出 不运行异常(throw NuRunException): " + e.getMessage(), 2);
+                                    logger.Log("throw NuRunException:" + e.getMessage(), 2);
                                 } catch (InvocationTargetException e) {
                                     InvocationTargetException ite = e;
                                     if (ite.getTargetException().getClass() == NoRunException.class) {
                                         NoRunException exception = (NoRunException) ite.getTargetException();
-                                        logger.Log("抛出 不运行异常(throw NuRunException): " + exception.getMessage(), 2);
+                                        logger.Log("throw NuRunException:" + exception.getMessage(), 2);
                                     } else {
-                                        logger.Log("存在映射一个异常(Has a Invoke Exception)=>" + ite.getTargetException() + " at " + getExceptionLine(ite.getTargetException()), -1);
+                                        logger.Log("Has a Invoke Exception\n" + getExceptionLine(ite.getTargetException()), -1);
                                     }
                                 } catch (Exception e) {
-                                    logger.Log("存在一个异常(Has a Exception)=>" + e + " at " + getExceptionLine(e), -1);
+                                    logger.Log(getExceptionLine(e), -1);
                                 }
                             } else {
                                 logger.Log("Can't Access types for " + Arrays.toString(objects), 2);
                             }
 
                         } catch (NoRunException e) {
-                            logger.Log("抛出 不运行异常(throw NuRunException): " + e.getMessage() + " At " + getExceptionLine(e), 2);
+                            logger.Log("throw NuRunException:" + e.getMessage() + " At " + getExceptionLine(e), 2);
                         } catch (Exception e) {
                             e.printStackTrace();
                         }
@@ -151,13 +151,13 @@ public class QueueExecutorImpl implements QueueExecutor {
                     try {
                         future.get(waitTime, TimeUnit.MILLISECONDS);
                     } catch (InterruptedException e) {
-                        logger.Log("运行时错误(Running Has Error)=>" + e, -1);
+                        logger.Log("Running Has Error\n" + getExceptionLine(e), -1);
                         future.cancel(true);
                     } catch (TimeoutException e) {
-                        logger.Log("运行超时(Run Time Out)=>" + e, -1);
+                        logger.Log("Run Time Out\n" + getExceptionLine(e), -1);
                         future.cancel(true);
                     } catch (Exception e) {
-                        logger.Log("其他错误(Other Error)=>" + e + "\n", -1);
+                        logger.Log("Other Error\n" + getExceptionLine(e), -1);
                         e.printStackTrace();
                         future.cancel(true);
                     }

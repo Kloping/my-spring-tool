@@ -202,9 +202,9 @@ public final class StarterObjectApplication {
                 getInstance().getClassManager().add(aClass);
             }
             postScan();
-            logger.info("version 0.6.2 sptool start success");
+            logger.info("version 0.6.3-Alpha1 sptool start success");
         } catch (Throwable e) {
-            logger.error("There is an exception=>" + e + " at " + getExceptionLine(e));
+            logger.error(getExceptionLine(e));
             e.printStackTrace();
         }
     }
@@ -237,7 +237,7 @@ public final class StarterObjectApplication {
             try {
                 runnable.run();
             } catch (Exception e) {
-                logger.error("There is an exception=>" + e + " at " + getExceptionLine(e));
+                logger.error(getExceptionLine(e));
             }
         }
     }
