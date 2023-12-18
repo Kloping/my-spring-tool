@@ -9,4 +9,11 @@ public class NoRunException extends RuntimeException {
     public NoRunException(String s) {
         super(s);
     }
+
+    private Object o;
+
+    public NoRunException(Object s) {
+        super();
+        this.o = s;
+    }
 }

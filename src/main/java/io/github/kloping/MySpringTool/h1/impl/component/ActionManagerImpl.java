@@ -48,7 +48,6 @@ public class ActionManagerImpl implements ActionManager {
         }
     }
 
-
     @Override
     public synchronized MatherResult mather(String regx) {
         if (regx == null || regx.trim().isEmpty()) return null;

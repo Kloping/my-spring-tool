@@ -11,8 +11,7 @@ import io.github.kloping.object.ObjectUtils;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import static io.github.kloping.object.ObjectUtils.baseToPack;
 
@@ -62,17 +61,10 @@ public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
         Parameter[] parameters = method.getParameters();
         Object[] ros = new Object[parameters.length];
         List<Object> usedList = new ArrayList<>();
-
-        List<Object> all = new ArrayList<>();
-        for (Object object : objects) {
-            all.add(object);
-        }
-        for (Object obj : objs) {
-            all.add(obj);
-        }
-        for (Object o : results) {
-            all.add(o);
-        }
+        Set<Object> all = new HashSet<>();
+        addAllObj(all, objs);
+        addAllObj(all, objects);
+        addAllObj(all, results);
         for (int i = 0; i < parameters.length; i++) {
             Class<?> cla = parameters[i].getType();
             if (parameters[i].isAnnotationPresent(Param.class)) {
@@ -108,6 +100,26 @@ public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
             }
         }
         return ros;
+    }
+
+    private static void addAllObj(Set<Object> all, Collection results) {
+        for (Object arg : results) {
+            if (arg != null) {
+                if (arg.getClass().isArray()) addAllObj(all, (Object[]) arg);
+                else if (arg.getClass().isAssignableFrom(Collection.class)) addAllObj(all, (Collection) arg);
+                all.add(arg);
+            }
+        }
+    }
+
+    private static void addAllObj(Set<Object> all, Object... args) {
+        for (Object arg : args) {
+            if (arg != null) {
+                if (arg.getClass().isArray()) addAllObj(all, (Object[]) arg);
+                else if (arg.getClass().isAssignableFrom(Collection.class)) addAllObj(all, (Collection) arg);
+                all.add(arg);
+            }
+        }
     }
 
     private void m1(List results, Parameter[] parameters, Object[] ros, int i) {

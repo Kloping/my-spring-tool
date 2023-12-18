@@ -4,13 +4,12 @@ package io.github.kloping.MySpringTool.h1.impls.baseup;
 import io.github.kloping.MySpringTool.Setting;
 import io.github.kloping.MySpringTool.entity.impls.RunnerEve;
 import io.github.kloping.MySpringTool.entity.interfaces.Runner;
-import io.github.kloping.MySpringTool.exceptions.NoRunException;
+import io.github.kloping.MySpringTool.entity.interfaces.RunnerOnThrows;
 import io.github.kloping.MySpringTool.interfaces.Executor;
 import io.github.kloping.MySpringTool.interfaces.Logger;
 import io.github.kloping.MySpringTool.interfaces.QueueExecutor;
 import io.github.kloping.MySpringTool.interfaces.entitys.MatherResult;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.*;
@@ -20,15 +19,20 @@ import static io.github.kloping.MySpringTool.PartUtils.getExceptionLine;
 /**
  * @author github-kloping
  */
-public class QueueExecutorWithReturnsImpl implements QueueExecutor {
+public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements QueueExecutor {
     protected Class<?> cla = Long.class;
     protected Executor executor;
     protected int poolSize = 20;
     protected long waitTime = 10 * 1000;
     private RunnerEve runner1;
     private RunnerEve runner2;
-    private Setting setting;
+    private RunnerOnThrows onThrows;
     private Logger logger;
+
+    @Override
+    public <T extends RunnerOnThrows> void setException(T r) {
+        this.onThrows = r;
+    }
 
     @Override
     public <T extends Runner> void setBefore(T runner) {
@@ -43,7 +47,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     }
 
     public QueueExecutorWithReturnsImpl(Class<?> cla, Executor executor, Setting setting) {
-        this.setting = setting;
+        super(setting);
         this.cla = cla;
         this.executor = executor;
         init();
@@ -63,7 +67,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     }
 
     protected QueueExecutorWithReturnsImpl(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
-        this.setting = setting;
+        super(setting);
         this.executor = executor;
         this.poolSize = poolSize;
         this.cla = cla;
@@ -71,31 +75,15 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
         this.init();
     }
 
-    public static QueueExecutorWithReturnsImpl create(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
-        return new QueueExecutorWithReturnsImpl(cla, poolSize, waitTime, executor, setting);
-    }
-
     @Override
-    public Object execute(Object This, Method method, Object... objects) throws InvocationTargetException, IllegalAccessException {
-        Object o = null;
-        try {
-            o = executor.execute(This, method, objects);
-        } catch (InvocationTargetException e) {
-            InvocationTargetException ite = e;
-            if (ite.getTargetException().getClass() == NoRunException.class) {
-                NoRunException exception = (NoRunException) ite.getTargetException();
-                logger.Log("抛出 不运行异常(throw NuRunException): " + exception.getMessage(), 2);
-            } else {
-                logger.Log("存在映射一个异常(Has a Invoke Exception)=>" + ite.getTargetException() + " at " + getExceptionLine(ite.getTargetException()), -1);
-            }
-        }
-        return o;
+    public Object execute(Object This, Method method, Object... objects) throws Throwable {
+        return executor.execute(This, method, objects);
     }
 
     @Override
     public <T> int queueExecute(T t, Object... objects) {
         if (t.getClass() != cla) {
-            logger.Log("not is mainKey type for " + t.getClass().getSimpleName(), 2);
+            logger.waring("not is mainKey type for " + t.getClass().getSimpleName());
             return -1;
         } else {
             if (runSet.add(t)) {
@@ -103,7 +91,7 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
                 return queueMap.size();
             } else {
                 append(t, objects);
-                logger.Log("append queue list and next run", 0);
+                logger.info("append queue list and next run");
             }
         }
         return 0;
@@ -112,7 +100,6 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
     protected <T> void tryRun(T t, Object[] objects) {
         runThreads.execute(() -> {
             Future future = threads.submit(() -> {
-                try {
                     long startTime = System.currentTimeMillis();
                     Object[] parts = Arrays.copyOfRange(objects, 2, objects.length);
                     if (setting.getArgsManager().isLegal(parts)) {
@@ -120,11 +107,6 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
                     } else {
                         logger.Log("Can't Access types for " + Arrays.toString(objects), 2);
                     }
-                } catch (NoRunException e) {
-                    logger.Log("抛出 不运行异常(throw NuRunException): " + e.getMessage() , 2);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
             });
             getVal(future);
             runEnd(t);
@@ -152,24 +134,12 @@ public class QueueExecutorWithReturnsImpl implements QueueExecutor {
                         }
                     }
                 }
-                logger.Log("lost time "
-                        + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
+                logger.Log("lost time " + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
             } else logger.Log("No match for " + objects[1].toString(), 2);
-        } catch (NoRunException e) {
-            logger.Log("抛出 不运行异常(throw NuRunException): "
-                    + e.getMessage() , 2);
-        } catch (InvocationTargetException e) {
-            InvocationTargetException ite = e;
-            if (ite.getTargetException().getClass() == NoRunException.class) {
-                NoRunException exception = (NoRunException) ite.getTargetException();
-                logger.Log("抛出 不运行异常(throw NuRunException): " + exception.getMessage(), 2);
-            } else {
-                logger.Log("存在映射一个异常(Has a Invoke Exception)=>"
-                        + ite.getTargetException() + " at " + getExceptionLine(ite.getTargetException()), -1);
-            }
-        } catch (Exception e) {
-            logger.Log("存在一个异常(Has a Exception)=>"
-                    + e + " at " + getExceptionLine(e), -1);
+        } catch (Throwable e) {
+            if (onThrows != null) {
+                onThrows.onThrows(e, t, objects);
+            } else logger.error(getExceptionLine(e));
         }
     }
 
