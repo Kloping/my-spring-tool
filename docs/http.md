@@ -8,10 +8,10 @@
 例如:
 
 ```java
-import io.github.kloping.MySpringTool.annotations.http.HttpClient;
-import io.github.kloping.MySpringTool.annotations.http.ParamName;
-import io.github.kloping.MySpringTool.annotations.http.PostPath;
-import io.github.kloping.MySpringTool.annotations.http.RequestBody;
+import io.github.kloping.spt.annotations.http.HttpClient;
+import io.github.kloping.spt.annotations.http.ParamName;
+import io.github.kloping.spt.annotations.http.PostPath;
+import io.github.kloping.spt.annotations.http.RequestBody;
 
 @HttpClient("https://glot.io/run/")
 public interface H2 {
@@ -35,10 +35,10 @@ public interface H2 {
 ```
 
 ```java
-import io.github.kloping.MySpringTool.annotations.http.GetPath;
-import io.github.kloping.MySpringTool.annotations.http.HttpClient;
-import io.github.kloping.MySpringTool.annotations.http.ParamBody;
-import io.github.kloping.MySpringTool.annotations.http.ParamName;
+import io.github.kloping.spt.annotations.http.GetPath;
+import io.github.kloping.spt.annotations.http.HttpClient;
+import io.github.kloping.spt.annotations.http.ParamBody;
+import io.github.kloping.spt.annotations.http.ParamName;
 
 @HttpClient("http://kloping.top/")
 public interface H1 {
@@ -78,7 +78,7 @@ public interface H1 {
 ```
 
 ```java
-import io.github.kloping.MySpringTool.annotations.Controller;
+import io.github.kloping.spt.annotations.Controller;
 
 @Controller
 public class Main {
