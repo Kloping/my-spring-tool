@@ -1,5 +1,6 @@
 package io.github.kloping.spt.impls;
 
+import io.github.kloping.date.CronUtils;
 import io.github.kloping.spt.Setting;
 import io.github.kloping.spt.annotations.Controller;
 import io.github.kloping.spt.annotations.CronSchedule;
@@ -10,7 +11,6 @@ import io.github.kloping.spt.interfaces.Logger;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.TimeMethodManager;
-import io.github.kloping.date.CronUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -32,6 +32,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
 
     public TimeMethodManagerImpl(Setting setting, ClassManager classManager, AutomaticWiringParams wiringParams) {
         this.automaticWiringParams = wiringParams;
+        this.contextManager = setting.getContextManager();
         classManager.registeredAnnotation(Controller.class, this);
         setting.getSTARTED_RUNNABLE().add(() -> {
             startTimer();
@@ -48,7 +49,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                     Map.Entry<Long, Method> en = getNextTimeMethodDelay();
                     if (en == null) {
                         Logger logger = contextManager.getContextEntity(Logger.class);
-                        if (logger != null) logger.Log("计时任务结束...", 2);
+                        if (logger != null) logger.log("计时任务结束...");
                         return;
                     }
                     long t1 = en.getKey();

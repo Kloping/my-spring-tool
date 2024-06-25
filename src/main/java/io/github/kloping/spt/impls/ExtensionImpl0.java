@@ -52,7 +52,7 @@ public class ExtensionImpl0 implements Extension {
         }
         if (!cname.isEmpty()) {
             final String msg = "can't load extension(s) " + cname;
-            if (logger != null) logger.error(msg);
+            if (logger != null) logger.log(msg);
             else System.err.println(msg);
         }
     }

@@ -59,7 +59,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
          * @param objects
          * @return
          */
-        private Object run(Object... objects) {
+        private Object run(Object... objects) throws Exception {
             Class<?> rtype = method.getReturnType();
             Class dType = method.getDeclaringClass();
             try {
@@ -92,12 +92,12 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 for (HttpStatusReceiver receiver : receivers)
                     receiver.receive(HttpClientManagerImpl.this, finalUrl, status, dType, method, type, rtype, finalO, doc);
                 return o;
-            } catch (Exception e) {
-                logger.error(e.getLocalizedMessage() + "\n" + getExceptionLine(e));
+            } catch (Throwable e) {
+//                logger.error(e.getLocalizedMessage() + "\n" + getExceptionLine(e));
                 for (HttpStatusReceiver receiver : receivers)
                     receiver.receive(HttpClientManagerImpl.this, url, null, dType, method, type, rtype, null, null);
+                throw e;
             }
-            return null;
         }
     }
 
@@ -149,7 +149,8 @@ public class HttpClientManagerImpl implements HttpClientManager {
             }
         } catch (Exception e) {
             logger.error(e.getMessage() == null ? "" :
-                    e.getMessage() + "The data returned by the request could not be converted to the specified type( " + cls.getName() + ")\n" + getExceptionLine(e));
+                    e.getMessage() + "The data returned by the request could not be converted to " +
+                            "the specified type( " + cls.getName() + ")\n" + getExceptionLine(e));
             return null;
         }
     }
