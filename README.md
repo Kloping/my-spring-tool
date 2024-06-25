@@ -18,7 +18,7 @@
     <dependency>
         <groupId>io.github.Kloping</groupId>
         <artifactId>SpringTool</artifactId>
-        <version>${version}</version>
+        <version>0.6.3-Beta2</version>
     </dependency>
 </dependencies>
 
