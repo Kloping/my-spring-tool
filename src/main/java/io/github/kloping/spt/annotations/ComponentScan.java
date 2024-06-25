@@ -7,6 +7,8 @@ import java.lang.annotation.Target;
 
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CommentScan {
-    String path() default "?";
+public @interface ComponentScan {
+    String value() default "?";
+
+    String[] path() default {};
 }

@@ -26,7 +26,7 @@ public class FieldManagerImpl implements FieldManager {
         this.automaticWiringValue = automaticWiringValue;
         classManager.registeredAnnotation(Entity.class, this);
         classManager.registeredAnnotation(Controller.class, this);
-        classManager.registeredAnnotation(CommentScan.class, this);
+        classManager.registeredAnnotation(ComponentScan.class, this);
         setting.getSTARTED_RUNNABLE().add(() -> {
             workStand();
         });

@@ -1,7 +1,7 @@
 package io.github.kloping.spt.impls;
 
 import io.github.kloping.spt.annotations.Bean;
-import io.github.kloping.spt.annotations.CommentScan;
+import io.github.kloping.spt.annotations.ComponentScan;
 import io.github.kloping.spt.annotations.Entity;
 import io.github.kloping.spt.interfaces.AutomaticWiringParams;
 import io.github.kloping.spt.interfaces.Logger;
@@ -18,7 +18,7 @@ public class MethodManagerImpl implements MethodManager {
     public MethodManagerImpl(AutomaticWiringParams automaticWiringParams, ClassManager classManager) {
         this.automaticWiringParams = automaticWiringParams;
         classManager.registeredAnnotation(Entity.class, this);
-        classManager.registeredAnnotation(CommentScan.class, this);
+        classManager.registeredAnnotation(ComponentScan.class, this);
     }
 
     @Override

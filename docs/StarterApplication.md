@@ -21,10 +21,10 @@
 package test;
 
 import io.github.kloping.spt.annotations.AutoStand;
-import io.github.kloping.spt.annotations.CommentScan;
+import io.github.kloping.spt.annotations.ComponentScan;
 import test.interfaces.M2;
 
-@CommentScan(path = "test")
+@ComponentScan(path = "test")
 public class Simple {
     public static void main(String[] args) {
         StarterApplication.addConfFile("./src/test/java/conf.txt");
@@ -52,7 +52,7 @@ import test.interfaces.M2;
 
 import java.lang.reflect.InvocationTargetException;
 
-@CommentScan(path = "test")
+@ComponentScan(path = "test")
 @Controller
 public class Main {
     @Before

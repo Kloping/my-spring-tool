@@ -4,6 +4,7 @@ import io.github.kloping.judge.Judge;
 import io.github.kloping.map.MapUtils;
 import io.github.kloping.object.ObjectUtils;
 import io.github.kloping.spt.PartUtils;
+import io.github.kloping.spt.exceptions.NoRunException;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 
 import java.util.Map;
@@ -52,7 +53,10 @@ public class ContextManagerWithEIImpl implements ContextManager {
     public <T> T getContextEntity(Class<T> cla, String id) {
         cla = (Class<T>) ObjectUtils.baseToPack(cla);
         if (contexts.containsKey(cla)) {
-            if (Judge.isNotEmpty(id)) if (contexts.get(cla).containsKey(id)) return (T) contexts.get(cla).get(id);
+            if (Judge.isNotEmpty(id)) {
+                if (contexts.get(cla).containsKey(id))
+                    return (T) contexts.get(cla).get(id);
+            }
             else return getContextEntity(cla);
         }
         return null;

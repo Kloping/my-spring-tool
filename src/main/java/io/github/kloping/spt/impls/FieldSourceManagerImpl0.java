@@ -1,6 +1,6 @@
 package io.github.kloping.spt.impls;
 
-import io.github.kloping.spt.annotations.CommentScan;
+import io.github.kloping.spt.annotations.ComponentScan;
 import io.github.kloping.spt.annotations.Controller;
 import io.github.kloping.spt.annotations.Entity;
 import io.github.kloping.spt.interfaces.component.up0.ClassAttributeManager;
@@ -58,7 +58,7 @@ public class FieldSourceManagerImpl0 implements ClassAttributeManager, FieldSour
         this.classManager = classManager;
         classManager.registeredAnnotation(Entity.class, this);
         classManager.registeredAnnotation(Controller.class, this);
-        classManager.registeredAnnotation(CommentScan.class, this);
+        classManager.registeredAnnotation(ComponentScan.class, this);
     }
 
     @Override

@@ -6,7 +6,7 @@
 
     <groupId>io.github.Kloping</groupId>
     <artifactId>SpringTool</artifactId>
-    <version>0.6.3-Beta2</version>
+    <version>0.6.3-R1</version>
 
     <packaging>jar</packaging>
     <name>SpringTool</name>
@@ -47,7 +47,7 @@
         <dependency>
             <groupId>io.github.Kloping</groupId>
             <artifactId>JvUtils</artifactId>
-            <version>0.4.9-R2</version>
+            <version>0.4.9-R3</version>
         </dependency>
         <dependency>
             <groupId>com.alibaba</groupId>

@@ -1,6 +1,7 @@
 package io.github.kloping.spt;
 
-import io.github.kloping.spt.annotations.CommentScan;
+import io.github.kloping.judge.Judge;
+import io.github.kloping.spt.annotations.ComponentScan;
 import io.github.kloping.spt.entity.interfaces.Runner;
 import io.github.kloping.spt.exceptions.NoRunException;
 import io.github.kloping.spt.impls.ExtensionImpl0;
@@ -38,7 +39,7 @@ public final class StarterObjectApplication {
 
     private int poolSize = 20;
     private long waitTime = 12 * 1000L;
-    private String scanPath;
+    private String[] scanPaths;
     private boolean inited = false;
     private Class<?> mainKey = Long.class;
     /**
@@ -70,10 +71,9 @@ public final class StarterObjectApplication {
      * @param cla
      */
     public StarterObjectApplication run0(Class<?> cla) {
-        if (cla.isAnnotationPresent(CommentScan.class)) {
-            CommentScan scan = cla.getAnnotation(CommentScan.class);
-            scanPath = filter(scan.path(), cla);
-            check(scanPath);
+        if (cla.isAnnotationPresent(ComponentScan.class)) {
+            ComponentScan scan = cla.getAnnotation(ComponentScan.class);
+            scanPaths = loadPaths(scan, cla);
             loadConf();
             work(cla);
             workAfter();
@@ -86,6 +86,27 @@ public final class StarterObjectApplication {
             }
         }
         return this;
+    }
+
+    private String[] loadPaths(ComponentScan scan, Class<?> cla) {
+        List<String> paths = new LinkedList<>();
+        String v = filter(scan.value(), cla);
+        check(v);
+        paths.add(v);
+        String[] ps = scan.path();
+        if (ps != null) {
+            for (String s : scan.path()) {
+                try {
+                    s = filter(s, cla);
+                    check(s);
+                    paths.add(s);
+                } catch (Exception e) {
+                    System.err.println(e.getMessage());
+                    continue;
+                }
+            }
+        }
+        return paths.toArray(new String[0]);
     }
 
     public static StarterObjectApplication run(Class<?> cla) {
@@ -199,8 +220,11 @@ public final class StarterObjectApplication {
             getInstance().getContextManager().append(startClass);
             getInstance().getClassManager().add(main);
             preScan();
-            for (Class<?> aClass : getInstance().getPackageScanner().scan(main, SCAN_LOADER, scanPath)) {
-                getInstance().getClassManager().add(aClass);
+            for (String scanPath : scanPaths) {
+                if (Judge.isEmpty(scanPath)) continue;
+                for (Class<?> aClass : getInstance().getPackageScanner().scan(main, SCAN_LOADER, scanPath)) {
+                    getInstance().getClassManager().add(aClass);
+                }
             }
             postScan();
             logger.info("version 0.6.3-Alpha1 sptool start success");

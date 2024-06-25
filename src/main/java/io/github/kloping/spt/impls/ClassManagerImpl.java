@@ -2,7 +2,7 @@ package io.github.kloping.spt.impls;
 
 import io.github.kloping.map.MapUtils;
 import io.github.kloping.spt.PartUtils;
-import io.github.kloping.spt.annotations.CommentScan;
+import io.github.kloping.spt.annotations.ComponentScan;
 import io.github.kloping.spt.annotations.Controller;
 import io.github.kloping.spt.annotations.Entity;
 import io.github.kloping.spt.interfaces.AutomaticWiringParams;
@@ -55,7 +55,7 @@ public class ClassManagerImpl implements ClassManager {
     public void add(Class<?> cla) {
         if (!set.add(cla)) return;
         String id = null;
-        if (cla.isAnnotationPresent(CommentScan.class)) {
+        if (cla.isAnnotationPresent(ComponentScan.class)) {
             Object o = contextManager.getContextEntity(cla);
         }
         if (cla.isAnnotationPresent(Entity.class)) {
