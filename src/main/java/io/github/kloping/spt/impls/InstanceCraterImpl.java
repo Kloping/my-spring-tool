@@ -1,6 +1,7 @@
 package io.github.kloping.spt.impls;
 
 import io.github.kloping.spt.PartUtils;
+import io.github.kloping.spt.annotations.Param;
 import io.github.kloping.spt.interfaces.Logger;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.InstanceCrater;
@@ -31,8 +32,8 @@ public class InstanceCraterImpl implements InstanceCrater {
                     int index = 0;
                     for (Parameter parameter : parameters) {
                         String id = null;
-                        if (parameter.isAnnotationPresent(io.github.kloping.spt.annotations.Parameter.class)) {
-                            io.github.kloping.spt.annotations.Parameter p = parameter.getDeclaredAnnotation(io.github.kloping.spt.annotations.Parameter.class);
+                        if (parameter.isAnnotationPresent(Param.class)) {
+                            Param p = parameter.getDeclaredAnnotation(Param.class);
                             id = p.value();
                         }
                         args[index++] = contextManager.getContextEntity(parameter.getType(), id);

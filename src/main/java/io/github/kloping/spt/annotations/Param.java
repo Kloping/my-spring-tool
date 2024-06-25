@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @Target(ElementType.PARAMETER)
 @java.lang.annotation.Retention(RetentionPolicy.RUNTIME)
-public @interface Parameter {
+public @interface Param {
     /**
      * 非action场景指定为id
      *

@@ -1,7 +1,7 @@
 package io.github.kloping.spt.impls.baseup;
 
 import io.github.kloping.spt.annotations.AllMess;
-import io.github.kloping.spt.annotations.Parameter;
+import io.github.kloping.spt.annotations.Param;
 import io.github.kloping.spt.annotations.ReturnResult;
 import io.github.kloping.spt.interfaces.AutomaticWiringParams;
 import io.github.kloping.spt.interfaces.component.ContextManager;
@@ -66,8 +66,8 @@ public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
         addAllObj(all, results);
         for (int i = 0; i < parameters.length; i++) {
             Class<?> cla = parameters[i].getType();
-            if (parameters[i].isAnnotationPresent(Parameter.class)) {
-                Parameter param = parameters[i].getAnnotation(Parameter.class);
+            if (parameters[i].isAnnotationPresent(Param.class)) {
+                Param param = parameters[i].getAnnotation(Param.class);
                 String r1 = result.getParams().get(param.value());
                 try {
                     cla = baseToPack(cla);
