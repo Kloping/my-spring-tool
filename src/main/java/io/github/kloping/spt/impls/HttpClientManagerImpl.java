@@ -2,6 +2,8 @@ package io.github.kloping.spt.impls;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import io.github.kloping.object.ObjectUtils;
+import io.github.kloping.reg.MatcherUtils;
 import io.github.kloping.spt.Setting;
 import io.github.kloping.spt.annotations.http.*;
 import io.github.kloping.spt.entity.KeyVals;
@@ -10,7 +12,6 @@ import io.github.kloping.spt.interfaces.Logger;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.HttpClientManager;
-import io.github.kloping.object.ObjectUtils;
 import org.fusesource.jansi.Ansi;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
@@ -40,14 +41,22 @@ public class HttpClientManagerImpl implements HttpClientManager {
     private Map<Method, Invoker> methodInks = new ConcurrentHashMap<>();
 
     private class Invoker {
-        private String url;
+        private String path;
+        private String host;
+        /**
+         * @Req 注解方法
+         */
         private Method method;
 
         private Connection.Method type;
+        /**
+         * 处理过滤的方法
+         */
         private Method[] methods;
 
-        public Invoker(String url, Method method, Connection.Method type, Method[] methods) {
-            this.url = url;
+        public Invoker(String host, String path, Method method, Connection.Method type, Method[] methods) {
+            this.path = path;
+            this.host = host;
             this.method = method;
             this.type = type;
             this.methods = methods;
@@ -59,11 +68,11 @@ public class HttpClientManagerImpl implements HttpClientManager {
          * @param objects
          * @return
          */
-        private Object run(Object... objects) throws Exception {
+        private Object run(Object... objects) throws Throwable {
             Class<?> rtype = method.getReturnType();
             Class dType = method.getDeclaringClass();
             try {
-                String finalUrl = getGetUrl(url, method, objects);
+                final String finalUrl = getGetUrl(host, path, method, objects);
                 Connection connection = null;
                 connection = getConnection(finalUrl, getHeaders(method, objects));
                 connection.method(type);
@@ -93,9 +102,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     receiver.receive(HttpClientManagerImpl.this, finalUrl, status, dType, method, type, rtype, finalO, doc);
                 return o;
             } catch (Throwable e) {
-//                logger.error(e.getLocalizedMessage() + "\n" + getExceptionLine(e));
                 for (HttpStatusReceiver receiver : receivers)
-                    receiver.receive(HttpClientManagerImpl.this, url, null, dType, method, type, rtype, null, null);
+                    receiver.receive(HttpClientManagerImpl.this, merge(host, path),
+                            null, dType, method, type, rtype, null, null);
                 throw e;
             }
         }
@@ -189,11 +198,18 @@ public class HttpClientManagerImpl implements HttpClientManager {
             path = rp.value();
             mt = rp.method();
         }
-        path = ali(host, path);
-        loadMethod(method, path, mt);
+        loadMethod(host, path, method, mt);
     }
 
-    private String ali(String host, String path) {
+    private String merge(String host, String path) throws Throwable {
+        if (host.matches(".*?\\{.*?}.*?")) {
+            for (String r0 : MatcherUtils.matcherAll(host, "\\{.*?}")) {
+                String fielda = r0.substring(1, r0.length() - 1);
+                AccessibleObject aco = parse(fielda);
+                Object value = getValue(aco);
+                host = host.replace(r0, value.toString());
+            }
+        }
         if (!host.endsWith(SPLIT)) {
             host += SPLIT;
         }
@@ -222,7 +238,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
     }
 
-    private void loadMethod(Method method, String url, Connection.Method type) {
+    private void loadMethod(String host, String path, Method method, Connection.Method type) {
         Method[] methods = null;
         if (method.isAnnotationPresent(Callback.class)) {
             Callback callback = method.getDeclaredAnnotation(Callback.class);
@@ -230,7 +246,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
             methods = loadMethods(ss);
         }
         Method[] finalMethods = methods;
-        methodInks.put(method, new Invoker(url, method, type, methods));
+        methodInks.put(method, new Invoker(host, path, method, type, methods));
     }
 
     private void loadConf(Connection connection, Method method, Object[] objects) {
@@ -436,12 +452,12 @@ public class HttpClientManagerImpl implements HttpClientManager {
         return store;
     }
 
-    private String getGetUrl(String url, Method method, Object... objects) {
+    private String getGetUrl(String host, String path, Method method, Object... objects) throws Throwable {
         Parameter[] parameters = method.getParameters();
-        StringBuilder sb_end = new StringBuilder();
+        StringBuilder urlsb = new StringBuilder();
         StringBuilder sb = new StringBuilder();
         Map<String, Object> replaceMap = new HashMap<>();
-        sb_end.append(url);
+        urlsb.append(merge(host, path));
         for (int i = 0; i < parameters.length; i++) {
             if (objects[i] instanceof Params) {
                 Params params = (Params) objects[i];
@@ -470,10 +486,10 @@ public class HttpClientManagerImpl implements HttpClientManager {
             } else if (parameters[i].isAnnotationPresent(PathValue.class)) {
                 PathValue pn = parameters[i].getAnnotation(PathValue.class);
                 if (pn.value() == null || pn.value().isEmpty()) {
-                    if (!sb_end.toString().endsWith(SPLIT)) {
-                        sb_end.append(SPLIT);
+                    if (!urlsb.toString().endsWith(SPLIT)) {
+                        urlsb.append(SPLIT);
                     }
-                    sb_end.append(objects[i].toString());
+                    urlsb.append(objects[i].toString());
                 } else {
                     String name = pn.value();
                     name = "{" + name + "}";
@@ -487,9 +503,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
         if (sb.toString().endsWith(AND)) {
             sb.delete(sb.length() - 1, sb.length());
         }
-        sb_end.append(DO);
-        sb_end.append(sb.toString());
-        String url0 = sb_end.toString();
+        urlsb.append(DO);
+        urlsb.append(sb.toString());
+        String url0 = urlsb.toString();
         if (url0.startsWith(SPLIT)) {
             url0 = url0.substring(1);
         }
@@ -530,7 +546,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
             if (!(s == null || s.isEmpty())) {
                 try {
                     AccessibleObject field = parse(s);
-                    Object o = getValue(field, cn0);
+                    Object o = getValue(field);
                     if (o instanceof Map) {
                         Map<String, String> m = (Map<String, String>) o;
                         map.putAll(m);
@@ -544,7 +560,12 @@ public class HttpClientManagerImpl implements HttpClientManager {
         return map;
     }
 
-    private Object getValue(AccessibleObject ao, Class c) throws Throwable {
+    /**
+     * @param ao
+     * @return
+     * @throws Throwable
+     */
+    private Object getValue(AccessibleObject ao) throws Throwable {
         if (ao == null) return null;
         ao.setAccessible(true);
         ContextManager contextManager = setting.getContextManager();
@@ -560,6 +581,13 @@ public class HttpClientManagerImpl implements HttpClientManager {
         return null;
     }
 
+    /**
+     * 将类似 test.Main.s0 字段解析为 可获取的实例
+     *
+     * @param str
+     * @return
+     * @throws ClassNotFoundException
+     */
     private static final AccessibleObject parse(String str) throws ClassNotFoundException {
         AccessibleObject accessibleObject = null;
         int i0 = str.lastIndexOf(".");

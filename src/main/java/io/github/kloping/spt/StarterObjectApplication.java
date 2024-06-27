@@ -227,7 +227,7 @@ public final class StarterObjectApplication {
                 }
             }
             postScan();
-            logger.info("version 0.6.3-R1 sptool start success");
+            logger.info("version 0.6.3-L1 sptool start success");
         } catch (Throwable e) {
             logger.error(getExceptionLine(e));
             e.printStackTrace();

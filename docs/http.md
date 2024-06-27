@@ -109,3 +109,24 @@ public interface MTest {
         * 其中 this 代表 当前的地址 即 即将访问的网址 将被
         * 访问两次 第一次获取 Cookie 第二次返回真实数据
     * method: 获取方法 默认 GET 且 仅可为 GET POST
+
+> 2024.6.27 更新
+
+```java
+@HttpClient("http://{sptest.Main.net}")
+public interface Baidu {
+    @GetPath("test")
+    String test();
+}
+```
+
+```java
+package sptest;
+
+public class Main {
+    public static String net = "kloping.top/";
+}
+```
+
+> >resp status code 200 from the [http://kloping.top/test]
+
