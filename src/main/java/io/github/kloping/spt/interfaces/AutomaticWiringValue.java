@@ -30,4 +30,14 @@ public interface AutomaticWiringValue extends AutomaticWiring {
      * @throws IllegalAccessException
      */
     boolean wiring(Field field, ContextManager contextManager) throws IllegalAccessException;
+
+    /**
+     * fill instance use contextManager
+     *
+     * @param obj
+     * @param contextManager
+     * @return
+     * @throws IllegalAccessException
+     */
+    boolean wiring(Object obj, ContextManager contextManager) throws IllegalAccessException;
 }

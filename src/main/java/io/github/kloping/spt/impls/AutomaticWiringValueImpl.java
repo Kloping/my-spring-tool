@@ -35,4 +35,14 @@ public class AutomaticWiringValueImpl implements AutomaticWiringValue {
     public boolean wiring(Field field, ContextManager contextManager) throws IllegalAccessException {
         return this.wiring(null, field, contextManager);
     }
+
+    @Override
+    public boolean wiring(Object obj, ContextManager contextManager) throws IllegalAccessException {
+        boolean k = false;
+        for (Field declaredField : obj.getClass().getDeclaredFields()) {
+            boolean a = wiring(obj, declaredField, contextManager);
+            k = a ? a : k;
+        }
+        return k;
+    }
 }

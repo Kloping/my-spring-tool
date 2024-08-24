@@ -1,5 +1,8 @@
 package io.github.kloping.spt.annotations.http;
 
+import io.github.kloping.spt.PartUtils;
+import org.jsoup.Connection;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

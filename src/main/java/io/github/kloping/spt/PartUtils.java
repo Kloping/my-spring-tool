@@ -1,5 +1,8 @@
 package io.github.kloping.spt;
 
+import org.jsoup.Connection;
+import org.jsoup.helper.HttpConnection;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
