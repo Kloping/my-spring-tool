@@ -6,7 +6,7 @@
 
     <groupId>io.github.Kloping</groupId>
     <artifactId>SpringTool</artifactId>
-    <version>0.6.3-R2</version>
+    <version>0.6.3-R</version>
 
     <packaging>jar</packaging>
     <name>SpringTool</name>
@@ -14,6 +14,7 @@
     <url>https://github.com/Kloping/my-spring-tool</url>
 
     <description>SpTool</description>
+
     <licenses>
         <license>
             <name>GNU AFFERO GENERAL PUBLIC LICENSE Version 3</name>
@@ -27,17 +28,6 @@
         <developerConnection>scm:git:ssh://github.com/Kloping/my-spring-tool</developerConnection>
         <url>https://github.com/Kloping/my-spring-tool</url>
     </scm>
-    <developers>
-        <developer>
-            <name>Kloping</name>
-            <id>Kloping</id>
-            <email>hrs3474006766@outlook.com</email>
-            <roles>
-                <role>Developer</role>
-            </roles>
-            <timezone>+8</timezone>
-        </developer>
-    </developers>
     <dependencies>
         <dependency>
             <groupId>org.fusesource.jansi</groupId>
@@ -61,11 +51,24 @@
         </dependency>
     </dependencies>
 
+    <developers>
+        <developer>
+            <id>kloping</id>
+            <name>Kloping</name>
+            <email>hrs3474006766@outlook.com</email>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <timezone>+8</timezone>
+        </developer>
+    </developers>
+
     <properties>
         <java.version>8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
+
     <distributionManagement>
         <snapshotRepository>
             <id>ossrh</id>
@@ -73,9 +76,10 @@
         </snapshotRepository>
         <repository>
             <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2</url>
         </repository>
     </distributionManagement>
+
     <build>
         <plugins>
             <plugin>
