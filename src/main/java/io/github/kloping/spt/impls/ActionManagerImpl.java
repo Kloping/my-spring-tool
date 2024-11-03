@@ -83,7 +83,7 @@ public class ActionManagerImpl implements ActionManager {
                 }
             }
         }
-        return null;
+        return new MatherResult(null, null, defActionMethods.toArray(new Method[0]));
     }
 
     private List<Character> getShortestSortedChars(String s0) {
