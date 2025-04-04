@@ -58,7 +58,7 @@ public class QueueExecutorImpl extends ExecutorNowImpl implements QueueExecutor 
         runThreads = Executors.newFixedThreadPool(poolSize);
     }
 
-    public static QueueExecutor create(Class<?> cla, int poolSize, long waitTime, Executor executor,Setting setting) {
+    public static QueueExecutor create(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
         QueueExecutorImpl queueExecutor = new QueueExecutorImpl(setting);
         queueExecutor.executor = executor;
         queueExecutor.poolSize = poolSize;
@@ -81,37 +81,37 @@ public class QueueExecutorImpl extends ExecutorNowImpl implements QueueExecutor 
             if (runSet.add(t)) {
                 runThreads.execute(() -> {
                     Future future = threads.submit(() -> {
-                            long startTime = System.currentTimeMillis();
-                            Object[] parts = Arrays.copyOfRange(objects, 2, objects.length);
-                            if (setting.getArgsManager().isLegal(parts)) {
-                                try {
-                                    MatherResult result = setting.getActionManager().mather(objects[1].toString());
-                                    if (result != null) {
-                                        Method[] methods = result.getMethods();
-                                        Class cla = methods[0].getDeclaringClass();
-                                        if (runner1 != null) runner1.run(methods[0], t, objects);
-                                        Object o = setting.getContextManager().getContextEntity(cla);
-                                        Object reo = null;
-                                        List<Object> results = new ArrayList<>();
-                                        for (Method m : methods) {
-                                            Object[] parObjs = setting.getAutomaticWiringParams().wiring(m, result, results, (Object) parts);
-                                            Object to = this.execute(o, m, parObjs);
-                                            if (to != null) {
-                                                results.add(to);
-                                                reo = to;
-                                            }
+                        long startTime = System.currentTimeMillis();
+                        Object[] parts = Arrays.copyOfRange(objects, 2, objects.length);
+                        if (setting.getArgsManager().isLegal(parts)) {
+                            try {
+                                MatherResult result = setting.getActionManager().mather(objects[1].toString());
+                                if (result != null && result.getMethods().length > 0) {
+                                    Method[] methods = result.getMethods();
+                                    Class cla = methods[0].getDeclaringClass();
+                                    if (runner1 != null) runner1.run(methods[0], t, objects);
+                                    Object o = setting.getContextManager().getContextEntity(cla);
+                                    Object reo = null;
+                                    List<Object> results = new ArrayList<>();
+                                    for (Method m : methods) {
+                                        Object[] parObjs = setting.getAutomaticWiringParams().wiring(m, result, results, (Object) parts);
+                                        Object to = this.execute(o, m, parObjs);
+                                        if (to != null) {
+                                            results.add(to);
+                                            reo = to;
                                         }
-                                        if (runner2 != null) runner2.run(methods[0], reo, objects);
-                                        logger.Log("lost time " + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
-                                    } else logger.Log("No match for " + objects[1].toString(), 2);
-                                } catch (Throwable e) {
-                                    if (onThrows != null) {
-                                        onThrows.onThrows(e, t, objects);
-                                    } else logger.error(getExceptionLine(e));
-                                }
-                            } else {
-                                logger.waring("Can't Access types for " + Arrays.toString(objects));
+                                    }
+                                    if (runner2 != null) runner2.run(methods[0], reo, objects);
+                                    logger.Log("lost time " + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
+                                } else logger.Log("No match for " + objects[1].toString(), 2);
+                            } catch (Throwable e) {
+                                if (onThrows != null) {
+                                    onThrows.onThrows(e, t, objects);
+                                } else logger.error(getExceptionLine(e));
                             }
+                        } else {
+                            logger.waring("Can't Access types for " + Arrays.toString(objects));
+                        }
                     });
 
                     try {

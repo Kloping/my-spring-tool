@@ -101,13 +101,13 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
     protected <T> void tryRun(T t, Object[] objects) {
         runThreads.execute(() -> {
             Future future = threads.submit(() -> {
-                    long startTime = System.currentTimeMillis();
-                    Object[] parts = Arrays.copyOfRange(objects, 2, objects.length);
-                    if (setting.getArgsManager().isLegal(parts)) {
-                        matcherAndRun(t, objects, startTime, (Object) parts);
-                    } else {
-                        logger.Log("Can't Access types for " + Arrays.toString(objects), 2);
-                    }
+                long startTime = System.currentTimeMillis();
+                Object[] parts = Arrays.copyOfRange(objects, 2, objects.length);
+                if (setting.getArgsManager().isLegal(parts)) {
+                    matcherAndRun(t, objects, startTime, (Object) parts);
+                } else {
+                    logger.Log("Can't Access types for " + Arrays.toString(objects), 2);
+                }
             });
             getVal(future);
             runEnd(t);
@@ -117,7 +117,7 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
     protected <T> void matcherAndRun(T t, Object[] objects, long startTime, Object parts) {
         try {
             MatherResult result = setting.getActionManager().mather(objects[1].toString());
-            if (result != null) {
+            if (result != null && result.getMethods().length > 0) {
                 Method[] methods = result.getMethods();
                 Class cla = methods[0].getDeclaringClass();
                 Object o = setting.getContextManager().getContextEntity(cla);
