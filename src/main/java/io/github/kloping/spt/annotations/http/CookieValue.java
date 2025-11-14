@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 /**
  * The parameter type annotated by this annotation should be {@link java.util.Map.Entry}
- *
+ * @deprecated
  * @author github.kloping
  */
 @Target({ElementType.PARAMETER})

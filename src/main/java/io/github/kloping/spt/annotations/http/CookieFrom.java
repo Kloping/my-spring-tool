@@ -7,6 +7,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * @deprecated
  * Request with cookie from value
  * The default request for obtaining cookies is GET
  * @author github-kloping

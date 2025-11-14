@@ -2,24 +2,28 @@ package io.github.kloping.spt.impls;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import io.github.kloping.object.ObjectUtils;
+import io.github.kloping.io.ReadUtils;
 import io.github.kloping.reg.MatcherUtils;
 import io.github.kloping.spt.Setting;
 import io.github.kloping.spt.annotations.http.*;
+import io.github.kloping.spt.annotations.http.Callback;
+import io.github.kloping.spt.annotations.http.Headers;
+import io.github.kloping.spt.annotations.http.RequestBody;
 import io.github.kloping.spt.entity.KeyVals;
 import io.github.kloping.spt.entity.Params;
 import io.github.kloping.spt.interfaces.Logger;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.HttpClientManager;
+import okhttp3.*;
 import org.fusesource.jansi.Ansi;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.HttpConnection;
 import org.jsoup.nodes.Document;
+import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.*;
 import java.net.CookieStore;
@@ -29,6 +33,7 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import static io.github.kloping.spt.PartUtils.getExceptionLine;
 
@@ -37,8 +42,11 @@ import static io.github.kloping.spt.PartUtils.getExceptionLine;
  */
 public class HttpClientManagerImpl implements HttpClientManager {
     public static final String SPLIT = "/";
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(HttpClientManagerImpl.class);
     private Setting setting;
     private Map<Method, Invoker> methodInks = new ConcurrentHashMap<>();
+    private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
+            .readTimeout(10, TimeUnit.SECONDS).writeTimeout(10, TimeUnit.SECONDS).build();
 
     private class Invoker {
         private String path;
@@ -62,6 +70,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
             this.methods = methods;
         }
 
+        private Request.Builder requestBuilder;
+        private String finalUrl;
+
         /**
          * proxy method run
          *
@@ -69,33 +80,45 @@ public class HttpClientManagerImpl implements HttpClientManager {
          * @return
          */
         private Object run(Object... objects) throws Throwable {
+            long start = System.currentTimeMillis();
+            long cost = -1L;
             Class<?> rtype = method.getReturnType();
             Class dType = method.getDeclaringClass();
             try {
-                final String finalUrl = getGetUrl(host, path, method, objects);
-                Connection connection = null;
-                connection = getConnection(finalUrl, getHeaders(method, objects));
-                connection.method(type);
-                loadConf(connection, method, objects);
-                loadBody(connection, method, objects);
-                loadData(connection, method, objects);
-                loadCookie(connection, method, finalUrl, objects);
-                Connection.Response response = connection.execute();
-                Document doc = response.parse();
-                int status = response.statusCode();
+                if (requestBuilder == null) {
+                    requestBuilder = new Request.Builder();
+                    finalUrl = getGetUrl(host, path, method, objects);
+                    requestBuilder.url(finalUrl);
+                }
+                getHeaders(method, objects).forEach((k, v) -> requestBuilder.header(k, v));
+                requestBuilder.header("User-Agent", userAgent);
+                okhttp3.RequestBody requestBody = loadBody(method, objects);
+                MultipartBody multipartBody = loadData(method, objects);
+                if (type == Connection.Method.POST) {
+                    if (requestBody != null) requestBuilder.post(requestBody);
+                    if (multipartBody != null) requestBuilder.post(multipartBody);
+                }
+                Call call = OK_HTTP_CLIENT.newCall(requestBuilder.build());
+                cost = System.currentTimeMillis();
+                Response response = call.execute();
+                cost = System.currentTimeMillis() - cost;
+                int status = response.code();
 
                 String statusTips = null;
                 if (status < 200 || status >= 400) {
                     statusTips = Ansi.ansi().fgRgb(LoggerImpl.ERROR_COLOR.getRGB()).a(status).reset().toString();
-                    logger.error(new HttpStatusException("HTTP error fetching URL", status, connection.request().url().toString()).getMessage());
+                    logger.error(new HttpStatusException("HTTP error fetching URL",
+                            status, response.request().url().url().toString()).getMessage());
                 } else statusTips = Ansi.ansi().fgRgb(LoggerImpl.INFO_COLOR.getRGB()).a(status).reset().toString();
-                if (print) logger.log(String.format("resp status code %s from the [%s]", statusTips, doc.location()));
+                if (print)
+                    logger.log(String.format("resp status code %s from the [%s]", statusTips, response.request().url().url()));
 
+                byte[] outBytes = response.body().bytes();
+                Document doc = Jsoup.parse(new String(outBytes));
                 Object o = null;
                 if (rtype == void.class) o = null;
-                else if (rtype == Document.class) o = response.parse();
-                else if (rtype == byte[].class) o = response.bodyAsBytes();
-                else if (rtype == CookieStore.class) o = connection.cookieStore();
+                else if (rtype == Document.class) o = doc;
+                else if (rtype == byte[].class) o = outBytes;
                 else o = toType(rtype, doc, response, methods);
                 Object finalO = o;
                 for (HttpStatusReceiver receiver : receivers)
@@ -103,9 +126,11 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 return o;
             } catch (Throwable e) {
                 for (HttpStatusReceiver receiver : receivers)
-                    receiver.receive(HttpClientManagerImpl.this, merge(host, path),
-                            null, dType, method, type, rtype, null, null);
+                    receiver.receive(HttpClientManagerImpl.this, merge(host, path), 0, dType, method, type, rtype, null, null);
                 throw e;
+            } finally {
+                logger.log(String.format("The entire proxy request process took %sms.(execute okhttp request cost %sms)"
+                        , System.currentTimeMillis() - start, cost));
             }
         }
     }
@@ -121,19 +146,18 @@ public class HttpClientManagerImpl implements HttpClientManager {
      * 将数据转为最终类型
      *
      * @param cls     最终类型
-     * @param doc     数据源
      * @param methods 代理方法 Callback
      * @param <T>
      * @return
      */
-    private <T> T toType(Class<T> cls, final Document doc, Connection.Response resp, Method[] methods) {
+    private <T> T toType(Class<T> cls, Document doc, Response resp, Method[] methods) throws IOException {
         String finalText = doc.body().text();
         String text = finalText;
         if (methods != null) {
             for (Method method : methods) {
                 if (method == null) continue;
                 try {
-                    Object[] os = AWP.wiring(method, doc, text);
+                    Object[] os = AWP.wiring(method, text);
                     Object out = method.invoke(null, os);
                     if (out.getClass() == String.class) {
                         text = out.toString();
@@ -148,7 +172,8 @@ public class HttpClientManagerImpl implements HttpClientManager {
         try {
             String data = (text == null ? finalText : text);
             if (print)
-                logger.log(String.format("Get the data [%s] from the [%s]", Ansi.ansi().fgRgb(LoggerImpl.NORMAL_LOW_COLOR.getRGB()).a(data).reset().toString(), doc.location()));
+                logger.log(String.format("Get the data [%s] from the [%s]", Ansi.ansi().fgRgb(LoggerImpl.NORMAL_LOW_COLOR.getRGB()).a(data).reset().toString(),
+                        resp.request().url().url()));
             if (cls == String.class) {
                 return (T) data;
             } else if (cls.isArray()) {
@@ -249,13 +274,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         methodInks.put(method, new Invoker(host, path, method, type, methods));
     }
 
-    private void loadConf(Connection connection, Method method, Object[] objects) {
-        if (method.isAnnotationPresent(IgnoreHttpErrors.class)) {
-            connection.ignoreHttpErrors(true);
-        }
-    }
-
-    private void loadBody(Connection connection, Method method, Object[] objects) {
+    private okhttp3.RequestBody loadBody(Method method, Object[] objects) {
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
             Parameter parameter = parameters[i];
@@ -264,19 +283,23 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 RequestBody rb = parameter.getAnnotation(RequestBody.class);
                 switch (rb.type()) {
                     case toString:
-                        connection.requestBody(objects[i].toString());
-                        break;
+                        return okhttp3.RequestBody.create(objects[i].toString(), MediaType.parse("text/plain"));
                     case json:
-                        connection.requestBody(JSON.toJSONString(objects[i]));
-                        break;
+                        if (objects[i].getClass().isAssignableFrom(String.class)) {
+                            return okhttp3.RequestBody.create(objects[i].toString(), MediaType.parse("application/json"));
+                        } else {
+                            return okhttp3.RequestBody.create(JSON.toJSONString(objects[i]), MediaType.parse("application/json"));
+                        }
                     default:
                         break;
                 }
             }
         }
+        return null;
     }
 
-    private void loadData(Connection connection, Method method, Object[] objects) {
+    private MultipartBody loadData(Method method, Object[] objects) throws IOException {
+        MultipartBody.Builder multipartBody = null;
         Parameter[] parameters = method.getParameters();
         for (int i = 0; i < parameters.length; i++) {
             if (objects[i] == null) continue;
@@ -285,58 +308,55 @@ public class HttpClientManagerImpl implements HttpClientManager {
             if (parameter.isAnnotationPresent(RequestData.class)) {
                 if (cla == Entry.class) {
                     Entry entry = (Entry) objects[i];
-                    connection.data(entry.getKey().toString(), entry.getValue().toString());
+                    if (multipartBody == null) multipartBody = new MultipartBody.Builder().setType(MultipartBody.FORM);
+                    multipartBody.addFormDataPart(entry.getKey().toString(), entry.getValue().toString());
                 } else if (cla == String.class) {
-                    connection.data(objects[i].toString());
+                    if (multipartBody == null) multipartBody = new MultipartBody.Builder().setType(MultipartBody.FORM);
+                    multipartBody.addPart(okhttp3.RequestBody.create(objects[i].toString(), MediaType.parse("text/plain")));
                 } else if (objects[i] instanceof KeyVals) {
                     KeyVals data = (KeyVals) objects[i];
                     for (HttpConnection.KeyVal value : data.values()) {
-                        connection.data(value.key(), value.value(), value.inputStream(), value.contentType());
+                        if (multipartBody == null)
+                            multipartBody = new MultipartBody.Builder().setType(MultipartBody.FORM);
+                        if (value.hasInputStream()) {
+                            byte[] bytes = ReadUtils.readAll(value.inputStream());
+                            multipartBody.addFormDataPart(value.key(), value.value(),
+                                    okhttp3.RequestBody.create(bytes, MediaType.parse(value.contentType())));
+                        } else {
+                            multipartBody.addFormDataPart(value.key(), value.value());
+                        }
                     }
                 }
             } else if (parameter.isAnnotationPresent(FileParm.class)) {
                 if (cla == byte[].class) {
                     byte[] bytes = (byte[]) objects[i];
                     FileParm fileParm = parameter.getDeclaredAnnotation(FileParm.class);
-                    if (!fileParm.type().isEmpty())
-                        connection.data(fileParm.value(), fileParm.name(), new ByteArrayInputStream(bytes), fileParm.type());
-                    else connection.data(fileParm.value(), fileParm.name(), new ByteArrayInputStream(bytes));
-                } else if (cla == HttpConnection.KeyVal.class) {
-                    HttpConnection.KeyVal keyVal = (HttpConnection.KeyVal) objects[i];
-                    connection.data(keyVal.key(), keyVal.value(), keyVal.inputStream(), keyVal.contentType());
-                }
-            }
-        }
-    }
+                    if (multipartBody == null)
+                        multipartBody = new MultipartBody.Builder().setType(MultipartBody.FORM);
 
-    private void loadCookie(Connection connection, Method method, String trueUrl, Object[] objects) throws Exception {
-        CookieStore cookieStore = connection.cookieStore();
-        if (method.isAnnotationPresent(CookieFrom.class)) {
-            CookieFrom cf = method.getAnnotation(CookieFrom.class);
-            cookieStore = getCookieStore(cf.value(), Connection.Method.valueOf(cf.method()), trueUrl, method, objects);
-            connection.cookieStore(cookieStore);
-        }
-        Parameter[] parameters = method.getParameters();
-        for (int i = 0; i < parameters.length; i++) {
-            Parameter parameter = parameters[i];
-            Class cla = parameter.getType();
-            if (parameter.isAnnotationPresent(CookieValue.class)) {
-                Entry<String, String> entry = (Entry<String, String>) objects[i];
-                connection.cookie(entry.getKey(), entry.getValue());
-            } else if (cla == CookieStore.class) {
-                CookieStore store = (CookieStore) objects[i];
-                addCookieStore(store, cookieStore);
-            } else if (ObjectUtils.isSuperOrInterface(cla, Collection.class)) {
-                ParameterizedType type = (ParameterizedType) parameter.getParameterizedType();
-                Class t1 = (Class) type.getActualTypeArguments()[0];
-                if (t1 == CookieStore.class) {
-                    Collection<CookieStore> cookieStores = (Collection<CookieStore>) objects[i];
-                    for (CookieStore store : cookieStores) {
-                        addCookieStore(store, cookieStore);
+                    if (!fileParm.type().isEmpty()) {
+                        multipartBody.addFormDataPart(fileParm.value(), fileParm.name(),
+                                okhttp3.RequestBody.create(bytes, MediaType.parse(fileParm.type())));
+                    } else {
+                        multipartBody.addFormDataPart(fileParm.value(), fileParm.name(),
+                                okhttp3.RequestBody.create(bytes, MediaType.parse(fileParm.type())));
+                    }
+                } else if (cla == HttpConnection.KeyVal.class) {
+                    HttpConnection.KeyVal value = (HttpConnection.KeyVal) objects[i];
+                    if (multipartBody == null)
+                        multipartBody = new MultipartBody.Builder().setType(MultipartBody.FORM);
+                    if (value.hasInputStream()) {
+                        byte[] bytes = ReadUtils.readAll(value.inputStream());
+                        multipartBody.addFormDataPart(value.key(), value.value(),
+                                okhttp3.RequestBody.create(bytes, MediaType.parse(value.contentType())));
+                    } else {
+                        multipartBody.addFormDataPart(value.key(), value.value());
                     }
                 }
             }
         }
+        if (multipartBody != null) return multipartBody.build();
+        else return null;
     }
 
     private Method[] loadMethods(String[] ss) {
@@ -382,21 +402,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
     public static String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53";
 
-    private Connection getConnection(String trueUrl, Map<String, String> headers) throws Exception {
-        if (trueUrl.startsWith(SPLIT)) {
-            trueUrl = trueUrl.substring(1);
-        }
-        Connection connection = null;
-        connection = Jsoup.connect(trueUrl)
-                .ignoreHttpErrors(true)
-                .ignoreContentType(true)
-                .userAgent(userAgent);
-        if (headers != null) {
-            connection = connection.headers(headers);
-        }
-        return connection;
-    }
-
     private String loadPostBody(Method method, Object[] objects) throws Exception {
         Parameter[] parameters = method.getParameters();
         StringBuilder sb = new StringBuilder();
@@ -421,35 +426,36 @@ public class HttpClientManagerImpl implements HttpClientManager {
     private static final AutomaticWiringParamsImpl AWP = new AutomaticWiringParamsImpl();
 
     private CookieStore getCookieStore(String[] urls, Connection.Method method, String url, Method m0, Object... objects) throws IOException, URISyntaxException {
-        CookieStore store = null;
-        for (String u1 : urls) {
-            try {
-                Connection connection = null;
-                CookieStore sc1 = null;
-                if ("this".equals(u1.trim().toLowerCase())) {
-                    u1 = url.trim();
-                }
-                connection = getConnection(u1, getHeaders(m0, objects));
-                if (method == Connection.Method.GET) {
-                    connection.get();
-                } else if (method == Connection.Method.POST) {
-                    connection.post();
-                }
-                sc1 = connection.cookieStore();
-                if (store == null) {
-                    store = sc1;
-                } else {
-                    List<HttpCookie> httpCookies = sc1.getCookies();
-                    for (int i1 = 0; i1 < httpCookies.size(); i1++) {
-                        store.add(store.getURIs().get(i1), httpCookies.get(i1));
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("get Cookie Failed From: " + u1);
-                continue;
-            }
-        }
-        return store;
+//        CookieStore store = null;
+//        for (String u1 : urls) {
+//            try {
+//                Connection connection = null;
+//                CookieStore sc1 = null;
+//                if ("this".equals(u1.trim().toLowerCase())) {
+//                    u1 = url.trim();
+//                }
+//                connection = getConnection(m0, u1, getHeaders(m0, objects));
+//                if (method == Connection.Method.GET) {
+//                    connection.get();
+//                } else if (method == Connection.Method.POST) {
+//                    connection.post();
+//                }
+//                sc1 = connection.cookieStore();
+//                if (store == null) {
+//                    store = sc1;
+//                } else {
+//                    List<HttpCookie> httpCookies = sc1.getCookies();
+//                    for (int i1 = 0; i1 < httpCookies.size(); i1++) {
+//                        store.add(store.getURIs().get(i1), httpCookies.get(i1));
+//                    }
+//                }
+//            } catch (Exception e) {
+//                logger.error("get Cookie Failed From: " + u1);
+//                continue;
+//            }
+//        }
+//        return store;
+        return null;
     }
 
     private String getGetUrl(String host, String path, Method method, Object... objects) throws Throwable {
@@ -514,6 +520,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
         }
         for (String s : replaceMap.keySet()) {
             url0 = url0.replace(s, replaceMap.get(s).toString());
+        }
+        if (url0.startsWith(SPLIT)) {
+            url0 = url0.substring(1);
         }
         return url0;
     }
