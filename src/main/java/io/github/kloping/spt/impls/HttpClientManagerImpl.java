@@ -70,7 +70,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
             this.methods = methods;
         }
 
-        private Request.Builder requestBuilder;
         private String finalUrl;
 
         /**
@@ -85,11 +84,9 @@ public class HttpClientManagerImpl implements HttpClientManager {
             Class<?> rtype = method.getReturnType();
             Class dType = method.getDeclaringClass();
             try {
-                if (requestBuilder == null) {
-                    requestBuilder = new Request.Builder();
-                    finalUrl = getGetUrl(host, path, method, objects);
-                    requestBuilder.url(finalUrl);
-                }
+                Request.Builder requestBuilder = new Request.Builder();
+                finalUrl = getGetUrl(host, path, method, objects);
+                requestBuilder.url(finalUrl);
                 getHeaders(method, objects).forEach((k, v) -> requestBuilder.header(k, v));
                 requestBuilder.header("User-Agent", userAgent);
                 okhttp3.RequestBody requestBody = loadBody(method, objects);
