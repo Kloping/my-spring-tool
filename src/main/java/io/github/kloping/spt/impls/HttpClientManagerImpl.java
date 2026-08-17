@@ -516,7 +516,12 @@ public class HttpClientManagerImpl implements HttpClientManager {
             url0 = url0.substring(0, url0.length() - 1);
         }
         for (String s : replaceMap.keySet()) {
-            url0 = url0.replace(s, replaceMap.get(s).toString());
+            Object res = replaceMap.get(s);
+            if (res != null) {
+                url0 = url0.replace(s, replaceMap.get(s).toString());
+            } else {
+                logger.waring("replaceMap get null at " + s + " in " + url0);
+            }
         }
         if (url0.startsWith(SPLIT)) {
             url0 = url0.substring(1);
