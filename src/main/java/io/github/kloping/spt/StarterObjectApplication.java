@@ -94,14 +94,14 @@ public final class StarterObjectApplication {
     private String[] loadPaths(ComponentScan scan, Class<?> cla) {
         List<String> paths = new LinkedList<>();
         String v = filter(scan.value(), cla);
-        check(v);
+        check(SCAN_LOADER, v);
         paths.add(v);
         String[] ps = scan.path();
         if (ps != null) {
             for (String s : scan.path()) {
                 try {
                     s = filter(s, cla);
-                    check(s);
+                    check(SCAN_LOADER, s);
                     paths.add(s);
                 } catch (Exception e) {
                     System.err.println(e.getMessage());
@@ -232,7 +232,7 @@ public final class StarterObjectApplication {
                 }
             }
             postScan();
-            logger.info("version 0.7.0 sptool start success");
+            logger.info("version 0.7.1 sptool start success");
         } catch (Throwable e) {
             logger.error(getExceptionLine(e));
             e.printStackTrace();

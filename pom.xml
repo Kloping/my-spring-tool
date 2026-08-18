@@ -6,7 +6,7 @@
 
     <groupId>io.github.kloping</groupId>
     <artifactId>SpringTool</artifactId>
-    <version>0.7.0</version>
+    <version>0.7.1</version>
 
     <packaging>jar</packaging>
     <name>SpringTool</name>

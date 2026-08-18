@@ -1,7 +1,6 @@
 package io.github.kloping.spt;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.time.DateTimeException;
@@ -49,12 +48,15 @@ public final class PartUtils {
     }
 
     public static void check(String scanPath) {
-        try {
-            if (!PartUtils.class.getClassLoader().getResources(scanPath).hasMoreElements())
-                throw new RuntimeException("The name of the package you want to scan does not exist");
-        } catch (IOException e) {
-            throw new IllegalStateException("Unable to inspect package: " + scanPath, e);
-        }
+        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        check(loader == null ? PartUtils.class.getClassLoader() : loader, scanPath);
+    }
+
+    public static void check(ClassLoader loader, String scanPath) {
+        String resourcePath = scanPath.replace('.', '/');
+        if (loader == null ? ClassLoader.getSystemResource(resourcePath) == null
+                : loader.getResource(resourcePath) == null)
+            throw new RuntimeException("The name of the package you want to scan does not exist");
     }
 
     public static Class<?>[] getAllInterfaceOrSupers(final Class<?> cla) {
