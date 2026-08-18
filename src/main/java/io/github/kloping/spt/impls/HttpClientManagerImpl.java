@@ -2,9 +2,9 @@ package io.github.kloping.spt.impls;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import io.github.kloping.io.ReadUtils;
-import io.github.kloping.reg.MatcherUtils;
 import io.github.kloping.spt.Setting;
+import io.github.kloping.spt.util.IoUtils;
+import io.github.kloping.spt.util.MatcherUtils;
 import io.github.kloping.spt.annotations.http.*;
 import io.github.kloping.spt.annotations.http.Callback;
 import io.github.kloping.spt.annotations.http.Headers;
@@ -22,7 +22,6 @@ import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.HttpConnection;
 import org.jsoup.nodes.Document;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.*;
@@ -42,7 +41,6 @@ import static io.github.kloping.spt.PartUtils.getExceptionLine;
  */
 public class HttpClientManagerImpl implements HttpClientManager {
     public static final String SPLIT = "/";
-    private static final org.slf4j.Logger log = LoggerFactory.getLogger(HttpClientManagerImpl.class);
     private Setting setting;
     private Map<Method, Invoker> methodInks = new ConcurrentHashMap<>();
     private static final OkHttpClient OK_HTTP_CLIENT = new OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS)
@@ -316,7 +314,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         if (multipartBody == null)
                             multipartBody = new MultipartBody.Builder().setType(MultipartBody.FORM);
                         if (value.hasInputStream()) {
-                            byte[] bytes = ReadUtils.readAll(value.inputStream());
+                            byte[] bytes = IoUtils.readAll(value.inputStream());
                             multipartBody.addFormDataPart(value.key(), value.value(),
                                     okhttp3.RequestBody.create(bytes, MediaType.parse(value.contentType())));
                         } else {
@@ -343,7 +341,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     if (multipartBody == null)
                         multipartBody = new MultipartBody.Builder().setType(MultipartBody.FORM);
                     if (value.hasInputStream()) {
-                        byte[] bytes = ReadUtils.readAll(value.inputStream());
+                        byte[] bytes = IoUtils.readAll(value.inputStream());
                         multipartBody.addFormDataPart(value.key(), value.value(),
                                 okhttp3.RequestBody.create(bytes, MediaType.parse(value.contentType())));
                     } else {

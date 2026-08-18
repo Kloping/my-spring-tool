@@ -7,7 +7,7 @@ import io.github.kloping.spt.interfaces.component.ActionManager;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.entitys.MatherResult;
-import io.github.kloping.map.MapUtils;
+import io.github.kloping.spt.util.MapUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -17,7 +17,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static io.github.kloping.judge.Judge.isNotNull;
+import static io.github.kloping.spt.util.Judge.isNotNull;
 
 /**
  * @author github-kloping
@@ -251,7 +251,7 @@ public class ActionManagerImpl implements ActionManager {
                 indexMap.remove(c);
             }
             for (char c : nowStr.toCharArray()) {
-                MapUtils.append(indexMap, c, nowStr);
+            MapUtils.append(indexMap, c, nowStr);
             }
             histIndexes.clear();
         }

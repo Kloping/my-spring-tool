@@ -1,8 +1,8 @@
 package io.github.kloping.spt.impls;
 
-import io.github.kloping.judge.Judge;
-import io.github.kloping.map.MapUtils;
-import io.github.kloping.object.ObjectUtils;
+import io.github.kloping.spt.util.Judge;
+import io.github.kloping.spt.util.MapUtils;
+import io.github.kloping.spt.util.ObjectUtils;
 import io.github.kloping.spt.PartUtils;
 import io.github.kloping.spt.exceptions.NoRunException;
 import io.github.kloping.spt.interfaces.component.ContextManager;

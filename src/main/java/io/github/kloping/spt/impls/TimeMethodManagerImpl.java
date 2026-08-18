@@ -1,7 +1,7 @@
 package io.github.kloping.spt.impls;
 
-import io.github.kloping.date.CronUtils;
 import io.github.kloping.spt.Setting;
+import io.github.kloping.spt.util.CronScheduler;
 import io.github.kloping.spt.annotations.Controller;
 import io.github.kloping.spt.annotations.CronSchedule;
 import io.github.kloping.spt.annotations.Schedule;
@@ -149,7 +149,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
             String cron = schedule.value();
             if (!cron.isEmpty()) {
                 method.setAccessible(true);
-                CronUtils.INSTANCE.addCronJob(cron, (c) -> {
+                CronScheduler.schedule(cron, () -> {
                     try {
                         Object[] objects = automaticWiringParams.wiring(method, contextManager);
                         method.invoke(o, objects);

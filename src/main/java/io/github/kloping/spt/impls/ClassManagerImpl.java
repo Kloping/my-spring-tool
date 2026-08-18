@@ -1,6 +1,6 @@
 package io.github.kloping.spt.impls;
 
-import io.github.kloping.map.MapUtils;
+import io.github.kloping.spt.util.MapUtils;
 import io.github.kloping.spt.PartUtils;
 import io.github.kloping.spt.annotations.ComponentScan;
 import io.github.kloping.spt.annotations.Controller;

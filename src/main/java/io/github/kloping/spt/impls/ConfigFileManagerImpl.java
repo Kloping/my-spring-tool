@@ -3,9 +3,9 @@ package io.github.kloping.spt.impls;
 import io.github.kloping.spt.interfaces.Logger;
 import io.github.kloping.spt.interfaces.component.ConfigFileManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
-import io.github.kloping.file.FileUtils;
-import io.github.kloping.object.ObjectUtils;
-import io.github.kloping.serialize.HMLObject;
+import io.github.kloping.spt.util.HmlObject;
+import io.github.kloping.spt.util.IoUtils;
+import io.github.kloping.spt.util.ObjectUtils;
 
 import java.io.File;
 
@@ -32,15 +32,25 @@ public class ConfigFileManagerImpl implements ConfigFileManager {
     }
 
     private void loadHml(String file) {
-        String string = FileUtils.getStringFromFile(file);
-        HMLObject object = HMLObject.parseObject(string);
+        String string;
+        try {
+            string = IoUtils.readString(file);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Unable to read config file: " + file, e);
+        }
+        HmlObject object = HmlObject.parse(string);
         object.getEntry().forEach((k, v) -> {
             contextManager.append(v.getClass(), v, k);
         });
     }
 
     private void loadTxt(String file) {
-        String[] ss = FileUtils.getStringsFromFile(file);
+        String[] ss;
+        try {
+            ss = IoUtils.readLines(file);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException("Unable to read config file: " + file, e);
+        }
         for (String s : ss) {
             String[] s2 = s.split("=");
             if (s2.length < 2) {

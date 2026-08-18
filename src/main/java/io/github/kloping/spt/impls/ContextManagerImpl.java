@@ -1,8 +1,8 @@
 package io.github.kloping.spt.impls;
 
 import io.github.kloping.spt.interfaces.component.ContextManager;
-import io.github.kloping.map.MapUtils;
-import io.github.kloping.object.ObjectUtils;
+import io.github.kloping.spt.util.MapUtils;
+import io.github.kloping.spt.util.ObjectUtils;
 
 import java.util.Map;
 import java.util.UUID;

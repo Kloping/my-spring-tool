@@ -1,6 +1,6 @@
 package io.github.kloping.spt;
 
-import io.github.kloping.judge.Judge;
+import io.github.kloping.spt.util.Judge;
 import io.github.kloping.spt.annotations.ComponentScan;
 import io.github.kloping.spt.entity.interfaces.Runner;
 import io.github.kloping.spt.exceptions.NoRunException;
@@ -16,14 +16,17 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.CountDownLatch;
 
-import static io.github.kloping.common.Public.EXECUTOR_SERVICE;
 import static io.github.kloping.spt.PartUtils.*;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 
 /**
  * @author github-kloping
  */
 public final class StarterObjectApplication {
+    private static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
     public Logger logger = new LoggerImpl();
     public Setting INSTANCE = null;
 

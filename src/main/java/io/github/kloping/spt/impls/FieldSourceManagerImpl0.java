@@ -7,7 +7,7 @@ import io.github.kloping.spt.interfaces.component.up0.ClassAttributeManager;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.FieldSourceManager;
-import io.github.kloping.map.MapUtils;
+import io.github.kloping.spt.util.MapUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;

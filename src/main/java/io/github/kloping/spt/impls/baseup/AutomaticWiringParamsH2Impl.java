@@ -7,12 +7,12 @@ import io.github.kloping.spt.interfaces.AutomaticWiringParams;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.entitys.MatherResult;
 import io.github.kloping.arr.Class2OMap;
-import io.github.kloping.object.ObjectUtils;
+import io.github.kloping.spt.util.ObjectUtils;
 
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static io.github.kloping.object.ObjectUtils.baseToPack;
+import static io.github.kloping.spt.util.ObjectUtils.baseToPack;
 
 /**
  * @author github-kloping

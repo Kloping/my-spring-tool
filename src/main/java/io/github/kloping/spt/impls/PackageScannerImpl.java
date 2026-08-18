@@ -1,9 +1,7 @@
 package io.github.kloping.spt.impls;
 
 import io.github.kloping.spt.interfaces.component.PackageScanner;
-import io.github.kloping.file.FileUtils;
-import io.github.kloping.io.ReadUtils;
-import io.github.kloping.url.UrlUtils;
+import io.github.kloping.spt.util.IoUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -78,7 +76,7 @@ public class PackageScannerImpl implements PackageScanner {
         JarEntry entry = jarFile.getJarEntry(urlPath);
         InputStream is = jarFile.getInputStream(entry);
         File temp = File.createTempFile("temp0", ".jar");
-        FileUtils.writeBytesToFile(ReadUtils.readAll(is), temp);
+        IoUtils.write(temp, IoUtils.readAll(is));
         temp.deleteOnExit();
         return new URL(JAR0FILE_STR + "/" + temp.getAbsolutePath() + "!/");
     }
@@ -134,7 +132,7 @@ public class PackageScannerImpl implements PackageScanner {
                 continue;
             } else if (classPath.startsWith("http")) {
                 File temp = File.createTempFile("temp0", ".jar");
-                FileUtils.writeBytesToFile(UrlUtils.getBytesFromHttpUrl(classPath.substring(0, classPath.indexOf("!"))), temp);
+                IoUtils.write(temp, IoUtils.readUrl(new URL(classPath.substring(0, classPath.indexOf("!")))));
                 jarFile = new JarFile(temp);
                 if (jarFile != null) {
                     classNames.addAll(getClassNameFromJar(jarFile.entries(), packageName, isRecursion));
