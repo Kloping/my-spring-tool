@@ -13,8 +13,8 @@ public class ContextManagerImpl implements ContextManager {
 
     @Override
     public int append(Class<?> cla, Object obj, String id) {
-        if (contexts.containsKey(cla)) MapUtils.append(contexts, cla, id, obj);
-        else MapUtils.append(contexts, cla, id, obj, ConcurrentHashMap.class);
+        requireValue(cla, obj, id);
+        MapUtils.append(contexts, cla, id, obj, ConcurrentHashMap.class);
         return contexts.get(cla).size();
     }
 
@@ -26,9 +26,15 @@ public class ContextManagerImpl implements ContextManager {
 
     @Override
     public int append(Object obj, String id) {
+        if (obj == null) throw new IllegalArgumentException("Context object cannot be null");
+        if (id == null) throw new IllegalArgumentException("Context id cannot be null");
         if (contexts.containsKey(obj.getClass())) MapUtils.append(contexts, obj.getClass(), id, obj);
         else MapUtils.append(contexts, obj.getClass(), id, obj, ConcurrentHashMap.class);
         return contexts.get(obj.getClass()).size();
+    }
+
+    private static void requireValue(Class<?> cla, Object obj, String id) {
+        if (cla == null || obj == null || id == null) throw new IllegalArgumentException("Context values cannot be null");
     }
 
     @Override

@@ -28,7 +28,8 @@ public class LoggerImpl implements Logger {
     private File file;
 
     @Override
-    public void setOutFile(String path) {
+    public synchronized void setOutFile(String path) {
+        closeWriter();
         file = new File(path);
     }
 
@@ -38,7 +39,9 @@ public class LoggerImpl implements Logger {
     }
 
     @Override
-    public void Log(String mess, Integer level) {
+    public synchronized void Log(String mess, Integer level) {
+        if (level == null) level = 0;
+        if (level != -1 && level < logLevel) return;
         String log = null;
         String out = null;
         try {
@@ -59,7 +62,7 @@ public class LoggerImpl implements Logger {
                 default:
             }
             log = prefix + log;
-            out = null;
+            out = log;
             if (level == 0) {
                 out = Ansi.ansi().fgRgb(NORMAL_COLOR.getRGB()).a(log).reset().toString();
             } else if (level == 1) {
@@ -87,13 +90,12 @@ public class LoggerImpl implements Logger {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (level != -1 && level < logLevel) return;
         System.out.println(out);
     }
 
     private BufferedWriter writer = null;
 
-    private BufferedWriter getWriter() {
+    private synchronized BufferedWriter getWriter() {
         if (file != null && writer == null) {
             try {
                 writer = new BufferedWriter(new FileWriter(file, true));
@@ -112,5 +114,16 @@ public class LoggerImpl implements Logger {
     @Override
     public void setPrefix(String prefix) {
         this.prefix = prefix;
+    }
+
+    public synchronized void close() {
+        closeWriter();
+    }
+
+    private void closeWriter() {
+        if (writer != null) {
+            try { writer.close(); } catch (IOException ignored) { }
+            writer = null;
+        }
     }
 }

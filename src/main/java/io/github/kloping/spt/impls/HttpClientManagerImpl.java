@@ -32,6 +32,7 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import static io.github.kloping.spt.PartUtils.getExceptionLine;
@@ -95,7 +96,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 }
                 Call call = OK_HTTP_CLIENT.newCall(requestBuilder.build());
                 cost = System.currentTimeMillis();
-                Response response = call.execute();
+                try (Response response = call.execute()) {
                 cost = System.currentTimeMillis() - cost;
                 int status = response.code();
 
@@ -108,7 +109,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 if (print)
                     logger.log(String.format("resp status code %s from the [%s]", statusTips, response.request().url().url()));
 
-                byte[] outBytes = response.body().bytes();
+                byte[] outBytes = response.body() == null ? new byte[0] : response.body().bytes();
                 Document doc = Jsoup.parse(new String(outBytes));
                 Object o = null;
                 if (rtype == void.class) o = null;
@@ -119,6 +120,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 for (HttpStatusReceiver receiver : receivers)
                     receiver.receive(HttpClientManagerImpl.this, finalUrl, status, dType, method, type, rtype, finalO, doc);
                 return o;
+                }
             } catch (Throwable e) {
                 for (HttpStatusReceiver receiver : receivers)
                     receiver.receive(HttpClientManagerImpl.this, merge(host, path), 0, dType, method, type, rtype, null, null);
@@ -154,6 +156,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 try {
                     Object[] os = AWP.wiring(method, text);
                     Object out = method.invoke(null, os);
+                    if (out == null) continue;
                     if (out.getClass() == String.class) {
                         text = out.toString();
                     } else if (out.getClass() == cls) {
@@ -194,7 +197,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         });
     }
 
-    private List<HttpStatusReceiver> receivers = new LinkedList<>();
+    private List<HttpStatusReceiver> receivers = new CopyOnWriteArrayList<>();
 
     @Override
     public void addHttpStatusReceiver(HttpStatusReceiver receiver) {
@@ -222,11 +225,13 @@ public class HttpClientManagerImpl implements HttpClientManager {
     }
 
     private String merge(String host, String path) throws Throwable {
+        if (host == null || path == null) throw new IllegalArgumentException("HTTP host and path are required");
         if (host.matches(".*?\\{.*?}.*?")) {
             for (String r0 : MatcherUtils.matcherAll(host, "\\{.*?}")) {
                 String fielda = r0.substring(1, r0.length() - 1);
                 AccessibleObject aco = parse(fielda);
                 Object value = getValue(aco);
+                if (value == null) throw new IllegalStateException("Unable to resolve host value: " + fielda);
                 host = host.replace(r0, value.toString());
             }
         }
@@ -278,9 +283,11 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 RequestBody rb = parameter.getAnnotation(RequestBody.class);
                 switch (rb.type()) {
                     case toString:
+                        if (objects[i] == null) return null;
                         return okhttp3.RequestBody.create(objects[i].toString(), MediaType.parse("text/plain"));
                     case json:
-                        if (objects[i].getClass().isAssignableFrom(String.class)) {
+                        if (objects[i] == null) return null;
+                        if (objects[i] instanceof String) {
                             return okhttp3.RequestBody.create(objects[i].toString(), MediaType.parse("application/json"));
                         } else {
                             return okhttp3.RequestBody.create(JSON.toJSONString(objects[i]), MediaType.parse("application/json"));

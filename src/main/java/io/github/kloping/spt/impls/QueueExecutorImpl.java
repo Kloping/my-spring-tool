@@ -74,8 +74,12 @@ public class QueueExecutorImpl extends ExecutorNowImpl implements QueueExecutor 
 
     @Override
     public <T> int queueExecute(T t, Object... objects) {
+        if (t == null || objects == null || objects.length < 2) {
+            if (logger != null) logger.waring("queueExecute requires a key and action");
+            return -1;
+        }
         if (t.getClass() != cla) {
-            logger.Log("not is mainKey type for " + t.getClass().getSimpleName(), 2);
+            if (logger != null) logger.Log("not is mainKey type for " + t.getClass().getSimpleName(), 2);
             return 0;
         } else {
             if (runSet.add(t)) {
@@ -128,8 +132,9 @@ public class QueueExecutorImpl extends ExecutorNowImpl implements QueueExecutor 
                         future.cancel(true);
                     }
                     runSet.remove(t);
-                    if (queueMap.containsKey(t)) {
-                        queueExecute(t, end(t));
+                    Object[] next = end(t);
+                    if (next != null) {
+                        queueExecute(t, next);
                     }
                 });
                 return queueMap.size();
@@ -152,12 +157,15 @@ public class QueueExecutorImpl extends ExecutorNowImpl implements QueueExecutor 
     }
 
     private Object[] end(Object t) {
-        Object[] objects = null;
-        if (queueMap.containsKey(t)) {
-            objects = (Object[]) queueMap.get(t).poll();
-        }
-        if (queueMap.get(t).isEmpty())
-            queueMap.remove(t);
+        Queue queue = queueMap.get(t);
+        if (queue == null) return null;
+        Object[] objects = (Object[]) queue.poll();
+        if (queue.isEmpty()) queueMap.remove(t, queue);
         return objects;
+    }
+
+    public void shutdown() {
+        if (threads != null) threads.shutdownNow();
+        if (runThreads != null) runThreads.shutdownNow();
     }
 }

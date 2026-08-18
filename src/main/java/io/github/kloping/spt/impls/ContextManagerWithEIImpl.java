@@ -19,8 +19,8 @@ public class ContextManagerWithEIImpl implements ContextManager {
 
     @Override
     public int append(Class<?> cla, Object obj, String id) {
-        if (contexts.containsKey(cla)) MapUtils.append(contexts, cla, id, obj);
-        else MapUtils.append(contexts, cla, id, obj, ConcurrentHashMap.class);
+        requireValue(cla, obj, id);
+        MapUtils.append(contexts, cla, id, obj, ConcurrentHashMap.class);
         for (Class c1 : PartUtils.getAllInterfaceOrSupers(cla)) MapUtils.append(contexts, c1, id, obj, ConcurrentHashMap.class);
         return contexts.get(cla).size();
     }
@@ -33,12 +33,16 @@ public class ContextManagerWithEIImpl implements ContextManager {
 
     @Override
     public int append(Object obj, String id) {
+        if (obj == null || id == null) throw new IllegalArgumentException("Context values cannot be null");
         Class cla = obj.getClass();
-        if (contexts.containsKey(cla)) MapUtils.append(contexts, cla, id, obj);
-        else MapUtils.append(contexts, cla, id, obj, ConcurrentHashMap.class);
+        MapUtils.append(contexts, cla, id, obj, ConcurrentHashMap.class);
         for (Class c1 : PartUtils.getAllInterfaceOrSupers(cla))
             MapUtils.append(contexts, c1, id, obj, ConcurrentHashMap.class);
         return contexts.get(cla).size();
+    }
+
+    private static void requireValue(Class<?> cla, Object obj, String id) {
+        if (cla == null || obj == null || id == null) throw new IllegalArgumentException("Context values cannot be null");
     }
 
     @Override

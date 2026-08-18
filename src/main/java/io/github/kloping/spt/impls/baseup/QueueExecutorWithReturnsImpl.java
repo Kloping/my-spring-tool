@@ -67,6 +67,11 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
         logger = setting.getContextManager().getContextEntity(Logger.class);
     }
 
+    public void shutdown() {
+        if (threads != null) threads.shutdownNow();
+        if (runThreads != null) runThreads.shutdownNow();
+    }
+
     protected QueueExecutorWithReturnsImpl(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
         super(setting);
         this.executor = executor;
@@ -83,8 +88,12 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
 
     @Override
     public <T> int queueExecute(T t, Object... objects) {
+        if (t == null || objects == null || objects.length < 2) {
+            if (logger != null) logger.waring("queueExecute requires a key and action");
+            return -1;
+        }
         if (t.getClass() != cla) {
-            logger.waring("not is mainKey type for " + t.getClass().getSimpleName());
+            if (logger != null) logger.waring("not is mainKey type for " + t.getClass().getSimpleName());
             return -1;
         } else {
             if (runSet.add(t)) {
@@ -146,8 +155,9 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
 
     protected <T> void runEnd(T t) {
         runSet.remove(t);
-        if (queueMap.containsKey(t)) {
-            queueExecute(t, end(t));
+        Object[] next = end(t);
+        if (next != null) {
+            queueExecute(t, next);
         }
     }
 
@@ -178,12 +188,10 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
     }
 
     private Object[] end(Object t) {
-        Object[] objects = null;
-        if (queueMap.containsKey(t)) {
-            objects = (Object[]) queueMap.get(t).poll();
-        }
-        if (queueMap.get(t).isEmpty())
-            queueMap.remove(t);
+        Queue queue = queueMap.get(t);
+        if (queue == null) return null;
+        Object[] objects = (Object[]) queue.poll();
+        if (queue.isEmpty()) queueMap.remove(t, queue);
         return objects;
     }
 }

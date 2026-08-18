@@ -33,11 +33,11 @@ public final class MapUtils {
     }
 
     private static <V> List<V> newList(Class<? extends List> type) {
-        try { return (List<V>) type.newInstance(); } catch (Exception e) { return new CopyOnWriteArrayList<>(); }
+        try { return (List<V>) type.getDeclaredConstructor().newInstance(); } catch (Exception e) { return new CopyOnWriteArrayList<>(); }
     }
 
     private static <K, V> Map<K, V> newMap(Class<? extends Map> type) {
-        try { return (Map<K, V>) type.newInstance(); } catch (Exception e) { return new java.util.concurrent.ConcurrentHashMap<>(); }
+        try { return (Map<K, V>) type.getDeclaredConstructor().newInstance(); } catch (Exception e) { return new java.util.concurrent.ConcurrentHashMap<>(); }
     }
 
     private static <K, V> void append(Map<K, List<V>> map, K key, V value, Supplier<List<V>> supplier) {

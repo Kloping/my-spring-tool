@@ -37,6 +37,7 @@ public class FieldSourceManagerImpl0 implements ClassAttributeManager, FieldSour
             for (Annotation annotation : field.getAnnotations()) {
                 MapUtils.append(map, annotation, field);
             }
+            FieldMap.put(classes, map);
         }
     }
 
@@ -64,6 +65,7 @@ public class FieldSourceManagerImpl0 implements ClassAttributeManager, FieldSour
     @Override
     public Field[] getFields(Class<?> cla) {
         Map<Annotation, List<Field>> map = FieldMap.get(cla);
+        if (map == null) return new Field[0];
         List<Field> list = new CopyOnWriteArrayList<>();
         for (List<Field> value : map.values()) {
             list.addAll(value);
@@ -74,6 +76,7 @@ public class FieldSourceManagerImpl0 implements ClassAttributeManager, FieldSour
     @Override
     public Field[] getFields(Class<?> cla, Annotation annotation) {
         Map<Annotation, List<Field>> map = FieldMap.get(cla);
+        if (map == null || annotation == null) return new Field[0];
         List<Field> list = new CopyOnWriteArrayList<>();
         map.forEach((k, v) -> {
             if (k.getClass() == annotation.getClass()) {

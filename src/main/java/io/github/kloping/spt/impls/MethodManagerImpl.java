@@ -28,7 +28,11 @@ public class MethodManagerImpl implements MethodManager {
             Class cla = method.getDeclaringClass();
             Object o = contextManager.getContextEntity(cla);
             Object[] objects = automaticWiringParams.wiring(method, contextManager);
+            if (o == null || objects == null) {
+                throw new IllegalStateException("Unable to wire @Bean method: " + method);
+            }
             Object ro = method.invoke(o, objects);
+            if (ro == null) return;
             String id = method.getDeclaredAnnotation(Bean.class).value();
             contextManager.append(ro, id);
             Logger logger = contextManager.getContextEntity(Logger.class);

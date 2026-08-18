@@ -40,7 +40,8 @@ public class ConfigFileManagerImpl implements ConfigFileManager {
         }
         HmlObject object = HmlObject.parse(string);
         object.getEntry().forEach((k, v) -> {
-            contextManager.append(v.getClass(), v, k);
+            Object value = v instanceof HmlObject ? ((HmlObject) v).toJavaObject() : v;
+            if (value != null) contextManager.append(value.getClass(), value, k);
         });
     }
 

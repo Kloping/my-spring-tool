@@ -13,7 +13,7 @@ import java.lang.reflect.Modifier;
 public class AutomaticWiringValueImpl implements AutomaticWiringValue {
     @Override
     public boolean wiring(Object o, Field field, ContextManager contextManager) throws IllegalAccessException {
-        if (o == null) return false;
+        if (o == null && !Modifier.isStatic(field.getModifiers())) return false;
         field.setAccessible(true);
         if (field.isAnnotationPresent(AutoStand.class)) {
             AutoStand autoStand = field.getDeclaredAnnotation(AutoStand.class);
@@ -22,10 +22,7 @@ public class AutomaticWiringValueImpl implements AutomaticWiringValue {
                 o1 = contextManager.getContextEntity(field.getType());
             } else o1 = contextManager.getContextEntity(field.getType(), autoStand.id());
 
-            if (o1 != null) field.set(o, o1);
-
-            if (Modifier.isStatic(field.getModifiers()))
-                field.set(null, o1);
+            if (o1 != null || Modifier.isStatic(field.getModifiers())) field.set(o, o1);
             return true;
         }
         return false;
@@ -38,6 +35,7 @@ public class AutomaticWiringValueImpl implements AutomaticWiringValue {
 
     @Override
     public boolean wiring(Object obj, ContextManager contextManager) throws IllegalAccessException {
+        if (obj == null) return false;
         boolean k = false;
         for (Field declaredField : obj.getClass().getDeclaredFields()) {
             boolean a = wiring(obj, declaredField, contextManager);

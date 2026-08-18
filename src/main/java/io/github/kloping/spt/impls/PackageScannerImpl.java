@@ -39,17 +39,17 @@ public class PackageScannerImpl implements PackageScanner {
         if (!getDefaultClass().isEmpty()) {
             return getDefaultClass().toArray(new Class[0]);
         }
-        Set<String> classNames = null;
+        Set<String> classNames = new HashSet<>();
         String packagePath = packageName.replace(".", "/");
         URL url = loader.getResource(packagePath);
         if (url != null) {
             String protocol = url.getProtocol().trim();
             if (FILE_STR.equals(protocol)) {
-                classNames = getClassNameFromDir(url.getPath(), packageName, isRecursion);
+                classNames = getClassNameFromDir(new File(url.toURI()).getPath(), packageName, isRecursion);
             } else if (JAR_STR.equals(protocol)) {
-                JarFile jarFile = null;
-                jarFile = ((JarURLConnection) url.openConnection()).getJarFile();
-                if (jarFile != null) {
+                JarURLConnection connection = (JarURLConnection) url.openConnection();
+                connection.setUseCaches(false);
+                try (JarFile jarFile = connection.getJarFile()) {
                     classNames = getClassNameFromJar(jarFile.entries(), packageName, isRecursion);
                 }
             }
@@ -70,13 +70,15 @@ public class PackageScannerImpl implements PackageScanner {
         urlPath = urlPath.substring(i1);
         urlPath = urlPath.substring(0, urlPath.indexOf("!"));
         URL urlJar0 = new URL(jar0);
-        JarFile jarFile = null;
-        jarFile = ((JarURLConnection) urlJar0.openConnection()).getJarFile();
+        JarFile jarFile = ((JarURLConnection) urlJar0.openConnection()).getJarFile();
         Enumeration<JarEntry> entryEnumeration = jarFile.entries();
         JarEntry entry = jarFile.getJarEntry(urlPath);
-        InputStream is = jarFile.getInputStream(entry);
         File temp = File.createTempFile("temp0", ".jar");
-        IoUtils.write(temp, IoUtils.readAll(is));
+        try (InputStream is = jarFile.getInputStream(entry)) {
+            IoUtils.write(temp, IoUtils.readAll(is));
+        } finally {
+            jarFile.close();
+        }
         temp.deleteOnExit();
         return new URL(JAR0FILE_STR + "/" + temp.getAbsolutePath() + "!/");
     }
@@ -85,6 +87,7 @@ public class PackageScannerImpl implements PackageScanner {
         Set<String> className = new HashSet<>();
         File file = new File(filePath);
         File[] files = file.listFiles();
+        if (files == null) return className;
         for (File childFile : files) {
             if (childFile.isDirectory()) {
                 if (isRecursion) {
@@ -110,8 +113,9 @@ public class PackageScannerImpl implements PackageScanner {
             JarEntry jarEntry = jarEntries.nextElement();
             if (!jarEntry.isDirectory()) {
                 String entryName = jarEntry.getName().replaceAll("/", ".");
-                if (entryName.endsWith(".class") && !entryName.contains("$") && entryName.startsWith(packageName)) {
-                    entryName = entryName.replace(".class", "");
+                if (entryName.endsWith(".class") && !entryName.contains("$")
+                        && (entryName.startsWith(packageName + ".") || entryName.equals(packageName + ".class"))) {
+                    entryName = entryName.substring(0, entryName.length() - ".class".length());
                     if (isRecursion) {
                         classNames.add(entryName);
                     } else if (!entryName.replace(packageName + ".", "").contains(".")) {
@@ -133,15 +137,13 @@ public class PackageScannerImpl implements PackageScanner {
             } else if (classPath.startsWith("http")) {
                 File temp = File.createTempFile("temp0", ".jar");
                 IoUtils.write(temp, IoUtils.readUrl(new URL(classPath.substring(0, classPath.indexOf("!")))));
-                jarFile = new JarFile(temp);
-                if (jarFile != null) {
-                    classNames.addAll(getClassNameFromJar(jarFile.entries(), packageName, isRecursion));
+                try (JarFile remoteJar = new JarFile(temp)) {
+                    classNames.addAll(getClassNameFromJar(remoteJar.entries(), packageName, isRecursion));
                 }
                 temp.delete();
             } else {
-                jarFile = new JarFile(classPath.substring(classPath.indexOf("/")));
-                if (jarFile != null) {
-                    classNames.addAll(getClassNameFromJar(jarFile.entries(), packageName, isRecursion));
+                try (JarFile localJar = new JarFile(classPath.substring(classPath.indexOf("/")))) {
+                    classNames.addAll(getClassNameFromJar(localJar.entries(), packageName, isRecursion));
                 }
             }
         }

@@ -42,9 +42,8 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
     private ExecutorService threads = Executors.newFixedThreadPool(5);
 
     private void startTimer() {
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+        Thread thread = new Thread(() -> {
+            while (!Thread.currentThread().isInterrupted()) {
                 try {
                     Map.Entry<Long, Method> en = getNextTimeMethodDelay();
                     if (en == null) {
@@ -53,31 +52,34 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                         return;
                     }
                     long t1 = en.getKey();
-                    if (t1 > 0) {
-                        Thread.sleep(t1);
-                        Method method = en.getValue();
-                        threads.execute(() -> {
-                            try {
-                                Class cla = method.getDeclaringClass();
-                                Object o = contextManager.getContextEntity(cla);
-                                Object[] objects = automaticWiringParams.wiring(method, contextManager);
-                                method.invoke(o, objects);
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        });
-                        run();
-                    }
+                    Thread.sleep(Math.max(1L, t1));
+                    Method method = en.getValue();
+                    threads.execute(() -> {
+                        try {
+                            Class cla = method.getDeclaringClass();
+                            Object o = contextManager.getContextEntity(cla);
+                            Object[] objects = automaticWiringParams.wiring(method, contextManager);
+                            if (o != null && objects != null) method.invoke(o, objects);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
                 } catch (Exception e) {
+                    if (e instanceof InterruptedException) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
                     Logger logger = contextManager.getContextEntity(Logger.class);
                     if (logger != null)
                         logger.Log("timeEve Exception\n"+ getExceptionLine(e), -1);
                 }
             }
-        }).start();
+        }, "spt-schedule");
+        thread.setDaemon(true);
+        thread.start();
     }
 
-    private Timer timer = new Timer();
+    private Timer timer = new Timer("spt-time-events", true);
 
     private Map<Class<?>, List<Map.Entry<String, Method>>> timeMethods = new ConcurrentHashMap<>();
 
@@ -168,5 +170,10 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
         for (Method method : clas.getDeclaredMethods()) {
             this.manager(method, contextManager);
         }
+    }
+
+    public void shutdown() {
+        timer.cancel();
+        threads.shutdownNow();
     }
 }

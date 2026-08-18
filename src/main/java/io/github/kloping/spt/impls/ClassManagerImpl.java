@@ -46,6 +46,9 @@ public class ClassManagerImpl implements ClassManager {
 
     @Override
     public <T extends Annotation> void registeredAnnotation(Class<T> annotation, ClassAttributeManager attributeManager) {
+        if (annotation == null || attributeManager == null) {
+            throw new IllegalArgumentException("Annotation and manager cannot be null");
+        }
         MapUtils.append(registeredAnnotations, annotation, attributeManager, CopyOnWriteArrayList.class);
     }
 

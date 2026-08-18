@@ -151,6 +151,9 @@ public final class StarterObjectApplication {
      * @return
      */
     public synchronized int executeMethod(Object... objects) {
+        if (objects == null || objects.length < 2 || objects[0] == null || objects[1] == null) {
+            throw new IllegalArgumentException("executeMethod requires a key and action");
+        }
         return getInstance().queueExecutor.queueExecute(objects[0], objects);
     }
 
@@ -219,6 +222,7 @@ public final class StarterObjectApplication {
     private void work(Class<?> main) {
         try {
             Object startClass = getInstance().getInstanceCrater().create(main, getInstance().contextManager);
+            if (startClass == null) throw new IllegalStateException("Unable to create application class: " + main.getName());
             getInstance().getContextManager().append(logger, logger.getClass().getSimpleName());
             getInstance().getContextManager().append(startClass);
             getInstance().getClassManager().add(main);

@@ -1,14 +1,13 @@
 package io.github.kloping.spt;
 
-import org.jsoup.Connection;
-import org.jsoup.helper.HttpConnection;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.DateTimeException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -20,36 +19,29 @@ public final class PartUtils {
         return baos.toString().trim();
     }
 
-    public static final SimpleDateFormat myFmt = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
-
     public static long getTimeFromNowTo(int hour, int mini, int mil) {
-        Date date = null;
         try {
-            String p1 = String.format("%s-%s-%s-%s-%s-%s", getYear(), getMon(), getDay(), hour, mini, mil);
-            date = myFmt.parse(p1);
-        } catch (Exception e) {
+            LocalDateTime date = LocalDate.now().atTime(hour, mini, mil);
+            return ChronoUnit.MILLIS.between(LocalDateTime.now(), date);
+        } catch (DateTimeException e) {
+            throw new IllegalArgumentException("Invalid time: " + hour + ":" + mini + ":" + mil, e);
         }
-        long millis = date.getTime();
-        long now = System.currentTimeMillis();
-        return millis - now;
     }
 
     public static int getYear() {
-        String s = myFmt.format(new Date());
-        return Integer.parseInt(s.substring(0, 4));
+        return LocalDate.now().getYear();
     }
 
     public static int getMon() {
-        String s = myFmt.format(new Date());
-        return Integer.parseInt(s.substring(5, 7));
+        return LocalDate.now().getMonthValue();
     }
 
     public static int getDay() {
-        String s = myFmt.format(new Date());
-        return Integer.parseInt(s.substring(8, 10));
+        return LocalDate.now().getDayOfMonth();
     }
 
     public static String filter(String path, Class cla) {
+        if (path == null) path = "";
         if (path.equals(".") || path.equals("/") || path.equals("./") || path.trim().isEmpty()) {
             path = cla.getName().substring(0, cla.getName().indexOf("."));
         }
@@ -58,15 +50,10 @@ public final class PartUtils {
 
     public static void check(String scanPath) {
         try {
-            if (PartUtils.class.getClassLoader().getResources(scanPath) == null)
+            if (!PartUtils.class.getClassLoader().getResources(scanPath).hasMoreElements())
                 throw new RuntimeException("The name of the package you want to scan does not exist");
         } catch (IOException e) {
-            e.printStackTrace();
-            try {
-                throw new RuntimeException("The name of the package you want to scan does not exist");
-            } finally {
-                System.exit(0);
-            }
+            throw new IllegalStateException("Unable to inspect package: " + scanPath, e);
         }
     }
 
