@@ -16,7 +16,6 @@ import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.HttpClientManager;
 import okhttp3.*;
-import org.fusesource.jansi.Ansi;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -102,10 +101,10 @@ public class HttpClientManagerImpl implements HttpClientManager {
 
                 String statusTips = null;
                 if (status < 200 || status >= 400) {
-                    statusTips = Ansi.ansi().fgRgb(LoggerImpl.ERROR_COLOR.getRGB()).a(status).reset().toString();
+                    statusTips = String.valueOf(status);
                     logger.error(new HttpStatusException("HTTP error fetching URL",
                             status, response.request().url().url().toString()).getMessage());
-                } else statusTips = Ansi.ansi().fgRgb(LoggerImpl.INFO_COLOR.getRGB()).a(status).reset().toString();
+                } else statusTips = String.valueOf(status);
                 if (print)
                     logger.log(String.format("resp status code %s from the [%s]", statusTips, response.request().url().url()));
 
@@ -170,7 +169,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
         try {
             String data = (text == null ? finalText : text);
             if (print)
-                logger.log(String.format("Get the data [%s] from the [%s]", Ansi.ansi().fgRgb(LoggerImpl.NORMAL_LOW_COLOR.getRGB()).a(data).reset().toString(),
+                logger.log(String.format("Get the data [%s] from the [%s]", data,
                         resp.request().url().url()));
             if (cls == String.class) {
                 return (T) data;

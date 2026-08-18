@@ -176,8 +176,6 @@ public final class StarterObjectApplication {
     }
 
     private void workAfter() {
-        Integer l = getInstance().contextManager.getContextEntity(Integer.class, "log.level");
-        if (l != null) logger.setLogLevel(l.intValue());
         String format = getInstance().contextManager.getContextEntity(String.class, "out.format");
         if (format != null) logger.setFormat(new SimpleDateFormat(format));
         INSTANCE.getContextManager().append(logger, logger.getClass().getSimpleName());
@@ -234,7 +232,7 @@ public final class StarterObjectApplication {
                 }
             }
             postScan();
-            logger.info("version 0.6.5-R1 sptool start success");
+            logger.info("version 0.7.0 sptool start success");
         } catch (Throwable e) {
             logger.error(getExceptionLine(e));
             e.printStackTrace();

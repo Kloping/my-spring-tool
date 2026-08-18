@@ -1,4 +1,4 @@
-package io.github.kloping.arr;
+package io.github.kloping.spt.util.arr;
 
 import java.util.ArrayList;
 import java.util.HashMap;

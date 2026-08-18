@@ -14,8 +14,6 @@ public interface Logger {
     default void setPrefix(String Prefix) {
     }
 
-    int setLogLevel(int level);
-
     /**
      * info log
      * @param mess

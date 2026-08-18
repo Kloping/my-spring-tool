@@ -1,9 +1,8 @@
 package io.github.kloping.spt.impls;
 
 import io.github.kloping.spt.interfaces.Logger;
-import org.fusesource.jansi.Ansi;
+import org.slf4j.LoggerFactory;
 
-import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -12,108 +11,62 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
- * @author github-kloping
+ * Compatibility adapter from the project's Logger API to SLF4J.
  */
 public class LoggerImpl implements Logger {
-    public static final Color NORMAL_LOW_COLOR = new Color(116, 117, 116, 224);
-    public static final Color NORMAL_COLOR = new Color(202, 206, 199, 247);
-    public static final Color INFO_COLOR = new Color(24, 220, 85, 247);
-    public static final Color DEBUG_COLOR = new Color(234, 213, 103, 247);
-    public static final Color ERROR_COLOR = new Color(224, 17, 106, 247);
-
-    private int logLevel = 0;
-    private SimpleDateFormat df = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
-    private String prefix = "[github.kloping.ST]";
-
+    private final org.slf4j.Logger delegate = LoggerFactory.getLogger("io.github.kloping.spt");
+    private volatile String prefix = "[g@kst]";
+    private volatile SimpleDateFormat format = new SimpleDateFormat("MM/dd-HH:mm:ss:SSS");
     private File file;
+    private BufferedWriter writer;
 
     @Override
     public synchronized void setOutFile(String path) {
         closeWriter();
-        file = new File(path);
+        file = path == null ? null : new File(path);
     }
 
     @Override
     public void setFormat(SimpleDateFormat format) {
-        df = format;
+        if (format != null) this.format = format;
     }
 
     @Override
     public synchronized void Log(String mess, Integer level) {
-        if (level == null) level = 0;
-        if (level != -1 && level < logLevel) return;
-        String log = null;
-        String out = null;
-        try {
-            log = "[" + df.format(new Date()) + "]" + "=>" + mess;
-            switch (level) {
-                case 0:
-                    log = "[Normal]" + log;
-                    break;
-                case 1:
-                    log = "[Info]  " + log;
-                    break;
-                case 2:
-                    log = "[Debug] " + log;
-                    break;
-                case -1:
-                    log = "[Error] " + log;
-                    break;
-                default:
-            }
-            log = prefix + log;
-            out = log;
-            if (level == 0) {
-                out = Ansi.ansi().fgRgb(NORMAL_COLOR.getRGB()).a(log).reset().toString();
-            } else if (level == 1) {
-                out = Ansi.ansi().fgRgb(INFO_COLOR.getRGB()).a(log).reset().toString();
-            } else if (level == 2) {
-                out = Ansi.ansi().fgRgb(DEBUG_COLOR.getRGB()).a(log).reset().toString();
-            } else if (level == -1) {
-                out = Ansi.ansi().fgRgb(ERROR_COLOR.getRGB()).a(log).reset().toString();
-            }
-        } catch (Exception e) {
-            if (level != -1 && level < logLevel) {
-            } else e.printStackTrace();
+        int actualLevel = level == null ? 0 : level;
+
+        String message = prefix + (mess == null ? "" : mess);
+        switch (actualLevel) {
+            case -1:
+                delegate.error(message);
+                break;
+            case 2:
+                delegate.warn(message);
+                break;
+            case 0:
+            case 1:
+            default:
+                delegate.info(message);
+                break;
         }
+        writeCompatibilityFile(message);
+    }
+
+    private void writeCompatibilityFile(String message) {
+        if (file == null) return;
         try {
-            BufferedWriter writer = getWriter();
-            if (writer != null) {
-                try {
-                    log = log.replaceAll("\\\u001B\\[38\\;2\\;[0-9]+\\;[0-9]+\\;[0-9]+m","")
-                            .replaceAll("\\\u001B\\[m","");
-                } catch (Exception e) {}
-                writer.write(log);
-                writer.newLine();
-                writer.flush();
-            }
+            if (writer == null) writer = new BufferedWriter(new FileWriter(file, true));
+            writer.write("[" + format.format(new Date()) + "]=>" + message);
+            writer.newLine();
+            writer.flush();
         } catch (IOException e) {
-            e.printStackTrace();
+            delegate.warn("Unable to write compatibility log file", e);
         }
-        System.out.println(out);
-    }
-
-    private BufferedWriter writer = null;
-
-    private synchronized BufferedWriter getWriter() {
-        if (file != null && writer == null) {
-            try {
-                writer = new BufferedWriter(new FileWriter(file, true));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return writer;
-    }
-
-    @Override
-    public int setLogLevel(int level) {
-        return logLevel = level;
     }
 
     @Override
     public void setPrefix(String prefix) {
-        this.prefix = prefix;
+        this.prefix = prefix == null ? "" : prefix;
     }
 
     public synchronized void close() {
@@ -122,8 +75,12 @@ public class LoggerImpl implements Logger {
 
     private void closeWriter() {
         if (writer != null) {
-            try { writer.close(); } catch (IOException ignored) { }
-            writer = null;
+            try {
+                writer.close();
+            } catch (IOException ignored) {
+            } finally {
+                writer = null;
+            }
         }
     }
 }

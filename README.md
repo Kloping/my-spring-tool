@@ -40,13 +40,11 @@ QQ官方机器人 Java/JVM/kotlin [SDK](https://github.com/Kloping/qqpd-bot-java
 
 不知名game[a game for Cultivation and Turn](https://github.com/Kloping/mihdp)
 
-
-
 ```java
 
 package sptest;
 
-import io.github.kloping.arr.Class2OMap;
+import io.github.kloping.spt.util.arr.Class2OMap;
 import io.github.kloping.spt.StarterObjectApplication;
 import io.github.kloping.spt.annotations.*;
 import io.github.kloping.spt.interfaces.entitys.MatherResult;

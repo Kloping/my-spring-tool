@@ -6,7 +6,7 @@ import io.github.kloping.spt.annotations.ReturnResult;
 import io.github.kloping.spt.interfaces.AutomaticWiringParams;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.entitys.MatherResult;
-import io.github.kloping.arr.Class2OMap;
+import io.github.kloping.spt.util.arr.Class2OMap;
 import io.github.kloping.spt.util.ObjectUtils;
 
 import java.lang.reflect.Method;
@@ -93,7 +93,7 @@ public class AutomaticWiringParamsH2Impl implements AutomaticWiringParams {
             } else if (parameters[i].isAnnotationPresent(ReturnResult.class)) {
                 m1(results, parameters, ros, i);
             } else if (parameters[i].getType() == Class2OMap.class) {
-                ros[i] = io.github.kloping.arr.Class2OMap.create(objects);
+                ros[i] = Class2OMap.create(objects);
             } else {
                 m0(all.toArray(), parameters[i], ros, usedList, i);
             }
