@@ -4,7 +4,7 @@ import io.github.kloping.spt.annotations.Bean;
 import io.github.kloping.spt.annotations.ComponentScan;
 import io.github.kloping.spt.annotations.Entity;
 import io.github.kloping.spt.interfaces.AutomaticWiringParams;
-import io.github.kloping.spt.interfaces.Logger;
+import lombok.extern.slf4j.Slf4j;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.MethodManager;
@@ -12,6 +12,7 @@ import io.github.kloping.spt.interfaces.component.MethodManager;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+@Slf4j
 public class MethodManagerImpl implements MethodManager {
     private AutomaticWiringParams automaticWiringParams;
 
@@ -35,9 +36,7 @@ public class MethodManagerImpl implements MethodManager {
             if (ro == null) return;
             String id = method.getDeclaredAnnotation(Bean.class).value();
             contextManager.append(ro, id);
-            Logger logger = contextManager.getContextEntity(Logger.class);
-            if (logger != null)
-                logger.Log("new bean  " + method.getName() + " from " + method.getDeclaringClass().getSimpleName(), 0);
+            log.debug("new bean {} from {}", method.getName(), method.getDeclaringClass().getSimpleName());
         }
     }
 

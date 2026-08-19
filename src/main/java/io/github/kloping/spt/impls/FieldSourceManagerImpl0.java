@@ -8,6 +8,7 @@ import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.FieldSourceManager;
 import io.github.kloping.spt.util.MapUtils;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AccessibleObject;
@@ -21,6 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 /**
  * @author github-kloping
  */
+@Slf4j
 public class FieldSourceManagerImpl0 implements ClassAttributeManager, FieldSourceManager {
     private ClassManager classManager;
     public final Map<Class<?>, Map<Annotation, List<Field>>> FieldMap = new ConcurrentHashMap<>();
@@ -98,7 +100,7 @@ public class FieldSourceManagerImpl0 implements ClassAttributeManager, FieldSour
             Field field = cla.getField(fieldName);
             return field;
         } catch (ClassNotFoundException | NoSuchFieldException e) {
-            e.printStackTrace();
+            log.error("Unable to resolve field source: {}", name, e);
         }
         return null;
     }

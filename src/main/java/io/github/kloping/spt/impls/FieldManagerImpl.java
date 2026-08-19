@@ -4,7 +4,7 @@ import io.github.kloping.spt.Setting;
 import io.github.kloping.spt.annotations.*;
 import io.github.kloping.spt.interfaces.AutomaticWiringParams;
 import io.github.kloping.spt.interfaces.AutomaticWiringValue;
-import io.github.kloping.spt.interfaces.Logger;
+import lombok.extern.slf4j.Slf4j;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.FieldManager;
@@ -18,6 +18,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * @author github-kloping
  */
+@Slf4j
 public class FieldManagerImpl implements FieldManager {
 
     private AutomaticWiringValue automaticWiringValue;
@@ -49,7 +50,7 @@ public class FieldManagerImpl implements FieldManager {
                         declaredMethod.invoke(o, objects);
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("AutoStandAfter invocation failed", e);
                 }
             }
         }
@@ -62,7 +63,7 @@ public class FieldManagerImpl implements FieldManager {
                 try {
                     this.manager(declaredField, contextManager);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("AutoStand field wiring failed", e);
                 }
             }
         }
@@ -73,9 +74,7 @@ public class FieldManagerImpl implements FieldManager {
         Object obj = contextManager.getContextEntity(field.getDeclaringClass());
         if (field.isAnnotationPresent(AutoStand.class)) {
             automaticWiringValue.wiring(obj, field, contextManager);
-            Logger logger = contextManager.getContextEntity(Logger.class);
-            if (logger != null)
-                logger.Log("autoStand " + field.getName() + " in " + field.getDeclaringClass().getSimpleName(), 0);
+            log.debug("autoStand {} in {}", field.getName(), field.getDeclaringClass().getSimpleName());
         }
     }
 

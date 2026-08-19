@@ -18,11 +18,25 @@
     <dependency>
         <groupId>io.github.Kloping</groupId>
         <artifactId>SpringTool</artifactId>
-        <version>0.7.1</version>
+        <version>0.7.2-L1</version>
     </dependency>
 </dependencies>
 
 ```
+
+### 日志配置
+
+框架仅依赖 SLF4J API，不携带日志实现或日志配置文件。使用方可完全控制输出等级、格式、颜色和目标位置。
+
+Spring Boot 中可在应用自己的 `application.yml` 设置框架日志等级：
+
+```yaml
+logging:
+  level:
+    io.github.kloping.spt: INFO
+```
+
+也可以设置为 `DEBUG`、`WARN`、`ERROR` 或 `OFF`。日志格式和颜色继续由 Spring Boot 的既有配置决定，不会被本框架覆盖。
 
 ### 功能列表
 

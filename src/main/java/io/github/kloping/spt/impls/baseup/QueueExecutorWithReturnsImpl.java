@@ -7,9 +7,9 @@ import io.github.kloping.spt.entity.interfaces.Runner;
 import io.github.kloping.spt.entity.interfaces.RunnerOnThrows;
 import io.github.kloping.spt.impls.QueueExecutorImpl;
 import io.github.kloping.spt.interfaces.Executor;
-import io.github.kloping.spt.interfaces.Logger;
 import io.github.kloping.spt.interfaces.QueueExecutor;
 import io.github.kloping.spt.interfaces.entitys.MatherResult;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -20,6 +20,7 @@ import static io.github.kloping.spt.PartUtils.getExceptionLine;
 /**
  * @author github-kloping
  */
+@Slf4j
 public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements QueueExecutor {
     protected Class<?> cla = Long.class;
     protected Executor executor;
@@ -28,7 +29,6 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
     private RunnerEve runner1;
     private RunnerEve runner2;
     private RunnerOnThrows onThrows;
-    private Logger logger;
 
     @Override
     public <T extends RunnerOnThrows> void setException(T r) {
@@ -64,7 +64,6 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
     protected void init() {
         threads = new ThreadPoolExecutor(poolSize, poolSize, waitTime, TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(poolSize));
         runThreads = Executors.newFixedThreadPool(poolSize);
-        logger = setting.getContextManager().getContextEntity(Logger.class);
     }
 
     public void shutdown() {
@@ -89,11 +88,11 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
     @Override
     public <T> int queueExecute(T t, Object... objects) {
         if (t == null || objects == null || objects.length < 2) {
-            if (logger != null) logger.waring("queueExecute requires a key and action");
+            log.warn("queueExecute requires a key and action");
             return -1;
         }
         if (t.getClass() != cla) {
-            if (logger != null) logger.waring("not is mainKey type for " + t.getClass().getSimpleName());
+            log.warn("not is mainKey type for {}", t.getClass().getSimpleName());
             return -1;
         } else {
             if (runSet.add(t)) {
@@ -101,7 +100,7 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
                 return queueMap.size();
             } else {
                 append(t, objects);
-                logger.info("append queue list and next run");
+                log.debug("append queue list and next run");
             }
         }
         return 0;
@@ -115,7 +114,7 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
                 if (setting.getArgsManager().isLegal(parts)) {
                     matcherAndRun(t, objects, startTime, (Object) parts);
                 } else {
-                    logger.Log("Can't Access types for " + Arrays.toString(objects), 2);
+                    log.warn("Can't Access types for {}", Arrays.toString(objects));
                 }
             });
             getVal(future);
@@ -144,12 +143,12 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
                         }
                     }
                 }
-                logger.Log("lost time " + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
-            } else logger.Log("No match for " + objects[1].toString(), 2);
+                log.debug("lost time {} Millisecond", System.currentTimeMillis() - startTime);
+            } else log.warn("No match for {}", objects[1]);
         } catch (Throwable e) {
             if (onThrows != null) {
                 onThrows.onThrows(e, t, objects);
-            } else logger.error(getExceptionLine(e));
+            } else log.error(getExceptionLine(e), e);
         }
     }
 
@@ -165,14 +164,13 @@ public class QueueExecutorWithReturnsImpl extends QueueExecutorImpl implements Q
         try {
             future.get(waitTime, TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
-            logger.Log("运行时错误(Running Has Error)=>" + e, -1);
+            log.error("运行时错误(Running Has Error)", e);
             future.cancel(true);
         } catch (TimeoutException e) {
-            logger.Log("运行超时(Run Time Out)=>" + e, -1);
+            log.error("运行超时(Run Time Out)", e);
             future.cancel(true);
         } catch (Exception e) {
-            logger.Log("其他错误(Other Error)=>" + e + "\n", -1);
-            e.printStackTrace();
+            log.error("其他错误(Other Error)", e);
             future.cancel(true);
         }
     }

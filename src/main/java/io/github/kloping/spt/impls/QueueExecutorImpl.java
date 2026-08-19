@@ -4,9 +4,9 @@ import io.github.kloping.spt.Setting;
 import io.github.kloping.spt.entity.interfaces.Runner;
 import io.github.kloping.spt.entity.interfaces.RunnerOnThrows;
 import io.github.kloping.spt.interfaces.Executor;
-import io.github.kloping.spt.interfaces.Logger;
 import io.github.kloping.spt.interfaces.QueueExecutor;
 import io.github.kloping.spt.interfaces.entitys.MatherResult;
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -17,6 +17,7 @@ import static io.github.kloping.spt.PartUtils.getExceptionLine;
 /**
  * @author github-kloping
  */
+@Slf4j
 public class QueueExecutorImpl extends ExecutorNowImpl implements QueueExecutor {
     private Class<?> cla = Long.class;
     private int poolSize = 20;
@@ -26,16 +27,12 @@ public class QueueExecutorImpl extends ExecutorNowImpl implements QueueExecutor 
     private RunnerOnThrows onThrows;
     protected Executor executor;
     protected Setting setting;
-    protected Logger logger;
 
     private java.util.concurrent.ExecutorService threads;
     private ExecutorService runThreads = null;
 
     public QueueExecutorImpl(Setting setting) {
         this.setting = setting;
-        setting.getSTARTED_RUNNABLE().add(() -> {
-            logger = setting.getContextManager().getContextEntity(Logger.class);
-        });
     }
 
     @Override
@@ -75,11 +72,11 @@ public class QueueExecutorImpl extends ExecutorNowImpl implements QueueExecutor 
     @Override
     public <T> int queueExecute(T t, Object... objects) {
         if (t == null || objects == null || objects.length < 2) {
-            if (logger != null) logger.waring("queueExecute requires a key and action");
+            log.warn("queueExecute requires a key and action");
             return -1;
         }
         if (t.getClass() != cla) {
-            if (logger != null) logger.Log("not is mainKey type for " + t.getClass().getSimpleName(), 2);
+            log.warn("not is mainKey type for {}", t.getClass().getSimpleName());
             return 0;
         } else {
             if (runSet.add(t)) {
@@ -106,29 +103,28 @@ public class QueueExecutorImpl extends ExecutorNowImpl implements QueueExecutor 
                                         }
                                     }
                                     if (runner2 != null) runner2.run(methods[0], reo, objects);
-                                    logger.Log("lost time " + (System.currentTimeMillis() - startTime) + " Millisecond", 1);
-                                } else logger.Log("No match for " + objects[1].toString(), 2);
+                                    log.debug("lost time {} Millisecond", System.currentTimeMillis() - startTime);
+                                } else log.warn("No match for {}", objects[1]);
                             } catch (Throwable e) {
                                 if (onThrows != null) {
                                     onThrows.onThrows(e, t, objects);
-                                } else logger.error(getExceptionLine(e));
+                                } else log.error(getExceptionLine(e), e);
                             }
                         } else {
-                            logger.waring("Can't Access types for " + Arrays.toString(objects));
+                            log.warn("Can't Access types for {}", Arrays.toString(objects));
                         }
                     });
 
                     try {
                         future.get(waitTime, TimeUnit.MILLISECONDS);
                     } catch (InterruptedException e) {
-                        logger.Log("Running Has Error\n" + getExceptionLine(e), -1);
+                        log.error("Running Has Error", e);
                         future.cancel(true);
                     } catch (TimeoutException e) {
-                        logger.Log("Run Time Out\n" + getExceptionLine(e), -1);
+                        log.error("Run Time Out", e);
                         future.cancel(true);
                     } catch (Exception e) {
-                        logger.Log("Other Error\n" + getExceptionLine(e), -1);
-                        e.printStackTrace();
+                        log.error("Other Error", e);
                         future.cancel(true);
                     }
                     runSet.remove(t);
@@ -140,7 +136,7 @@ public class QueueExecutorImpl extends ExecutorNowImpl implements QueueExecutor 
                 return queueMap.size();
             } else {
                 append(t, objects);
-                logger.Log("append queue list and next run", 0);
+                log.debug("append queue list and next run");
             }
         }
         return 0;

@@ -11,7 +11,6 @@ import io.github.kloping.spt.annotations.http.Headers;
 import io.github.kloping.spt.annotations.http.RequestBody;
 import io.github.kloping.spt.entity.KeyVals;
 import io.github.kloping.spt.entity.Params;
-import io.github.kloping.spt.interfaces.Logger;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.HttpClientManager;
@@ -21,6 +20,7 @@ import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.helper.HttpConnection;
 import org.jsoup.nodes.Document;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.lang.reflect.*;
@@ -39,6 +39,7 @@ import static io.github.kloping.spt.PartUtils.getExceptionLine;
 /**
  * @author github-kloping
  */
+@Slf4j
 public class HttpClientManagerImpl implements HttpClientManager {
     public static final String SPLIT = "/";
     private Setting setting;
@@ -102,11 +103,11 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 String statusTips = null;
                 if (status < 200 || status >= 400) {
                     statusTips = String.valueOf(status);
-                    logger.error(new HttpStatusException("HTTP error fetching URL",
+                    log.error(new HttpStatusException("HTTP error fetching URL",
                             status, response.request().url().url().toString()).getMessage());
                 } else statusTips = String.valueOf(status);
                 if (print)
-                    logger.log(String.format("resp status code %s from the [%s]", statusTips, response.request().url().url()));
+                    log.debug("resp status code {} from the [{}]", statusTips, response.request().url().url());
 
                 byte[] outBytes = response.body() == null ? new byte[0] : response.body().bytes();
                 Document doc = Jsoup.parse(new String(outBytes));
@@ -125,8 +126,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                     receiver.receive(HttpClientManagerImpl.this, merge(host, path), 0, dType, method, type, rtype, null, null);
                 throw e;
             } finally {
-                logger.log(String.format("The entire proxy request process took %sms.(execute okhttp request cost %sms)"
-                        , System.currentTimeMillis() - start, cost));
+                log.debug("The entire proxy request process took {}ms.(execute okhttp request cost {}ms)", System.currentTimeMillis() - start, cost);
             }
         }
     }
@@ -162,15 +162,14 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         return (T) out;
                     }
                 } catch (Exception e) {
-                    logger.error(e.getMessage() + getExceptionLine(e));
+                    log.error(e.getMessage() + getExceptionLine(e), e);
                 }
             }
         }
         try {
             String data = (text == null ? finalText : text);
             if (print)
-                logger.log(String.format("Get the data [%s] from the [%s]", data,
-                        resp.request().url().url()));
+                log.debug("Get the data [{}] from the [{}]", data, resp.request().url().url());
             if (cls == String.class) {
                 return (T) data;
             } else if (cls.isArray()) {
@@ -179,21 +178,16 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 return JSON.parseObject(data).toJavaObject(cls);
             }
         } catch (Exception e) {
-            logger.error(e.getMessage() == null ? "" :
+            log.error(e.getMessage() == null ? "" :
                     e.getMessage() + "The data returned by the request could not be converted to " +
                             "the specified type( " + cls.getName() + ")\n" + getExceptionLine(e));
             return null;
         }
     }
 
-    private Logger logger;
-
     public HttpClientManagerImpl(Setting setting, ClassManager classManager) {
         this.setting = setting;
         classManager.registeredAnnotation(HttpClient.class, this);
-        setting.getSTARTED_RUNNABLE().add(() -> {
-            logger = setting.getContextManager().getContextEntity(Logger.class);
-        });
     }
 
     private List<HttpStatusReceiver> receivers = new CopyOnWriteArrayList<>();
@@ -382,7 +376,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                 method.setAccessible(true);
                 methods[i] = method;
             } catch (Exception e) {
-                logger.error(e.getMessage() + getExceptionLine(e));
+                log.error(e.getMessage() + getExceptionLine(e), e);
             }
             i++;
         }
@@ -451,7 +445,6 @@ public class HttpClientManagerImpl implements HttpClientManager {
 //                    }
 //                }
 //            } catch (Exception e) {
-//                logger.error("get Cookie Failed From: " + u1);
 //                continue;
 //            }
 //        }
@@ -524,7 +517,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
             if (res != null) {
                 url0 = url0.replace(s, replaceMap.get(s).toString());
             } else {
-                logger.waring("replaceMap get null at " + s + " in " + url0);
+                log.warn("replaceMap get null at {} in {}", s, url0);
             }
         }
         if (url0.startsWith(SPLIT)) {
@@ -550,7 +543,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         }
                     }
                 } catch (Exception e) {
-                    logger.error("The Parameter Type not is Map<String,String>");
+                    log.error("The Parameter Type not is Map<String,String>");
                 }
             }
             i++;
@@ -567,8 +560,7 @@ public class HttpClientManagerImpl implements HttpClientManager {
                         map.putAll(m);
                     }
                 } catch (Throwable e) {
-                    e.printStackTrace();
-                    logger.error("parse error at " + cn0 + " Annotation @Headers");
+                    log.error("parse error at {} Annotation @Headers", cn0, e);
                 }
             }
         }

@@ -2,7 +2,7 @@ package io.github.kloping.spt.impls;
 
 import io.github.kloping.spt.Setting;
 import io.github.kloping.spt.annotations.*;
-import io.github.kloping.spt.interfaces.Logger;
+import lombok.extern.slf4j.Slf4j;
 import io.github.kloping.spt.interfaces.component.ActionManager;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
@@ -22,13 +22,11 @@ import static io.github.kloping.spt.util.Judge.isNotNull;
 /**
  * @author github-kloping
  */
+@Slf4j
 public class ActionManagerImpl implements ActionManager {
 
     public ActionManagerImpl(ClassManager classManager, Setting setting) {
         classManager.registeredAnnotation(Controller.class, this);
-        setting.getSTARTED_RUNNABLE().add(() -> {
-            logger = setting.getContextManager().getContextEntity(Logger.class);
-        });
     }
 
     public static final Pattern PATTERN0 = Pattern.compile("<.*>");
@@ -63,7 +61,7 @@ public class ActionManagerImpl implements ActionManager {
                     r = mr(regx, histIndexes.get(regx));
                     if (r != null) return r;
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Action matching failed", e);
                 }
             }
             for (char c : getShortestSortedChars(regx)) {
@@ -154,7 +152,6 @@ public class ActionManagerImpl implements ActionManager {
         return classSet.toArray(new Class[0]);
     }
 
-    private Logger logger;
     private Map<String, Set<Method>> action2methods = new ConcurrentHashMap<>();
     private Set<Class<?>> classSet = new CopyOnWriteArraySet<>();
     private List<Method> defActionMethods = new ArrayList<>();
@@ -176,13 +173,11 @@ public class ActionManagerImpl implements ActionManager {
             if (declaredMethod.isAnnotationPresent(Before.class)) {
                 declaredMethod.setAccessible(true);
                 before = declaredMethod;
-                if (logger != null)
-                    logger.Log("new before " + declaredMethod.getName() + " from " + declaredMethod.getDeclaringClass().getSimpleName(), 0);
+                log.debug("new before {} from {}", declaredMethod.getName(), declaredMethod.getDeclaringClass().getSimpleName());
             } else if (declaredMethod.isAnnotationPresent(After.class)) {
                 declaredMethod.setAccessible(true);
                 after = declaredMethod;
-                if (logger != null)
-                    logger.Log("new after  " + declaredMethod.getName() + " from " + declaredMethod.getDeclaringClass().getSimpleName(), 0);
+                log.debug("new after {} from {}", declaredMethod.getName(), declaredMethod.getDeclaringClass().getSimpleName());
             }
         }
         for (Method declaredMethod : obj.getClass().getDeclaredMethods()) {
@@ -198,8 +193,7 @@ public class ActionManagerImpl implements ActionManager {
                     append(action2methods, actionV, declaredMethod);
                     if (after != null) append(action2methods, actionV, after);
                 }
-                if (logger != null)
-                    logger.Log("new action  " + declaredMethod.getName() + " from " + declaredMethod.getDeclaringClass().getSimpleName(), 0);
+                log.debug("new action {} from {}", declaredMethod.getName(), declaredMethod.getDeclaringClass().getSimpleName());
             } else if (declaredMethod.isAnnotationPresent(DefAction.class)) {
                 declaredMethod.setAccessible(true);
                 if (before != null) defActionMethods.add(before);

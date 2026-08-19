@@ -1,6 +1,6 @@
 package io.github.kloping.spt.impls;
 
-import io.github.kloping.spt.interfaces.Logger;
+import lombok.extern.slf4j.Slf4j;
 import io.github.kloping.spt.interfaces.component.ConfigFileManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.util.HmlObject;
@@ -12,6 +12,7 @@ import java.io.File;
 /**
  * @author github-kloping
  */
+@Slf4j
 public class ConfigFileManagerImpl implements ConfigFileManager {
     private ContextManager contextManager;
 
@@ -61,9 +62,7 @@ public class ConfigFileManagerImpl implements ConfigFileManager {
             Object o = ObjectUtils.maybeType(m1.trim());
             contextManager.append(o, s2[0]);
         }
-        Logger logger = contextManager.getContextEntity(Logger.class);
-        if (logger != null)
-            logger.Log("load config file ok for " + file, 0);
+        log.debug("load config file ok for {}", file);
     }
 
     @Override

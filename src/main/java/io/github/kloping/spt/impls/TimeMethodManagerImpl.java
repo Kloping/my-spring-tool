@@ -7,7 +7,7 @@ import io.github.kloping.spt.annotations.CronSchedule;
 import io.github.kloping.spt.annotations.Schedule;
 import io.github.kloping.spt.annotations.TimeEve;
 import io.github.kloping.spt.interfaces.AutomaticWiringParams;
-import io.github.kloping.spt.interfaces.Logger;
+import lombok.extern.slf4j.Slf4j;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.TimeMethodManager;
@@ -25,6 +25,7 @@ import static io.github.kloping.spt.PartUtils.getTimeFromNowTo;
 /**
  * @author HRS-Computer
  */
+@Slf4j
 public class TimeMethodManagerImpl implements TimeMethodManager {
 
     private AutomaticWiringParams automaticWiringParams;
@@ -47,8 +48,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                 try {
                     Map.Entry<Long, Method> en = getNextTimeMethodDelay();
                     if (en == null) {
-                        Logger logger = contextManager.getContextEntity(Logger.class);
-                        if (logger != null) logger.log("计时任务结束...");
+                        log.debug("计时任务结束...");
                         return;
                     }
                     long t1 = en.getKey();
@@ -61,7 +61,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                             Object[] objects = automaticWiringParams.wiring(method, contextManager);
                             if (o != null && objects != null) method.invoke(o, objects);
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            log.error("Scheduled method execution failed", e);
                         }
                     });
                 } catch (Exception e) {
@@ -69,9 +69,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                         Thread.currentThread().interrupt();
                         return;
                     }
-                    Logger logger = contextManager.getContextEntity(Logger.class);
-                    if (logger != null)
-                        logger.Log("timeEve Exception\n"+ getExceptionLine(e), -1);
+                    log.error("timeEve Exception\n{}", getExceptionLine(e), e);
                 }
             }
         }, "spt-schedule");
@@ -122,16 +120,11 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                         Object[] objects = automaticWiringParams.wiring(method, contextManager);
                         method.invoke(o, objects);
                     } catch (Exception e) {
-                        e.printStackTrace();
-                        Logger logger = contextManager.getContextEntity(Logger.class);
-                        if (logger != null)
-                            logger.Log("timeEve Exception\n"+ getExceptionLine(e), -1);
+                        log.error("timeEve Exception\n{}", getExceptionLine(e), e);
                     }
                 }
             }, t, t);
-            Logger logger = contextManager.getContextEntity(Logger.class);
-            if (logger != null)
-                logger.Log("new timeEve  " + method.getName() + " from " + method.getDeclaringClass().getSimpleName(), 0);
+            log.debug("new timeEve {} from {}", method.getName(), method.getDeclaringClass().getSimpleName());
         } else if (method.isAnnotationPresent(Schedule.class)) {
             Class cla = method.getDeclaringClass();
             List<Map.Entry<String, Method>> list = timeMethods.get(cla);
@@ -142,9 +135,7 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                 list.add(new AbstractMap.SimpleEntry<>(s, method));
             }
             timeMethods.put(cla, list);
-            Logger logger = contextManager.getContextEntity(Logger.class);
-            if (logger != null)
-                logger.Log("new Schedule " + method.getName() + " from " + method.getDeclaringClass().getSimpleName(), 0);
+            log.debug("new Schedule {} from {}", method.getName(), method.getDeclaringClass().getSimpleName());
         } else if (method.isAnnotationPresent(CronSchedule.class)) {
             Object o = contextManager.getContextEntity(method.getDeclaringClass());
             CronSchedule schedule = method.getAnnotation(CronSchedule.class);
@@ -156,9 +147,9 @@ public class TimeMethodManagerImpl implements TimeMethodManager {
                         Object[] objects = automaticWiringParams.wiring(method, contextManager);
                         method.invoke(o, objects);
                     } catch (IllegalAccessException e) {
-                        e.printStackTrace();
+                        log.error("Cron scheduled method access failed", e);
                     } catch (InvocationTargetException e) {
-                        e.printStackTrace();
+                        log.error("Cron scheduled method invocation failed", e);
                     }
                 });
             }

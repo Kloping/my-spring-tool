@@ -5,8 +5,7 @@ import io.github.kloping.spt.annotations.ComponentScan;
 import io.github.kloping.spt.entity.interfaces.Runner;
 import io.github.kloping.spt.exceptions.NoRunException;
 import io.github.kloping.spt.impls.ExtensionImpl0;
-import io.github.kloping.spt.impls.LoggerImpl;
-import io.github.kloping.spt.interfaces.Logger;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
@@ -25,9 +24,9 @@ import java.util.concurrent.Executors;
 /**
  * @author github-kloping
  */
+@Slf4j
 public final class StarterObjectApplication {
     private static final ExecutorService EXECUTOR_SERVICE = Executors.newCachedThreadPool();
-    public Logger logger = new LoggerImpl();
     public Setting INSTANCE = null;
 
     private final ClassLoader SCAN_LOADER;
@@ -104,7 +103,7 @@ public final class StarterObjectApplication {
                     check(SCAN_LOADER, s);
                     paths.add(s);
                 } catch (Exception e) {
-                    System.err.println(e.getMessage());
+                    log.error(e.getMessage(), e);
                     continue;
                 }
             }
@@ -121,7 +120,7 @@ public final class StarterObjectApplication {
             try {
                 runnable.run();
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Started runnable execution failed", e);
             }
         }
     }
@@ -176,9 +175,6 @@ public final class StarterObjectApplication {
     }
 
     private void workAfter() {
-        String format = getInstance().contextManager.getContextEntity(String.class, "out.format");
-        if (format != null) logger.setFormat(new SimpleDateFormat(format));
-        INSTANCE.getContextManager().append(logger, logger.getClass().getSimpleName());
     }
 
     private void loadConf() {
@@ -221,7 +217,6 @@ public final class StarterObjectApplication {
         try {
             Object startClass = getInstance().getInstanceCrater().create(main, getInstance().contextManager);
             if (startClass == null) throw new IllegalStateException("Unable to create application class: " + main.getName());
-            getInstance().getContextManager().append(logger, logger.getClass().getSimpleName());
             getInstance().getContextManager().append(startClass);
             getInstance().getClassManager().add(main);
             preScan();
@@ -232,10 +227,9 @@ public final class StarterObjectApplication {
                 }
             }
             postScan();
-            logger.info("version 0.7.1 sptool start success");
+            log.info("version 0.7.2-L1 sptool start success.");
         } catch (Throwable e) {
-            logger.error(getExceptionLine(e));
-            e.printStackTrace();
+            log.error(getExceptionLine(e), e);
         }
     }
 
@@ -248,7 +242,7 @@ public final class StarterObjectApplication {
                     try {
                         runnable.run();
                     } catch (Throwable e) {
-                        e.printStackTrace();
+                        log.error("Post-scan runnable execution failed", e);
                     }
                     cdl.countDown();
                 }
@@ -257,7 +251,7 @@ public final class StarterObjectApplication {
         try {
             cdl.await();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.error("Post-scan interrupted", e);
         }
     }
 
@@ -267,7 +261,7 @@ public final class StarterObjectApplication {
             try {
                 runnable.run();
             } catch (Exception e) {
-                logger.error(getExceptionLine(e));
+                log.error(getExceptionLine(e), e);
             }
         }
     }

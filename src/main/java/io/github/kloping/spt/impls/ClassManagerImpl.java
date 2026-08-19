@@ -6,7 +6,7 @@ import io.github.kloping.spt.annotations.ComponentScan;
 import io.github.kloping.spt.annotations.Controller;
 import io.github.kloping.spt.annotations.Entity;
 import io.github.kloping.spt.interfaces.AutomaticWiringParams;
-import io.github.kloping.spt.interfaces.Logger;
+import lombok.extern.slf4j.Slf4j;
 import io.github.kloping.spt.interfaces.component.ActionManager;
 import io.github.kloping.spt.interfaces.component.ClassManager;
 import io.github.kloping.spt.interfaces.component.ContextManager;
@@ -24,6 +24,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 /**
  * @author github-kloping
  */
+@Slf4j
 public class ClassManagerImpl implements ClassManager {
 
     private InstanceCrater instanceCrater;
@@ -81,9 +82,7 @@ public class ClassManagerImpl implements ClassManager {
                     try {
                         classAttributeManager.manager(cla, contextManager);
                     } catch (Exception e) {
-                        Logger logger = contextManager.getContextEntity(Logger.class);
-                        if (logger != null) logger.error(PartUtils.getExceptionLine(e));
-                        else e.printStackTrace();
+                        log.error(PartUtils.getExceptionLine(e), e);
                     }
                 }
             }

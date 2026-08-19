@@ -3,11 +3,11 @@ package io.github.kloping.spt.impls.baseup;
 
 import io.github.kloping.spt.Setting;
 import io.github.kloping.spt.interfaces.Executor;
-import io.github.kloping.spt.interfaces.Logger;
 import io.github.kloping.spt.interfaces.component.Callback;
 import io.github.kloping.spt.interfaces.component.Filter;
 import io.github.kloping.spt.interfaces.component.Interceptor;
 import io.github.kloping.spt.interfaces.component.InterceptorCallback;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,11 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author github-kloping
  */
+@Slf4j
 public class QueueExecutorWithReturnsAndInterceptorImpl
         extends QueueExecutorWithReturnsImpl
         implements Interceptor, InterceptorCallback {
-
-    private Logger logger;
 
     public QueueExecutorWithReturnsAndInterceptorImpl(Class<?> cla, Executor executor, Setting setting) {
         super(cla, executor, setting);
@@ -27,7 +26,6 @@ public class QueueExecutorWithReturnsAndInterceptorImpl
 
     protected QueueExecutorWithReturnsAndInterceptorImpl(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
         super(cla, poolSize, waitTime, executor, setting);
-        logger = setting.getContextManager().getContextEntity(Logger.class);
     }
 
     public static QueueExecutorWithReturnsAndInterceptorImpl create(Class<?> cla, int poolSize, long waitTime, Executor executor, Setting setting) {
@@ -73,7 +71,7 @@ public class QueueExecutorWithReturnsAndInterceptorImpl
     @Override
     public <T> int queueExecute(T t, Object... objects) {
         if (t.getClass() != cla) {
-            logger.Log("not is mainKey type for " + t.getClass().getSimpleName(), 2);
+            log.warn("not is mainKey type for {}", t.getClass().getSimpleName());
             return 0;
         } else {
             if (runSet.add(t)) {
@@ -82,7 +80,7 @@ public class QueueExecutorWithReturnsAndInterceptorImpl
                 return queueMap.size();
             } else {
                 append(t, objects);
-                logger.Log("append queue list and next run", 0);
+                log.debug("append queue list and next run");
             }
         }
         return 0;

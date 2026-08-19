@@ -2,7 +2,7 @@ package io.github.kloping.spt.impls;
 
 import io.github.kloping.spt.PartUtils;
 import io.github.kloping.spt.annotations.Param;
-import io.github.kloping.spt.interfaces.Logger;
+import lombok.extern.slf4j.Slf4j;
 import io.github.kloping.spt.interfaces.component.ContextManager;
 import io.github.kloping.spt.interfaces.component.InstanceCrater;
 
@@ -16,6 +16,7 @@ import java.util.List;
 /**
  * @author github-kloping
  */
+@Slf4j
 public class InstanceCraterImpl implements InstanceCrater {
     @Override
     public <T> T create(Class<T> cla, ContextManager contextManager) {
@@ -43,22 +44,17 @@ public class InstanceCraterImpl implements InstanceCrater {
                 break;
             } catch (InvocationTargetException ex) {
                 Throwable e = ex.getTargetException();
-                Logger logger = contextManager.getContextEntity(Logger.class);
                 if (e instanceof RuntimeException) {
                     String msg = e.getMessage() + " at create bean " + cla.getSimpleName() + " parameters " + Arrays.toString(con.getParameters());
-                    if (logger != null) logger.error(msg);
-                    else System.err.println(msg);
+                    log.error(msg, e);
                     io.github.kloping.spt.annotations.Constructor constructor = con.getDeclaredAnnotation(io.github.kloping.spt.annotations.Constructor.class);
                     if (constructor != null && constructor.value() != 0) break;
                     else continue;
                 } else {
-                    if (logger != null) logger.error(PartUtils.getExceptionLine(e));
-                    else e.printStackTrace();
+                    log.error(PartUtils.getExceptionLine(e), e);
                 }
             } catch (InstantiationException | IllegalAccessException e) {
-                Logger logger = contextManager.getContextEntity(Logger.class);
-                if (logger != null) logger.error(PartUtils.getExceptionLine(e));
-                else e.printStackTrace();
+                log.error(PartUtils.getExceptionLine(e), e);
             }
         }
         return t;
